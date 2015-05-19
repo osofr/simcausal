@@ -1,7 +1,9 @@
-cran-comments.md
-README.html
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^cran-comments\.md$
+^README\.html$
+.Rprofile
+inst/db
 ^\.travis\.yml$
 \.sublime-project$
 \.sublime-workspace$

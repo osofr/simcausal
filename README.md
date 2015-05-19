@@ -33,7 +33,7 @@ help(package = 'simcausal')
 * To add the vignette...
 
 ### Citation
-Please include the following citation when using `simcausal` for research:
+To cite `simcausal` in publications, please use:
 > Sofrygin O, Neugebauer R (2015). *simcausal: Simulating Longitudinal Data with Causal Inference Applications.* R package version 0.1.
 
 ### Funding

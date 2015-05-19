@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .DS_Store
-cran-comments.md
+inst/doc
 README.html
 *.sublime-project
 *.sublime-workspace
