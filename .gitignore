@@ -1,0 +1,8 @@
+.Rproj.user
+.Rhistory
+.RData
+.DS_Store
+cran-comments.md
+README.html
+*.sublime-project
+*.sublime-workspace

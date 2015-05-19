@@ -1,0 +1,29 @@
+Package: simcausal
+Type: Package
+Title: Simulating Longitudinal Data with Causal Inference Applications
+Version: 0.1
+Date: 2015-05-14
+Authors@R: c(
+    person("Oleg", "Sofrygin", role=c("aut", "cre"), email="oleg.sofrygin@gmail.com"),
+    person("Romain", "Neugebauer", role="aut", email="Romain.S.Neugebauer@kp.org"))
+Description: A flexible tool for simulating complex longitudinal data using
+    structural equations, with emphasis on problems in causal inference.
+    Specify interventions and simulate from intervened data generating
+    distributions. Define and evaluate treatment-specific means, the average
+    treatment effects and coefficients from working marginal structural models.
+    User interface designed to facilitate the conduct of transparent and
+    reproducible simulation studies, and allows concise expression of complex
+    functional dependencies for a large number of time-varying nodes.
+Depends: R (>= 3.1.0)
+Imports:
+    data.table,
+    reshape2
+Suggests:
+    ltmle,
+    RUnit,
+    knitr,
+    igraph,
+    ggplot2,
+    Hmisc
+License: GPL-2
+Packaged: 2015-01-26 21:44:49 UTC; olegsofrygin

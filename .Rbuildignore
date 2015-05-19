@@ -1,0 +1,7 @@
+cran-comments.md
+README.html
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.travis\.yml$
+\.sublime-project$
+\.sublime-workspace$
