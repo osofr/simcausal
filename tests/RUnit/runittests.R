@@ -28,6 +28,9 @@ if(FALSE) {
       ## system("R CMD build simcausal --no-build-vignettes")
       ## system("R CMD build simcausal")
 
+  # SET UP TRAVIS CONFIG FILE:
+  # devtools::use_travis()
+
   # INSTALLING FROM SOURCE:
   # install.packages("./simcausal_0.1.tar.gz", repos = NULL, type="source", dependencies=TRUE)
   # library(simcausal)

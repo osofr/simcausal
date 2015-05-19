@@ -1,0 +1,34 @@
+# Sample .travis.yml for R projects
+
+language: r
+warnings_are_errors: true
+r_build_args: "--no-build-vignettes"
+r_check_args: "--no-build-vignettes --as-cran"
+
+sudo: required
+
+os:
+  - linux
+  - osx
+
+r_binary_packages:
+  - knitr
+  - data.table
+  - reshape2
+  - ltmle
+  - RUnit
+  - igraph
+  - ggplot2
+  - Hmisc
+
+env:
+ global:
+   - CRAN: http://cran.rstudio.com
+
+on_failure:
+  - ./travis-tool.sh dump_logs
+
+notifications:
+  email:
+    on_success: change
+    on_failure: change
