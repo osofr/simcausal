@@ -772,12 +772,12 @@ test.experimental_parsingMSMs <- function() {
     # ---
     # *****
     # glmt
- # for 100K per action
-  #   user  system elapsed 
-  # 9.861   2.732  12.565
- # for 200K per action 
- #   user  system elapsed 
- # 23.310   8.457  38.413 
+    # for 100K per action
+    #   user  system elapsed 
+    # 9.861   2.732  12.565
+    # for 200K per action 
+    #   user  system elapsed 
+    # 23.310   8.457  38.413 
     # speedmsmfit$coeff
 
     # hazard:
