@@ -15,11 +15,13 @@ r_binary_packages:
   - knitr
   - data.table
   - reshape2
-  - ltmle
   - RUnit
   - igraph
   - ggplot2
   - Hmisc
+
+r_packages:
+  - ltmle
 
 env:
  global:
