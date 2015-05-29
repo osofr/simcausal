@@ -2,7 +2,7 @@
 % Please edit documentation in R/interface.r
 \name{add.nodes}
 \alias{add.nodes}
-\title{Adding Nodes to DAG}
+\title{Adding Node(s) to DAG}
 \usage{
 add.nodes(DAG, nodes)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/targetparam.r
 \name{set.targetMSM}
 \alias{set.targetMSM}
-\title{MSMs as the Causal Target Parameter}
+\title{Define Causal Parameters with a Working Marginal Structural Model (MSM)}
 \usage{
 set.targetMSM(DAG, outcome, t, formula, family = "quasibinomial", hazard, ...,
   attr = list())

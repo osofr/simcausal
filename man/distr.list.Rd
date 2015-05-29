@@ -2,11 +2,11 @@
 % Please edit documentation in R/distributions.R
 \name{distr.list}
 \alias{distr.list}
-\title{List all custom distribution functions in \code{SimCausal}.}
+\title{List All Custom Distribution Functions in \code{simcausal}.}
 \usage{
 distr.list()
 }
 \description{
-List all custom distribution functions in \code{SimCausal}.
+List All Custom Distribution Functions in \code{simcausal}.
 }
 

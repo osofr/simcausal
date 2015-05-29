@@ -2,17 +2,17 @@
 % Please edit documentation in R/distributions.R
 \name{rcategor.int}
 \alias{rcategor.int}
-\title{Categorical node distribution (integer)}
+\title{Categorical Node Distribution (Integer)}
 \usage{
 rcategor.int(n, probs)
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size.}
 
 \item{probs}{Either a vector or a matrix of success probabilities. When probs is a vector, \code{n} identically distributed random categorical variables are generated with categories: 1, 2, ..., \code{length(probs)+1}. When \code{probs} is a matrix, the categorical probabilities of the \code{k}th sample are determined by the \code{k}th row of probs matrix, i.e., \code{probs[k,]}.}
 }
 \value{
-An integer vector of length \code{n} with values: \code{1,2, ...,ncol(probs)+1}
+An integer vector of length \code{n} with values: \code{1,2, ...,ncol(probs)+1}.
 }
 \description{
 Same as \code{rcategor}, but returning a vector of sampled integers 1, 2, ..., \code{ncol(probs)+1} instead of a factor.

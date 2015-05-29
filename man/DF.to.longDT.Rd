@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{DF.to.longDT}
 \alias{DF.to.longDT}
-\title{Convert \code{data.frame} into long format (faster than \code{DF.to.long})}
+\title{Convert Data from Wide to Long Format Using \code{dcast.data.table}}
 \usage{
 DF.to.longDT(df_wide)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{sim}
 \alias{sim}
-\title{Simulate from DAG or list of DAGs (Either Action or Observed DAG(s))}
+\title{Simulate Full or Observed Data from \code{DAG} Object}
 \usage{
 sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 }
@@ -23,6 +23,6 @@ sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.
 }
 \description{
-This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frames}
+This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
 }
 

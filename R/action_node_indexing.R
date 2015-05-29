@@ -5,9 +5,9 @@
 # Indexing/Subsetting DAG and actions will be here
 ###################################################################
 
-#' Subsetting/indexing DAG nodes
-#' @param DAG A DAG object that was defined using functions \code{\link{node}} and \code{\link{set.DAG}}
-#' @return returns a list of nodes that can be indexed as a typical named list "[[]]"
+#' Subsetting/Indexing \code{DAG} Nodes
+#' @param DAG A DAG object that was defined using functions \code{\link{node}} and \code{\link{set.DAG}}.
+#' @return returns a list of nodes that can be indexed as a typical named list "[[]]".
 #' @examples
 #' 
 #'D <- DAG.empty()
@@ -48,8 +48,8 @@ Nattr <- function(DAG, attr) {
   lapply(N(DAG), '[[', attr)
 }
 
-#' Subsetting/indexing actions defined for DAG object
-#' @param DAG A DAG object that was defined using functions \code{\link{node}}, \code{\link{set.DAG}} and \code{\link{action}}
+#' Subsetting/Indexing Actions Defined for \code{DAG} Object
+#' @param DAG A DAG object that was defined using functions \code{\link{node}}, \code{\link{set.DAG}} and \code{\link{action}}.
 #' @return returns a list of actions, which are intervened versions of the original observed data DAG.
 #' @examples
 #' 

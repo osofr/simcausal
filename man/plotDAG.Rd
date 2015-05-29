@@ -12,9 +12,9 @@ plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
 
 \item{tmax}{Maximum time-point to plot for time-varying DAG objects}
 
-\item{xjitter}{Amount of jitter for node x-axis plotting coordinates}
+\item{xjitter}{Amount of random jitter for node x-axis plotting coordinates}
 
-\item{yjitter}{Amount of jitter for node y-axis plotting coordinates}
+\item{yjitter}{Amount of random jitter for node y-axis plotting coordinates}
 
 \item{node.action.color}{Color of the action node labels (only for action DAG of class DAG.action). If missing, defaults to red.}
 

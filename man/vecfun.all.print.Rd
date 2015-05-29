@@ -2,7 +2,7 @@
 % Please edit documentation in R/simcausal.r
 \name{vecfun.all.print}
 \alias{vecfun.all.print}
-\title{Print names of all vectorized functions}
+\title{Print Names of All Vectorized Functions}
 \usage{
 vecfun.all.print()
 }
@@ -10,6 +10,6 @@ vecfun.all.print()
 A vector of build-in and user-defined vectorized function names
 }
 \description{
-Print all vectorized function names (build-in and user-defined)
+Print all vectorized function names (build-in and user-defined).
 }
 

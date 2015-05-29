@@ -2,17 +2,17 @@
 % Please edit documentation in R/distributions.R
 \name{rconst}
 \alias{rconst}
-\title{Constant (degenerate) node distribution}
+\title{Constant (Degenerate) Node Distribution}
 \usage{
 rconst(n, const)
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size.}
 
-\item{const}{A vector of constant values}
+\item{const}{A vector of constant values.}
 }
 \value{
-A vector of constants of length \code{n}
+A vector of constants of length \code{n}.
 }
 \description{
 Wrapper for a constant value (degenerate) distribution.

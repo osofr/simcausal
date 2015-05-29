@@ -4,5 +4,9 @@
 .DS_Store
 inst/doc
 README.html
+tests/*.pdf
+tests/RUnit/*.html
+tests/RUnit/*.txt
+tests/RUnit/*.pdf
 *.sublime-project
 *.sublime-workspace

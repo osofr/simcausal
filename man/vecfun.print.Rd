@@ -2,7 +2,7 @@
 % Please edit documentation in R/simcausal.r
 \name{vecfun.print}
 \alias{vecfun.print}
-\title{Print names of custom vectorized functions}
+\title{Print Names of Custom Vectorized Functions}
 \usage{
 vecfun.print()
 }
@@ -10,6 +10,6 @@ vecfun.print()
 A vector of vectorized function names
 }
 \description{
-Print current user-defined vectorized function names
+Print current user-defined vectorized function names.
 }
 

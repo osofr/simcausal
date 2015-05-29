@@ -5,6 +5,7 @@ simcausal
 <!-- [![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal) -->
 [![](http://cranlogs.r-pkg.org/badges/simcausal)](http://cran.rstudio.com/web/packages/simcausal/index.html)
 [![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal)
+<!-- [![Coverage Status](https://coveralls.io/repos/osofr/simcausal/badge.png?branch=master)](https://coveralls.io/r/osofr/simcausal) -->
 
 `simcausal` allow simulations of longitudinal data with causal inference applications.
 

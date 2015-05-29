@@ -7,9 +7,9 @@
 \method{print}{DAG.node}(x, ...)
 }
 \arguments{
-\item{x}{A Node object}
+\item{x}{A Node object.}
 
-\item{...}{Other arguments to generic print}
+\item{...}{Other arguments to generic print.}
 }
 \description{
 Print DAG.node Object

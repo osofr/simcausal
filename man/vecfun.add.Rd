@@ -2,7 +2,7 @@
 % Please edit documentation in R/simcausal.r
 \name{vecfun.add}
 \alias{vecfun.add}
-\title{Add custom vectorized functions}
+\title{Add Custom Vectorized Functions}
 \usage{
 vecfun.add(vecfun_names)
 }

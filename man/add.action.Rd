@@ -3,7 +3,7 @@
 \name{add.action}
 \alias{action}
 \alias{add.action}
-\title{Define Actions}
+\title{Define and Add Actions (Interventions)}
 \usage{
 add.action(DAG, name, nodes, ..., attr = list())
 

@@ -122,9 +122,9 @@ subset_dat_long <- function(dt, t_sel) { # subset full data (in long format) by 
 }
 #************
 
-#' Node Expectations (E) as the Causal Target Parameter
+#' Define Non-Parametric Causal Parameters
 #'
-#' Set up the causal target parameter as a vector of expectations, ratio of expectations or contrast of expectations over the nodes of specified actions. 
+#' Set up the causal target parameter as a vector of expectations, ratio of expectations or contrast of expectations (average treatment effect) over the nodes of specified actions. 
 #'These settings are then used to evaluate the true value of the causal target parameter by calling \code{\link{eval.target}} function.
 #'
 #' @param DAG Object specifying the directed acyclic graph (DAG) for the observed data 
@@ -267,7 +267,7 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
 	DAG
 }
 
-#' MSMs as the Causal Target Parameter
+#' Define Causal Parameters with a Working Marginal Structural Model (MSM)
 #'
 #' Set up the MSM causal target parameter for the current DAG object. These settings can be later used to evaluate the true value of the MSM parameter on the full (counterfactual) data by calling \code{eval.target} function.
 #'
@@ -377,7 +377,7 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
 }
 
 
-#' Evaluate the Causal Target Parameter via Monte-Carlo Simulation
+#' Evaluate the True Value of the Causal Target Parameter
 #'
 #' This function estimates the true value of the previously set target parameter (\code{set.targetE} or \code{set.targetMSM}) using the DAG object and either 1) \code{data}: list of action-specific simulated \code{data.frames}; or 2) \code{actions}; or 3) when \code{data} and \code{actions} are missing, using all distinct actions previously defined on the \code{DAG} object.
 #'
@@ -455,7 +455,7 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
 		if (is.longfmt(data[[1]])) stop("full data must be in wide format for target set.targetE, run sim(actions, n)")
 		vec_EFUP <- sapply(N(DAG)[outnode_nms], is.EFUP)
 		if (any(vec_EFUP)&(!is.LTCF(data[[1]], outcome))) {
-			message("...some outcome nodes have EFU=TRUE, applying Last Timepoint Carry Forward function: doLTCF()...")
+			message("...some outcome nodes have EFU=TRUE, applying Last Time Point Carry Forward function: doLTCF()...")
 			data <- lapply(data, doLTCF, outcome=outcome)
 		}
 		res <- eval.E(DAG=DAG, df_full=data, outnodes=outnodes, outnode_nms=outnode_nms, params.E=params.E, attrs=attrs)
@@ -542,8 +542,8 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
 	if (!is.null(hazard)) {
 		if (!hazard) LTCF_param <- outcome	# for survival outcome, carry last known observation forward after failure event
 		sim_paramstr <- "simfull(actions = actions, n = n, LTCF = " %+% LTCF_param %+% ")"
-		if (hazard & is.LTCF(df_full[[1]], outcome)) stop("For modelling hazard in target param.MSM full data must be simulated with LTCF=NULL (outcome NOT carried forward), run "%+%sim_paramstr%+%"...")
-		if (!hazard & !is.LTCF(df_full[[1]], outcome)) stop("For modelling survival in target param.MSM full data must be simulated with LTCF='outcome' (outcome carried forward), run "%+%sim_paramstr%+%"...")
+		if (hazard & is.LTCF(df_full[[1]], outcome)) stop("For modeling hazard in target param.MSM full data must be simulated with LTCF=NULL (outcome NOT carried forward), run "%+%sim_paramstr%+%"...")
+		if (!hazard & !is.LTCF(df_full[[1]], outcome)) stop("For modeling survival in target param.MSM full data must be imputed with LTCF='outcome' (last time point (outcome) carried forward), where 'outcome' is the name of the EOF=TRUE node, run "%+%sim_paramstr%+%"...")
 		if (hazard) {
 			if (!all(vec_EFUP)) stop("for hazard=TRUE all outcome nodes must be set to EFU=TRUE...")
 			# vec_Bern <- sapply(DAG[outnode_nms], is.Bern) # b) check all(is.binary(outcomes))

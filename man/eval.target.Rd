@@ -2,7 +2,7 @@
 % Please edit documentation in R/targetparam.r
 \name{eval.target}
 \alias{eval.target}
-\title{Evaluate the Causal Target Parameter via Monte-Carlo Simulation}
+\title{Evaluate the True Value of the Causal Target Parameter}
 \usage{
 eval.target(DAG, n, data, actions, rndseed = NULL)
 }

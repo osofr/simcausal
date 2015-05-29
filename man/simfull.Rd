@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{simfull}
 \alias{simfull}
-\title{Simulate Full Data (From Action/Intervention DAG(s))}
+\title{Simulate Full Data (Using Action DAG(s))}
 \usage{
 simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 }
@@ -21,6 +21,6 @@ simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 A named list, each item is a \code{data.frame} corresponding to an action specified by the actions argument, action names are used for naming these list items.
 }
 \description{
-This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frames}
+This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
 }
 

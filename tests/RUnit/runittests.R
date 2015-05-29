@@ -35,6 +35,16 @@ if(FALSE) {
   # simcausal:::addvectorfcn("poisson")
   # simcausal:::debug_set() # SET TO DEBUG MODE
   # simcausal:::debug_off() # SET DEBUG MODE OFF
+
+  # TEST COVERATE:
+  # if your working directory is in the packages base directory
+  # package_coverage()
+  # or a package in another directory
+  # cov <- package_coverage("simcausal")
+  # view results as a data.frame
+  # as.data.frame(cov)
+  # zero_coverage() can be used to filter only uncovered lines.
+  # zero_coverage(cov)
 }
 
 psi_RDs_DAG2a <- NULL
@@ -1427,9 +1437,9 @@ test.set.DAG_DAG2b_newactions <- function() {
     # Some survival plots
     D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1"); surv_th1 <- 1-eval.target(D, data=X_dat_big)$res
     D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th0"); surv_th0 <- 1-eval.target(D, data=X_dat_big)$res
-    if (FALSE) {
-        plotSurvEst(list(d_theta1 = surv_th1, d_theta0 = surv_th0), 1:17, "Counterfactual Survival, P(T>t)", 0.75)        
-    }
+    # if (FALSE) {
+        plotSurvEst(surv=list(d_theta1 = surv_th1, d_theta0 = surv_th0), xindx=1:17, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
+    # }
 
     # EXAMPLE 3: Contrasts
     D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
@@ -1465,9 +1475,9 @@ test.set.DAG_DAG2b_newactions <- function() {
     # plotting survival
     S_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
     S_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
-    if (FALSE) {
-        plotSurvEst(list(MSM_theta1 = S_th1, MSM_theta0 = S_th0), 1:17, "MSM Survival, P(T>t)", 0.75)    
-    }
+    # if (FALSE) {
+        plotSurvEst(surv=list(MSM_theta1 = S_th1, MSM_theta0 = S_th0), xindx=1:17, ylab="MSM Survival, P(T>t)", ylim=c(0.75,1.0))
+    # }
 
     #-------------------------------------------------------------
     # Target parameter: modelling the descrete hazard with MSM
@@ -1489,15 +1499,15 @@ test.set.DAG_DAG2b_newactions <- function() {
     # plotting the hazard
     h_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
     h_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
-    if (FALSE) {
-        plotSurvEst(list(MSM_theta1 = h_th1, MSM_theta0 = h_th0), 1:17, "1 - MSM predicted hazard, P(T>t)", 0.95)
-    }
+    # if (FALSE) {
+        plotSurvEst(surv=list(MSM_theta1 = h_th1, MSM_theta0 = h_th0), xindx=1:17, ylab="1 - MSM predicted hazard, P(T>t)", ylim=c(0.95,1.0))
+    # }
     # Converting hazard to survival
     Surv_h_th0 <- cumprod(h_th0)
     Surv_h_th1 <- cumprod(h_th1)
-    if (FALSE) {
-        plotSurvEst(list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0), 1:17, "P(T>t) from hazard", 0.75)
-    }
+    # if (FALSE) {
+        plotSurvEst(surv=list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0), xindx=1:17, ylab="P(T>t) from hazard", ylim=c(0.75,1.0))
+    # }
     #-------------------------------------------------------------
     # Estimation with lTMLE package: node means
     #-------------------------------------------------------------
@@ -1834,8 +1844,7 @@ test.set.DAG_DAG_informcens <- function() {
     # plot survival
     S_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
     S_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
-    plotSurvEst(surv_res_est=list(MSM_theta1 = S_th1, MSM_theta0 = S_th0), xindx=1:17, y_lab="MSM Survival, P(T>t)", miny=0.75)
-    # plotSurvEst <- function(surv_res_est=list(), xindx=NULL, y_lab="", miny=0.0, maxy=1.0) {
+    plotSurvEst(surv=list(MSM_theta1 = S_th1, MSM_theta0 = S_th0), xindx=1:17, ylab="MSM Survival, P(T>t)", ylim=c(0.75,1.0))
 
     #-------------------------------------------------------------
     # Target parameter: modelling the descrete hazard with MSM
@@ -1853,12 +1862,12 @@ test.set.DAG_DAG_informcens <- function() {
     # plot the hazard
     h_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=1:17), type="response")
     h_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=1:17), type="response")
-    plotSurvEst(list(MSM_theta1 = h_th1, MSM_theta0 = h_th0), 1:17, "1 - MSM predicted hazard, P(T>t)", 0.95)
+    plotSurvEst(surv=list(MSM_theta1 = h_th1, MSM_theta0 = h_th0), xindx=1:17, ylab="1 - MSM predicted hazard, P(T>t)", ylim=c(0.95,1.0))
 
     # Converting hazard to survival
     Surv_h_th0 <- cumprod(h_th0)
     Surv_h_th1 <- cumprod(h_th1)
-    plotSurvEst(list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0), 1:17, "P(T>t) from hazard", 0.75)
+    plotSurvEst(surv=list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0), xindx=1:17, ylab="P(T>t) from hazard", ylim=c(0.75,1.0))
 
     #-------------------------------------------------------------
     # Suppose now we want to model Y_t by adding a summary measure covariate that is defined as the mean of exposure A1 from time 0 to t    
@@ -2521,7 +2530,7 @@ needs_rerewrite_test_set.DAG_DAG2a_long <- function() {
     (psi_fuldf_th0 <- 1-getTrueParam(outnodes=outnodes, param="A1_th0", df_full=fulldf_DAG_2))  # survival for regimen theta=0
     surv_res <- list(d_theta1 = psi_fuldf_th1, d_theta0 = psi_fuldf_th0)
     # pdf(file.path("../simDAG2_fullsurv.pdf"), width=5,height=7)
-    # plotSurvEst(surv_res, t_int+1, "Counterfactual Survival, P(T>t)", 0.75)
+    # plotSurvEst(surv=surv_res, xindx=t_int+1, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
     # dev.off()
 
     # test for contrasts - 2 interventions (one node and vector of nodes)
@@ -2621,7 +2630,7 @@ old_test_set.DAG_DAG2b_short <- function() {
     (psi_fuldf_th0b <- 1-getTrueParam(outnodes=outnodes, param="A1_th0", df_full=fulldf_DAG_2b))  # survival for regimen theta=0
     surv_resb <- list(d_theta1 = psi_fuldf_th1b, d_theta0 = psi_fuldf_th0b)
     # pdf(file.path("../simDAG2_fullsurv_b.pdf"), width=5,height=7)
-    # plotSurvEst(surv_resb, t_int+1, "Counterfactual Survival, P(T>t)", 0.75)
+    # plotSurvEst(surv=surv_resb, xindx=t_int+1, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
     # dev.off()
 
     # test for contrasts - 2 interventions (one node and vector of nodes)

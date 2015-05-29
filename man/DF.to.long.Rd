@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{DF.to.long}
 \alias{DF.to.long}
-\title{Convert data from wide format into long format using \code{reshape} base function}
+\title{Convert Data from Wide to Long Format Using \code{reshape}}
 \usage{
 DF.to.long(df_wide)
 }
@@ -13,7 +13,7 @@ DF.to.long(df_wide)
 A \code{data.frame} object in long format
 }
 \description{
-This utility function takes a simulated data.frame in wide format as an input and converts it into a long format (slower compared to \code{\link{DF.to.longDT}})
+This utility function takes a simulated data.frame in wide format as an input and converts it into a long format (slower compared to \code{\link{DF.to.longDT}}).
 }
 \details{
 Keeps all covariates that appear only once and at the first time-point constant (carry-forward).

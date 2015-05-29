@@ -2,7 +2,7 @@
 % Please edit documentation in R/distributions.R
 \name{rdistr.template}
 \alias{rdistr.template}
-\title{Template for writing custom distributions}
+\title{Template for Writing Custom Distribution Functions}
 \usage{
 rdistr.template(n, arg1, arg2, ...)
 }

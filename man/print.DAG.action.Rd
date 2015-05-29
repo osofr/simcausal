@@ -7,9 +7,9 @@
 \method{print}{DAG.action}(x, ...)
 }
 \arguments{
-\item{x}{An object}
+\item{x}{An object.}
 
-\item{...}{Other arguments to generic print}
+\item{...}{Other arguments to generic print.}
 }
 \description{
 Print Action Object

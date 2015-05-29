@@ -2,17 +2,17 @@
 % Please edit documentation in R/distributions.R
 \name{rcategor}
 \alias{rcategor}
-\title{Categorical node distribution (factor)}
+\title{Categorical Node Distribution (Factor)}
 \usage{
 rcategor(n, probs)
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size.}
 
 \item{probs}{Either a vector or a matrix of success probabilities. When \code{probs} is a vector, \code{n} identically distributed random categorical variables are generated with categories: 1, 2, ..., length(probs)+1. When \code{probs} is a matrix, the categorical probabilities of the \code{k}th sample are determined by the \code{k}th row of \code{probs} matrix, i.e., \code{probs[k,]}.}
 }
 \value{
-A factor of length \code{n} with levels: \code{1,2, ...,ncol(probs)+1}
+A factor of length \code{n} with levels: \code{1,2, ...,ncol(probs)+1}.
 }
 \description{
 Matrix version of the categorical distribution. The argument \code{probs} can be a matrix of n rows, specifying individual (varying in sample) categorical probabilities. The number of categories generated is equal to \code{ncol(probs)+1}, the categories are labeled as: \code{1,...,ncol(probs)+1}.

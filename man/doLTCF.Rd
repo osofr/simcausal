@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{doLTCF}
 \alias{doLTCF}
-\title{Last Timepoint Carried Forward (LTCF)}
+\title{Imputation with Last Time Point (Observation) Carried Forward (LTCF)}
 \usage{
 doLTCF(data, outcome)
 }

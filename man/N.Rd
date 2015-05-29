@@ -2,18 +2,18 @@
 % Please edit documentation in R/action_node_indexing.R
 \name{N}
 \alias{N}
-\title{Subsetting/indexing DAG nodes}
+\title{Subsetting/Indexing \code{DAG} Nodes}
 \usage{
 N(DAG)
 }
 \arguments{
-\item{DAG}{A DAG object that was defined using functions \code{\link{node}} and \code{\link{set.DAG}}}
+\item{DAG}{A DAG object that was defined using functions \code{\link{node}} and \code{\link{set.DAG}}.}
 }
 \value{
-returns a list of nodes that can be indexed as a typical named list "[[]]"
+returns a list of nodes that can be indexed as a typical named list "[[]]".
 }
 \description{
-Subsetting/indexing DAG nodes
+Subsetting/Indexing \code{DAG} Nodes
 }
 \examples{
 D <- DAG.empty()

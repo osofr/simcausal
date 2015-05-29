@@ -2,7 +2,7 @@
 % Please edit documentation in R/simcausal.r
 \name{vecfun.reset}
 \alias{vecfun.reset}
-\title{Reset custom vectorized function list}
+\title{Reset Custom Vectorized Function List}
 \usage{
 vecfun.reset()
 }

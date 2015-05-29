@@ -2,7 +2,7 @@
 % Please edit documentation in R/simcausal.r
 \name{vecfun.remove}
 \alias{vecfun.remove}
-\title{Remove custom vectorized functions}
+\title{Remove Custom Vectorized Functions}
 \usage{
 vecfun.remove(vecfun_names)
 }

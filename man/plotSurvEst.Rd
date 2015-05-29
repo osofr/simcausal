@@ -2,23 +2,25 @@
 % Please edit documentation in R/simcausal.r
 \name{plotSurvEst}
 \alias{plotSurvEst}
-\title{(EXPERIMENTAL) Plot Survival}
+\title{(EXPERIMENTAL) Plot Discrete Survival Function(s)}
 \usage{
-plotSurvEst(surv_res_est = list(), xindx = NULL, y_lab = "", miny = 0,
-  maxy = 1)
+plotSurvEst(surv = list(), xindx = NULL, ylab = "", xlab = "t",
+  ylim = c(0, 1), ...)
 }
 \arguments{
-\item{surv_res_est}{A list of vectors containing action-specific discrete survival values over time}
+\item{surv}{A list of vectors, each containing action-specific discrete survival probabilities over time.}
 
-\item{xindx}{A vector of indices for subsetting each of the survival survival vectors in surv_res_est}
+\item{xindx}{A vector of indices for subsetting the survival vectors in \code{surv}, if omitted all survival probabilities in each \code{surv[[i]]} are plotted.}
 
-\item{y_lab}{A character vector for labeling y axis}
+\item{ylab}{An optional title for y axis, passed to \code{plot}.}
 
-\item{miny}{Minimum y to plot, 0 to 1}
+\item{xlab}{An optional title for x axis, passed to \code{plot}.}
 
-\item{maxy}{Maximum y to plot, 0 to 1}
+\item{ylim}{Optional y limits for the plot, passed to \code{plot}.}
+
+\item{...}{Additional arguments passed to \code{plot}.}
 }
 \description{
-Plot survival curves given a list of survival outcomes
+Plot discrete survival curves from a list of discrete survival probabilities by calling \code{plot} with \code{type='b'}.
 }
 

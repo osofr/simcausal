@@ -1,4 +1,16 @@
-# Sample .travis.yml for R projects
+#----------------------------------------------------------------
+# Travis-CI configuration for R packages
+#
+# REFERENCES:
+# * Travis CI: https://travis-ci.org/
+# * native R support: https://github.com/craigcitro/r-travis
+# * examples: https://github.com/craigcitro/r-travis/wiki/Porting-to-native-R-support-in-Travis
+# * r-builder: https://github.com/metacran/r-builder
+# * covr: https://github.com/jimhester/covr
+# * Coveralls: https://coveralls.io/
+#
+# Validate your .travis.yml file at http://lint.travis-ci.org/
+#----------------------------------------------------------------
 
 language: r
 warnings_are_errors: true
@@ -23,9 +35,15 @@ r_binary_packages:
 r_packages:
   - ltmle
 
+r_github_packages:
+  - jimhester/covr
+
 env:
  global:
    - CRAN: http://cran.rstudio.com
+
+after_success:
+  - Rscript -e 'library(covr);coveralls()'
 
 on_failure:
   - ./travis-tool.sh dump_logs

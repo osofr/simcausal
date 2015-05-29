@@ -2,7 +2,7 @@
 % Please edit documentation in R/targetparam.r
 \name{set.targetE}
 \alias{set.targetE}
-\title{Node Expectations (E) as the Causal Target Parameter}
+\title{Define Non-Parametric Causal Parameters}
 \usage{
 set.targetE(DAG, outcome, t, param, ..., attr = list())
 }
@@ -26,7 +26,7 @@ A modified DAG object with the target parameter saved as part of the DAG,
 this DAG can now be passed as an argument to \code{\link{eval.target}} function for actual Monte-Carlo evaluation of the target parameter. See Examples.
 }
 \description{
-Set up the causal target parameter as a vector of expectations, ratio of expectations or contrast of expectations over the nodes of specified actions.
+Set up the causal target parameter as a vector of expectations, ratio of expectations or contrast of expectations (average treatment effect) over the nodes of specified actions.
 These settings are then used to evaluate the true value of the causal target parameter by calling \code{\link{eval.target}} function.
 }
 \examples{

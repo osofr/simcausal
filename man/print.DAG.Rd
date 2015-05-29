@@ -7,9 +7,9 @@
 \method{print}{DAG}(x, ...)
 }
 \arguments{
-\item{x}{A DAG object}
+\item{x}{A DAG object.}
 
-\item{...}{Other arguments to generic print}
+\item{...}{Other arguments to generic print.}
 }
 \description{
 Print DAG Object

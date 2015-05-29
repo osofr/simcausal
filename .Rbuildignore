@@ -1,9 +1,12 @@
 ^.*\.Rproj$
+^\.DS_Store$
 ^\.Rproj\.user$
 ^cran-comments\.md$
 ^README\.html$
-.Rprofile
-inst/db
+^.Rprofile$
+^inst/db$
+^tests/$
+^tests/RUnit/$
 ^\.travis\.yml$
-\.sublime-project$
-\.sublime-workspace$
+^\.sublime-project$
+^\.sublime-workspace$

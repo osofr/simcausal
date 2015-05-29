@@ -388,10 +388,9 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 	return(obs.df)
 }
 
-
 #' Simulate Observed Data
 #'
-#' This function simulates observed data from a DAG object
+#' This function simulates observed data from a DAG object.
 #' @param DAG A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated.
 #' @param n Number of observations to sample.
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
@@ -399,16 +398,15 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 #' @param rndseed Seed for the random number generator.
 #' @return A data.frame where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
 #' @export
-# simObsData <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL) {
 simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL) {
 	if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
 
 	simFromDAG(DAG=DAG, Nsamp=n, wide=wide, LTCF=LTCF, rndseed=rndseed)
 }
 
-#' Simulate Full Data (From Action/Intervention DAG(s))
+#' Simulate Full Data (Using Action DAG(s))
 #'
-#' This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frames}
+#' This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
 #' @param actions Actions specifying the counterfactual DAG. This argument must be either an object of class DAG.action or a list of DAG.action objects.
 #' @param n Number of observations to sample.
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
@@ -455,9 +453,9 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 	return(fulldf.list)
 }
 
-#' Simulate from DAG or list of DAGs (Either Action or Observed DAG(s))
+#' Simulate Full or Observed Data from \code{DAG} Object
 #'
-#' This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frames}
+#' This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
 #' @param DAG A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated if actions argument is omitted.
 #' @param actions Character vector of action names which will be extracted from the DAG object. Alternatively, this can be a list of action DAGs selected with \code{A(DAG)} function, in which case the argument \code{DAG} is unused. When this argument is missing, the default is to samlpe observed data from the \code{DAG} object.
 #' @param n Number of observations to sample.
@@ -474,7 +472,7 @@ sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 	if (missing(actions)) {	
 		if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
 		if (!is.DAGlocked(DAG)) stop("call set.DAG() before attempting to simulate data from DAG")
-		message(cat("simulating observed dataset from the DAG object"))
+		message("simulating observed dataset from the DAG object")
 		return(simobs(DAG=DAG, n=n, wide = wide, LTCF = LTCF, rndseed = rndseed))
 
 	# SIMULATE FULL DATA FROM ACTION DAGs (when actions are present)
@@ -488,12 +486,12 @@ sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 		} else {
 			stop("argument actions must be a character vector of action names or a list of action DAGs")
 		}
-		message(cat("simulating action-specific datasets for action(s): ", names(actions)))
+		message("simulating action-specific datasets for action(s): "%+%paste(names(actions), collapse = " "))
 		return(simfull(actions=actions, n=n, wide = wide, LTCF = LTCF, rndseed=rndseed))
 	}
 }
 
-#' Last Timepoint Carried Forward (LTCF)
+#' Imputation with Last Time Point (Observation) Carried Forward (LTCF)
 #'
 #' Carry forward (forward impute) all missing variable values for simulated observations that have reached the end of their follow-up, as defined by the node of type (EOF=TRUE).
 #' @param data Simulated \code{data.frame} in wide format
@@ -543,9 +541,9 @@ doLTCF <- function(data, outcome) {
 	return(data)
 }
 
-#' Convert data from wide format into long format using \code{reshape} base function
+#' Convert Data from Wide to Long Format Using \code{reshape}
 #'
-#' This utility function takes a simulated data.frame in wide format as an input and converts it into a long format (slower compared to \code{\link{DF.to.longDT}})
+#' This utility function takes a simulated data.frame in wide format as an input and converts it into a long format (slower compared to \code{\link{DF.to.longDT}}).
 #'
 #' Keeps all covariates that appear only once and at the first time-point constant (carry-forward).
 #'
@@ -626,7 +624,7 @@ DF.to.long <- function(df_wide) {
 NULL
 #' @import data.table
 NULL
-#' Convert \code{data.frame} into long format (faster than \code{DF.to.long})
+#' Convert Data from Wide to Long Format Using \code{dcast.data.table}
 #'
 #' This utility function takes a simulated data.frame in wide format as an input and converts it into a long format 
 #' using \pkg{data.table} package functions \code{melt.data.table} and \code{dcast.data.table}.
@@ -697,7 +695,6 @@ DF.to.longDT <- function(df_wide) {
         }
         DT_l_fin
 	 }
-
 	# for each node, determinine if its baseline or time-varying
 	# if time-varying and columns are missing for some of its time-points => impute those time-points as NA (last ifelse)
 	for (cur_node_name in node_nms_unq) {
@@ -706,7 +703,6 @@ DF.to.longDT <- function(df_wide) {
 		node_t_vals <- unlist(sapply(node_nms_split, function(t_nodename) if(t_nodename[1]%in%cur_node_name) as.integer(t_nodename[2])))
 		# if node name has no "_", assume its bsl and assign first time-point:
 		if (all(is.na(node_t_vals))) node_t_vals <- all_ts[1] 
-
 		dprint("cur_node_name: "%+%cur_node_name);
 		dprint("all_ts"); dprint(all_ts)
 		# dprint("idx_node"); dprint(idx_node)
@@ -735,7 +731,6 @@ DF.to.longDT <- function(df_wide) {
 	}
 	dprint("v.names"); dprint(v.names)
 	dprint("bsl.names"); dprint(bsl.names)
-
 	#*** the baseline variable names are also passed as last arg
 	simDT_long <- DF.to.longDT_run(dat_df=df_wide, t_pts=all_ts, lvars=v.names, bslvars=bsl.names)
 	if (length(attnames)>0) v.names <- v.names[!v.names%in%attnames]
@@ -745,7 +740,6 @@ DF.to.longDT <- function(df_wide) {
 	attr(simDT_long, "v.names") <- v.names
 	simDT_long
 }
-
 
 # NOT IMPLEMENTED
 # will convert the dataset back to wide format from long, get the necessary attributes from simdf_long
@@ -758,7 +752,6 @@ DF.to.longDT <- function(df_wide) {
 #     # node_nms_unq <- unique(sapply(node_nms_split, '[', 1))
 # 	varying <- list()
 # 	v.names <- NULL
-
 # 	simdf_wide <- reshape(data=simdf_long, idvar=, varying=varying, v.names=v.names, timevar = "t", times = all_ts, sep="_", direction="wide")
 # 	simdf_wide
 # }

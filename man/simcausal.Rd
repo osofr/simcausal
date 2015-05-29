@@ -4,7 +4,7 @@
 \name{simcausal}
 \alias{simcausal}
 \alias{simcausal-package}
-\title{Simulate longitudinal data and evaluate causal parameters}
+\title{Simulate Longitudinal Data and Evaluate True Values of Various Causal Parameters}
 \description{
 Simcausal is designed for simulating longitudinal data based on the data-generating process specified by Structural Equation Model (SEM) or Directed Acyclic Graph (DAG),
 with both terms being used interchangeably in this document.
@@ -22,6 +22,6 @@ The most important functions in \pkg{simcausal} are:
 \item \code{\link{set.targetE}} or \code{\link{set.targetMSM}} - Specify node expectation (set.targetE) or marginal structural model (MSM) (set.targetMSM) counterfactual parameters
 \item \code{\link{eval.target}} - evaluate the previously set parameter on the simulate full (counterfactual) data
 }
-For details please see the package vignette and the function-specific documentation.
+For additional details please see the package vignette and function-specific documentation.
 }
 

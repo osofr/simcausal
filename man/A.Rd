@@ -2,18 +2,18 @@
 % Please edit documentation in R/action_node_indexing.R
 \name{A}
 \alias{A}
-\title{Subsetting/indexing actions defined for DAG object}
+\title{Subsetting/Indexing Actions Defined for \code{DAG} Object}
 \usage{
 A(DAG)
 }
 \arguments{
-\item{DAG}{A DAG object that was defined using functions \code{\link{node}}, \code{\link{set.DAG}} and \code{\link{action}}}
+\item{DAG}{A DAG object that was defined using functions \code{\link{node}}, \code{\link{set.DAG}} and \code{\link{action}}.}
 }
 \value{
 returns a list of actions, which are intervened versions of the original observed data DAG.
 }
 \description{
-Subsetting/indexing actions defined for DAG object
+Subsetting/Indexing Actions Defined for \code{DAG} Object
 }
 \examples{
 D <- DAG.empty()

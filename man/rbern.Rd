@@ -2,17 +2,17 @@
 % Please edit documentation in R/distributions.R
 \name{rbern}
 \alias{rbern}
-\title{Bernoulli node distribution}
+\title{Bernoulli Node Distribution}
 \usage{
 rbern(n, prob)
 }
 \arguments{
-\item{n}{Sample size}
+\item{n}{Sample size.}
 
-\item{prob}{A vector of success probabilities}
+\item{prob}{A vector of success probabilities.}
 }
 \value{
-Binary vector of length \code{n}
+Binary vector of length \code{n}.
 }
 \description{
 Wrapper for Bernoulli node distribution.

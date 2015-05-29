@@ -21,6 +21,6 @@ simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 A data.frame where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
 }
 \description{
-This function simulates observed data from a DAG object
+This function simulates observed data from a DAG object.
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/simcausal.r
 \name{set.DAG}
 \alias{set.DAG}
-\title{Create and lock DAG object}
+\title{Create and Lock DAG Object}
 \usage{
 set.DAG(DAG, vecfun)
 }
@@ -12,7 +12,7 @@ set.DAG(DAG, vecfun)
 \item{vecfun}{A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.}
 }
 \value{
-A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order
+A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 }
 \description{
 Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution. Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.

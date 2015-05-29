@@ -1,11 +1,11 @@
 
-#' Bernoulli node distribution
+#' Bernoulli Node Distribution
 #'
 #' Wrapper for Bernoulli node distribution.
 #'
-#' @param n Sample size
-#' @param prob A vector of success probabilities
-#' @return Binary vector of length \code{n}
+#' @param n Sample size.
+#' @param prob A vector of success probabilities.
+#' @return Binary vector of length \code{n}.
 #' @examples
 #'
 #'#---------------------------------------------------------------------------------------
@@ -22,13 +22,13 @@ rbern <- function(n, prob) {
 	rbinom(n=n, prob=prob, size=1)
 }
 
-#' Constant (degenerate) node distribution
+#' Constant (Degenerate) Node Distribution
 #'
 #' Wrapper for a constant value (degenerate) distribution.
 #'
-#' @param n Sample size
-#' @param const A vector of constant values
-#' @return A vector of constants of length \code{n}
+#' @param n Sample size.
+#' @param const A vector of constant values.
+#' @return A vector of constants of length \code{n}.
 #' @examples
 #'
 #'#---------------------------------------------------------------------------------------
@@ -49,13 +49,13 @@ rconst = function(n, const) {
 	}
 }
 
-#' Categorical node distribution (factor)
+#' Categorical Node Distribution (Factor)
 #'
 #' Matrix version of the categorical distribution. The argument \code{probs} can be a matrix of n rows, specifying individual (varying in sample) categorical probabilities. The number of categories generated is equal to \code{ncol(probs)+1}, the categories are labeled as: \code{1,...,ncol(probs)+1}.
 #'
-#' @param n Sample size
+#' @param n Sample size.
 #' @param probs Either a vector or a matrix of success probabilities. When \code{probs} is a vector, \code{n} identically distributed random categorical variables are generated with categories: 1, 2, ..., length(probs)+1. When \code{probs} is a matrix, the categorical probabilities of the \code{k}th sample are determined by the \code{k}th row of \code{probs} matrix, i.e., \code{probs[k,]}.
-#' @return A factor of length \code{n} with levels: \code{1,2, ...,ncol(probs)+1}
+#' @return A factor of length \code{n} with levels: \code{1,2, ...,ncol(probs)+1}.
 #' @examples
 #'
 #'#---------------------------------------------------------------------------------------
@@ -99,12 +99,12 @@ rcategor = function(n, probs) {
 	as.factor(samples)
 }
 
-#' Categorical node distribution (integer)
+#' Categorical Node Distribution (Integer)
 #'
 #' Same as \code{rcategor}, but returning a vector of sampled integers 1, 2, ..., \code{ncol(probs)+1} instead of a factor.
-#' @param n Sample size
+#' @param n Sample size.
 #' @param probs Either a vector or a matrix of success probabilities. When probs is a vector, \code{n} identically distributed random categorical variables are generated with categories: 1, 2, ..., \code{length(probs)+1}. When \code{probs} is a matrix, the categorical probabilities of the \code{k}th sample are determined by the \code{k}th row of probs matrix, i.e., \code{probs[k,]}.
-#' @return An integer vector of length \code{n} with values: \code{1,2, ...,ncol(probs)+1}
+#' @return An integer vector of length \code{n} with values: \code{1,2, ...,ncol(probs)+1}.
 #' @export
 rcategor.int = function(n, probs) {
 	if (is.vector(probs)) {
@@ -128,7 +128,7 @@ rcategor.int = function(n, probs) {
 
 
 
-#' List all custom distribution functions in \code{SimCausal}.
+#' List All Custom Distribution Functions in \code{simcausal}.
 #'
 #' @export
 distr.list <- function() {
@@ -138,7 +138,7 @@ distr.list <- function() {
 	invisible(ls("package:simcausal"))
 }
 
-#' Template for writing custom distributions
+#' Template for Writing Custom Distribution Functions
 #'
 #' Template function for writing \code{SimCausal} custom distribution wrappers.
 #'

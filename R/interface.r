@@ -67,7 +67,7 @@ DAG.empty <- function() {
 # 2) If order is not defined in "nodes" then infer where to add the node and calculate the orders at set.DAG()
 # if DAG.nodelist object nodes consists of just one node, increment the order by 1
 ###################################################################
-#' Adding Nodes to DAG
+#' Adding Node(s) to DAG
 #'
 #' Adding nodes to a growing DAG object, as in \code{DAG + node(...)}. Use either syntax \code{DAG + node} or \code{add.action(DAG, node)}, both give identical results.
 #' 
@@ -141,7 +141,7 @@ add.nodes <- function(DAG, nodes) {
 ###################################################################
 # Action constructor
 ###################################################################
-#' Define Actions
+#' Define and Add Actions (Interventions)
 #'
 #' Define and add new action (intervention) to the existing DAG object. Use either syntax \code{DAG + action} or \code{add.action}, both give identical results, see examples and details.
 #' 
