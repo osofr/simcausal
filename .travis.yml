@@ -14,8 +14,9 @@
 
 language: r
 warnings_are_errors: true
-r_build_args: "--no-build-vignettes"
-r_check_args: "--no-build-vignettes --as-cran"
+# r_build_args: "--no-build-vignettes"
+# r_check_args: "--no-build-vignettes --as-cran"
+r_check_args: "--as-cran"
 
 sudo: required
 
