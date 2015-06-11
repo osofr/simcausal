@@ -174,7 +174,6 @@ print.DAG.node <- function(x, ...) str(x)
 #' @param ... Additional arguments passed to \code{plot}.
 #' @export
 plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim = c(0.0, 1.0), ...) {
-# plotSurvEst <- function(surv_res_est=list(), xindx=NULL, y_lab="", miny=0.0, maxy=1.0) {
   ptsize <- 0.7
   counter <- 0
   for(d.j in names(surv)){
@@ -404,98 +403,7 @@ check_expanded <- function(inputDAG) {
 #' @param DAG Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.
 #' @param vecfun A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
-#' @examples
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 1A: Define some Bernoulli nodes, survival outcome Y and put it together in a 
-#'# DAG object
-#'#---------------------------------------------------------------------------------------
-#'W1 <- node(name="W1", distr="rbern", prob=plogis(-0.5), order=1)
-#'W2 <- node(name="W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2)
-#'A <- node(name="A", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2), order=3)
-#'Y <- node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2), order=4)
-#'D1A <- set.DAG(c(W1,W2,A,Y))
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 1B: Same as 1A using +node interface and no order argument
-#'#---------------------------------------------------------------------------------------
-#'D1B <- DAG.empty()
-#'D1B <- D1B + node(name="W1", distr="rbern", prob=plogis(-0.5))
-#'D1B <- D1B + node(name="W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1))
-#'D1B <- D1B + node(name="A", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2))
-#'D1B <- D1B + node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2))
-#'D1B <- set.DAG(D1B)
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 1C: Same as 1A and 1B using add.nodes interface and no order argument
-#'#---------------------------------------------------------------------------------------
-#'D1C <- DAG.empty()
-#'D1C <- add.nodes(D1C, node(name="W1", distr="rbern", prob=plogis(-0.5)))
-#'D1C <- add.nodes(D1C, node(name="W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1)))
-#'D1C <- add.nodes(D1C, node(name="A", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2)))
-#'D1C <- add.nodes(D1C, node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2)))
-#'D1C <- set.DAG(D1C)
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 1D: Add a uniformly distributed node and redefine outcome Y as categorical
-#'#---------------------------------------------------------------------------------------
-#'D_unif <- DAG.empty()
-#'D_unif <- D_unif + node("W1", distr="rbern", prob=plogis(-0.5))
-#'D_unif <- D_unif + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1))
-#'D_unif <- D_unif + node("W3", distr="runif", min=plogis(-0.5 + 0.7*W1 + 0.3*W2), max=10)
-#'D_unif <- D_unif + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*sin(W3)))
-#' # Categorical syntax 1 (probabilities as values)
-#'D_cat_1 <- D_unif + node("Y", distr="rcategor", probs={0.3;0.4})
-#' # Categorical syntax 2 (probabilities as formulas)
-#'D_cat_2 <- D_unif + node("Y", distr="rcategor", 
-#'                          probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*cos(W3)); 
-#'                                 plogis(-0.5 + 0.7*W1)})
-#'D_cat_1 <- set.DAG(D_cat_1)
-#'D_cat_2 <- set.DAG(D_cat_2)
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 1E: Defining new distribution function 'rbern', defining and passing a custom 
-#'# vectorized node function 'customfun'
-#'#---------------------------------------------------------------------------------------
-#'rbern <- function(n, prob) { # defining a bernoulli wrapper based on R rbinom function
-#'  rbinom(n=n, prob=prob, size=1)
-#'}
-#'customfun <- function(arg, lambda) {
-#'  res <- ifelse(arg==1,lambda,0.1)
-#'  res
-#'}
-#'D <- DAG.empty()
-#'D <- D + node("W1", distr="rbern", prob=0.05)
-#'D <- D + node("W2", distr="rbern", prob=customfun(W1,0.5))
-#'D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
-#'D1d <- set.DAG(D, vecfun=c("customfun"))
-#'sim1d <- simobs(D1d, n=200, rndseed=1)
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 2: Define time varying nodes for time points t = 0 to 16
-#'#---------------------------------------------------------------------------------------
-#'t_end <- 16
-#'DTV <- DAG.empty()
-#'DTV <- DTV + node(name="L2", t=0, distr="rbern", prob=0.05)
-#'DTV <- DTV + node(name="L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1))
-#'DTV <- DTV + node(name="A1", t=0, distr="rbern", 
-#' 	prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, 
-#'                                          ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))))
-#'DTV <- DTV + node(name="A2", t=0, distr="rbern", 
-#' 	prob=0)
-#'DTV <- DTV + node(name="Y",  t=0, distr="rbern", 
-#' 	prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), EFU=TRUE)
-#'DTV <- DTV + node(name="L2", t=1:t_end, distr="rbern", 
-#' 	prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/.(t_end)))))
-#'DTV <- DTV + node(name="A1", t=1:t_end, distr="rbern", 
-#' 	prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, 
-#'                               ifelse(L1[0]==0 & L2[0]==0, 0.1, 
-#'                                ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))))
-#'DTV <- DTV + node(name="A2", t=1:t_end, distr="rbern", 
-#' 	prob=0, order=8+4*(0:(t_end-1)))
-#'DTV <- DTV + node(name="Y", t=1:t_end, distr="rbern", 
-#' 	prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
-#'DTV <- set.DAG(DTV)
+#' @example tests/RUnit/set.DAG.R
 #' @export
 set.DAG <- function(DAG, vecfun) {
   rndseed <- NULL
@@ -672,7 +580,8 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
         gnode_idx <- which(DAG_names%in%gattr_nm)
         modDAG.full <- modDAG.full[-gnode_idx]
         class(modDAG.full) <- "DAG"
-        warning("existing non-time-varying attribute "%+% gattr_nm %+% " was overwritten with a time-varying attribute")
+        warning("\nAction: " %+% actname %+% "; Attribute: " %+% gattr_nm %+% ".\nScalar attribute value is overwritten by a vector of time-varying values.")
+        # warning("\nNon-time-varying attribute ("%+% gattr_nm %+% ") was overwritten by time-varying attribute values")
       }
       # for generic node being added (theta), need to check that no TV nodes under the same name already exist (theta_i)
       if (!checkgenexist) { # the generic (nonTV) node doesn't exist yet but the TV node already does
@@ -681,7 +590,8 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
           gnode_idx <- which(gennamesall%in%gattr_nm)
           modDAG.full <- modDAG.full[-gnode_idx]
           class(modDAG.full) <- "DAG"
-          warning("existing time-varying attribute "%+% gattr_nm %+% " was overwritten with a non-time-varying attribute")
+          warning("\nAction: " %+% actname %+% "; Attribute: " %+% gattr_nm %+% ".\nVector of time-varying attribute values is overwritten by a single scalar value.")
+          # warning("\nTime-varying attribute ("%+% gattr_nm %+% ") was overwritten by non-time-varying attribute values")
         }
       }
       # either add or overwrite existing attribute values

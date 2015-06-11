@@ -13,7 +13,7 @@ simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 
 \item{wide}{A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format}
 
-\item{LTCF}{The name of the right-censoring / failure event indicator variable for the Last Time-point Carried Forward imputation. By default, when LTCF is left unspecified, all variables that follow after any end of follow-up (EFU) event are set to missing (NA). The end of follow-up event occurs when a binary node declared with EFU=TRUE is observed to be equal to 1, indicating a failing or right-censoring event. To forward impute the values of the time-varying nodes after the occurrence of the EFU event, set the LTCF argument to a name of the EFU node representing this event. This implies that for each observation, missing value of a time-varying variable (that is node declared with t argument) will be replaced by the last observed value of that variable, if the missingness is a result of the EFU event of the node LTCF.}
+\item{LTCF}{If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.}
 
 \item{rndseed}{Seed for the random number generator.}
 }
@@ -22,5 +22,11 @@ A data.frame where each column is sampled from the conditional distribution spec
 }
 \description{
 This function simulates observed data from a DAG object.
+}
+\seealso{
+\code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+
+Other simulation.functions: \code{\link{simfull}};
+  \code{\link{sim}}
 }
 

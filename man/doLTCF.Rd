@@ -2,19 +2,69 @@
 % Please edit documentation in R/simulation.r
 \name{doLTCF}
 \alias{doLTCF}
-\title{Imputation with Last Time Point (Observation) Carried Forward (LTCF)}
+\title{Missing Variable Imputation with Last Time Point Value Carried Forward (LTCF)}
 \usage{
-doLTCF(data, outcome)
+doLTCF(data, LTCF)
 }
 \arguments{
 \item{data}{Simulated \code{data.frame} in wide format}
 
-\item{outcome}{Character string specifying the outcome node that is the indicator of the end of follow-up (observations with value of the outcome variable being 1 indicate that the end of follow-up has been reached). The outcome variable must be a binary node that was declared with \code{EFU=TRUE}.}
+\item{LTCF}{Character string specifying the outcome node that is the indicator of the end of follow-up (observations with value of the outcome variable being 1 indicate that the end of follow-up has been reached). The outcome variable must be a binary node that was declared with \code{EFU=TRUE}.}
 }
 \value{
-Modified simulated \code{data.frame}, forward imputed all variables after outcome switched to 1.
+Modified \code{data.frame}, all time-varying missing variables after the \code{EFU} outcome specified in \code{LTCF} are forward imputed with their last available non-missing value.
 }
 \description{
-Carry forward (forward impute) all missing variable values for simulated observations that have reached the end of their follow-up, as defined by the node of type (EOF=TRUE).
+Forward imputation for missing variable values in simulated data after a particular end of the follow-up event. The end of follow-up event is defined by the node of type \code{EOF=TRUE} being equal to 1.
+}
+\section{Details}{
+
+The default behavior of the \code{sim} function consists in setting all nodes that temporally follow an \code{EFU} node whose simulated value is 1 to missing (i.e., \code{NA}).
+The argument \code{LTCF} of the \code{sim} function can however be used to change this default behavior and impute some of these missing values with \emph{last time point value carried forward} (LTCF).
+More specifically, only the missing values of time-varying nodes (i.e., those with non-missing \code{t} argument) that follow the end of follow-up event encoded by the \code{EFU} node specified by the \code{LTCF} argument will be imputed.
+One can use the function \code{doLTCF} to apply the \emph{last time point value carried forward} (LTCF) imputation to an existing simulated dataset obtained from the function \code{sim} that was called with its default imputation setting (i.e., with no \code{LTCF} argument).
+Illustration of the use of the LTCF imputation functionality are provided in the package vignette.
+
+The first example below shows the default data format of the \code{sim} function after an end of the follow-up event and how this behavior can be modified to generate data with LTCF imputation by either using the \code{LTCF} argument of the
+\code{sim} function or by calling the \code{doLTCF} function. The second example demonstrates how to use the \code{doLTCF} function to perform LTCF imputation on already existing data simulated with the \code{sim} function based on its default non-imputation behavior.
+}
+\examples{
+t_end <- 16
+lDAG <- DAG.empty()
+lDAG <- lDAG + 
+	node(name = "L2", t = 0, distr = "rconst", const = 0) + 
+	node(name = "A1", t = 0, distr = "rconst", const = 0) + 
+	node(name = "L2", t = 1:t_end, distr = "rbern", 
+ 	prob = ifelse(A1[t - 1]  ==  1, 0.1, 
+ 			ifelse(L2[t-1] == 1, 0.9, 
+ 			  min(1,0.1 + t/.(t_end))))) + 
+	node(name = "A1", t = 1:t_end, distr = "rbern", 
+ 	prob = ifelse(A1[t - 1]  ==  1, 1, 
+ 			 ifelse(L2[0] == 0, 0.3, 
+			  ifelse(L2[0] == 0, 0.1, 
+			   ifelse(L2[0] == 1, 0.7, 0.5))))) + 
+	node(name = "Y", t = 1:t_end, distr = "rbern", 
+ 	prob = plogis(-6.5 + 4 * L2[t] + 0.05 * sum(I(L2[0:t] == rep(0,(t + 1))))), 
+ 	EFU = TRUE)
+lDAG <- set.DAG(lDAG)
+#---------------------------------------------------------------------------------------
+# EXAMPLE 1. No forward imputation.
+#---------------------------------------------------------------------------------------
+Odat.wide <- sim(DAG = lDAG, n = 1000, rndseed = 123)
+Odat.wide[c(21,47), 1:18]
+Odat.wideLTCF <- sim(DAG = lDAG, n = 1000, LTCF = "Y", rndseed = 123)
+Odat.wideLTCF[c(21,47), 1:18]
+#---------------------------------------------------------------------------------------
+# EXAMPLE 2. With forward imputation.
+#---------------------------------------------------------------------------------------
+Odat.wideLTCF2 <- doLTCF(data = Odat.wide, LTCF = "Y")
+Odat.wideLTCF2[c(21,47), 1:18]
+all.equal(Odat.wideLTCF, Odat.wideLTCF2)
+}
+\seealso{
+\code{\link{sim}}, \code{\link{simobs}} and \code{\link{simfull}} for simulating data with and without carry forward imputation.
+
+Other data.manipulation.functions: \code{\link{DF.to.longDT}};
+  \code{\link{DF.to.long}}
 }
 

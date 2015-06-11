@@ -1,0 +1,2884 @@
+\listfiles
+% \documentclass[a4paper]{article}
+% \documentclass[article,nojss]{jss}
+% alternative:
+\documentclass[nojss,article,shortnames]{jss}
+% \usepackage[margin=2.5cm]{geometry}
+\usepackage{float}
+\usepackage{amssymb,amsmath,amsfonts}
+% \usepackage{authblk}
+\usepackage[multiple]{footmisc}
+\usepackage[utf8]{inputenc}
+% \usepackage[colorlinks=true,urlcolor=blue]{hyperref}
+% \usepackage{graphicx}
+% \usepackage[font={scriptsize, it}]{caption}
+\usepackage[english]{babel}
+\usepackage{pdflscape}
+\usepackage{booktabs}
+\usepackage{ctable}
+% \usepackage{color}
+
+% causes conflict with jss style:
+% \usepackage[table]{xcolor}
+% \usepackage[]{colortbl} 
+% \usepackage{listings}
+% \lstset{breaklines=true} 
+% \lstset{ 
+%     language=R, % choose the language of the code
+%     basicstyle=\color{red},
+%     keywordstyle=\color{red}, % style for keywords
+%     numbers=none, % where to put the line-numbers
+%     numberstyle=\tiny, % the size of the fonts that are used for the line-numbers     
+%     backgroundcolor=\color{gray90},
+%     showspaces=false, % show spaces adding particular underscores
+%     showstringspaces=false, % underline spaces within strings
+%     showtabs=false, % show tabs within strings adding particular underscores
+%     frame=single, % adds a frame around the code
+%     tabsize=2, % sets default tabsize to 2 spaces
+%     rulesepcolor=\color{gray90},
+%     rulecolor=\color{black},
+%     captionpos=b, % sets the caption-position to bottom
+%     breaklines=true, % sets automatic line breaking
+%     breakatwhitespace=false, 
+% }
+\definecolor{blue}{rgb}{.2,.2,.7}
+\definecolor{red}{rgb}{.7,.2,.2}
+\definecolor{green}{rgb}{0,.6,.3}  
+\definecolor{gray}{rgb}{0.45,0.45,0.45} 
+\newcommand{\btext}[1]{\textcolor{blue}{#1}}
+\newcommand{\rtext}[1]{\textcolor{red}{#1}}
+\newcommand{\gtext}[1]{\textcolor{green}{#1}}
+\newcommand{\wtext}[1]{\textcolor{white}{#1}}
+\newcommand{\old}[1]{\textcolor{gray}{#1}}
+\definecolor{gray90}{RGB}{229,229,229}
+\definecolor{gray77}{RGB}{196,196,196}
+\definecolor{gray60}{RGB}{153,153,153}
+
+\renewcommand{\thefootnote}{\alph{footnote}}
+%%\newcommand{\acronym}[1]{\textsc{#1}}
+%%\newcommand{\class}[1]{\mbox{\textsf{#1}}}
+% \newcommand{\code}[1]{\mbox{\texttt{#1}}}
+% \newcommand{\pkg}[1]{{\normalfont\fontseries{b}\selectfont #1}}
+% \newcommand{\proglang}[1]{\textsf{#1}}
+\newcommand\XOR{\mathbin{\char`\^}}
+\newcommand\independent{\protect\mathpalette{\protect\independenT}{\perp}}
+\def\independenT#1#2{\mathrel{\rlap{$#1#2$}\mkern2mu{#1#2}}}
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+
+\author{Oleg Sofrygin\\Division of Research,\\Kaiser Permanente Northern California\\University of California, Berkeley\And 
+        Mark J. van der Laan\\University of California, Berkeley\AND
+        Romain Neugebauer\\Division of Research,\\Kaiser Permanente Northern California}
+\title{\pkg{simcausal} \proglang{R} Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data}
+\Plainauthor{Oleg Sofrygin, Mark J. van der Laan, Romain Neugebauer}
+\Plaintitle{simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data}
+\Shorttitle{\pkg{simcausal}: Causal Simulation Package} %% a short title (if necessary)
+
+\Abstract{ The \pkg{simcausal} \proglang{R} package is a tool for specification and simulation of complex longitudinal
+data structures that are based on structural equation models. The package aims to provide a flexible tool for
+simplifying the conduct of transparent and reproducible simulation studies, with a particular emphasis on the types of
+data and interventions frequently encountered in real-world causal inference problems, such as, observational data with
+time-dependent confounding, selection bias, and random monitoring processes. The package interface allows for concise
+expression of complex functional dependencies between a large number of nodes, where each node may represent a time-
+varying random variable. The package allows for specification and simulation of counterfactual data under various user-
+specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
+represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical
+monitoring events. Finally, the package enables the computation of a selected set of user-specified features of the
+distribution of the counterfactual data that represent common causal quantities of interest, such as, treatment-specific
+means, the average treatment effects and coefficients from working marginal structural models. The applicability of
+\pkg{simcausal} is demonstrated by replicating the results of two published simulation studies. }
+
+\Keywords{causal inference, simulation, marginal structural model, structural equation model, directed acyclic graph, causal model, \proglang{R}}
+
+\Plainkeywords{causal inference, simulation, marginal structural model, structural equation model, directed acyclic graph, causal model, R} %% without formatting
+
+\Address{
+  Oleg Sofrygin\\
+  Division of Research\\
+  Kaiser Permanente Northern California\\
+  Oakland, CA 94612 \\
+  \emph{and}\\
+  Division of Biostatistics, School of Public Health\\ 
+  University of California, Berkeley\\ 
+  Berkeley, CA 94720\\
+  E-mail: \email{oleg.sofrygin@gmail.com}\\
+  \\
+  Mark J. van der Laan\\
+  Division of Biostatistics, School of Public Health\\ 
+  University of California, Berkeley\\
+  Berkeley, CA 94720\\
+  E-mail: \email{laan@berkeley.edu}\\
+  \\
+  Romain Neugebauer\\
+  Division of Research\\
+  Kaiser Permanente Northern California\\
+  2000 Broadway\\
+  Oakland, CA 94612 \\
+  E-mail: \email{Romain.S.Neugebauer@kp.org}\\
+}
+
+%% need no \usepackage{Sweave.sty}
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{simcausal Package: Simulations with Complex Longitudinal Data}
+\begin{document}
+
+<<include=FALSE, results='hide'>>=
+  exportTexOnly=FALSE # do not include any chunks in the final result (R code is still evaluated)
+
+  require(knitr)
+  require(simcausal)
+  cache_opt <- TRUE
+  opts_chunk$set(fig.path='figure/beamer-',fig.align='center',fig.show='hold',size='footnotesize')
+  # to crop white space in output figures:
+  knit_hooks$set(pdfcrop = hook_pdfcrop)
+  # To disable syntax color highlighing of R code in the entire document
+  # opts_chunk$set(highlight=FALSE)
+  # To change the background color on knitR output from default gray to white:
+  # opts_chunk$set(background='white')
+  opts_chunk$set(include=!exportTexOnly)
+
+  # options(width=80)  # make the printing fit on the page
+  options(width=90)  # make the printing fit on the page
+  set.seed(1121)   # make the results repeatable
+@
+<<CreateRefs, include=FALSE, results='hide'>>=
+  # Need to first load that packages that need to be cited:
+  # require(simcausal)
+  # require(knitr)
+  # require(data.table)
+  # require(ggplot2)
+  # require(ltmle)
+  # require(igraph)
+  # require(lavaan); require(lavaan.survey); require(sem); require(semPLS); 
+  # # require(OpenMx)
+  # require(gems); require(aftgee); require(survsim)
+  # # # Select packages to cite:
+  # citPkgs <- names(sessionInfo()$otherPkgs)
+  # citPkgs <- c(citPkgs, "base")
+  # # Write the bibtex file:
+  # write_bib(citPkgs, file = "R-Pckgs.bib")
+@
+
+<<chunkMSMsurvplot, eval=TRUE, echo=FALSE>>=
+    # get MSM survival predictions from the full data.table in long format (melted) by time (t_vec), and by the MSM term (MSMtermName)
+    # predictions from the estimated msm model (based on observational data) can be obtained by passing estimated msm model, est.msm
+    # given vector of t (t_vec), results of MSM target.eval and an MSM term get survival table by action
+   survbyMSMterm <- function(MSMres, t_vec, MSMtermName, use_actions=NULL, est.msm=NULL) {
+      library(data.table)
+      # look up MSMtermName in MSMterm map, if exists -> use the new name, if doesn't exist use MSMtermName
+      if (!is.null(MSMres$S.msm.map)) {
+        mapS_exprs <- as.character(MSMres$S.msm.map[,"S_exprs_vec"])
+        XMSMterms <- as.character(MSMres$S.msm.map[,"XMSMterms"])
+        map_idx <- which(mapS_exprs%in%MSMtermName)
+        XMSMtermName <- XMSMterms[map_idx]
+        if (!is.null(XMSMtermName)&&length(XMSMtermName)>0) {
+          MSMtermName <- XMSMtermName
+        }
+      }
+      print("MSMtermName used"); print(MSMtermName)
+      t_dt <- data.table(t=as.integer(t_vec)); setkey(t_dt, t)
+      get_predict <- function(actname) {
+        # setkey(MSMres$df_long[[actname]], t)
+        setkeyv(MSMres$df_long[[actname]], c("t", MSMtermName))
+        # MSMterm_vals <- as.numeric(MSMres$df_long[[actname]][t_dt, mult="first"][[MSMtermName]])
+        # print("MSMterm_vals"); print(MSMterm_vals)
+        MSMterm_vals <- as.numeric(MSMres$df_long[[actname]][t_dt, mult="last"][[MSMtermName]])
+        # print("MSMterm_vals last"); print(MSMterm_vals)
+        newdata=data.frame(t=t_vec, MSMterm_vals=MSMterm_vals)
+        colnames(newdata) <- c("t", MSMtermName)
+        # print("newdata"); print(newdata)
+        if (!is.null(est.msm)) {
+          pred <- predict(est.msm, newdata=newdata, type="response")
+        } else {
+          pred <- predict(MSMres$m, newdata=newdata, type="response")
+        }
+        return(data.frame(t=t_vec, pred=pred))
+      }
+      action_names <- names(MSMres$df_long)
+      if (!is.null(use_actions)) {
+        action_names <- action_names[action_names%in%use_actions]
+      }
+      surv <- lapply(action_names, function(actname) {
+                                    res <- get_predict(actname)
+                                    if (MSMres$hazard) {
+                                      res$surv <- cumprod(1-res$pred)  
+                                    } else {
+                                      res$surv <- 1-res$pred
+                                    }
+                                    res$pred <- NULL
+                                    res$action <- actname
+                                    res
+                                  })
+      names(surv) <- names(MSMres$df_long)
+      surv_melt <- do.call('rbind', surv)
+      surv_melt$action <- factor(surv_melt$action, levels=unique(surv_melt$action), ordered=TRUE)
+      surv_melt
+    }
+    plotsurvbyMSMterm <- function(surv_melt_dat) {
+      library(ggplot2)
+      f_ggplot_surv_wS <- ggplot(data= surv_melt_dat, aes(x=t, y=surv)) +
+                          geom_line(aes(group = action, color = action), size=.4, linetype="dashed") + 
+                          theme_bw()
+
+    }
+    plotsurvbyMSMterm_facet <- function(surv_melt_dat1, surv_melt_dat2, msm_names=NULL) {
+      library(ggplot2)
+      if (is.null(msm_names)) {
+        msm_names <- c("MSM1", "MSM2")
+      }
+      surv_melt_dat1$MSM <- msm_names[1]
+      surv_melt_dat2$MSM <- msm_names[2]
+
+      surv_melt_dat <- rbind(surv_melt_dat1,surv_melt_dat2)
+      f_ggplot_surv_wS <- ggplot(data= surv_melt_dat, aes(x=t, y=surv)) +
+                          geom_line(aes(group = action, color = action), size=.4, linetype="dashed") + 
+                          theme_bw() + 
+                          facet_wrap( ~ MSM)
+    }   
+@
+<<chunk.est.targetMSM, eval=TRUE, echo=FALSE>>=
+  # @param DAG Object specifying the directed acyclic graph for the observed data, 
+    # must have a well-defined MSM target parameter (\code{set.target.MSM()})
+  # @param obs_df Simulated observational data
+  # @param Aname Generic names of the treatment nodes (can be time-varying)
+  # @param Cname Generic names of the censoring nodes (can be time-varying)
+  # @param Lnames Generic names of the time-varying covariates (can be time-varying)
+  # @param tvec Vector of time points for Y nodes
+  # @param actions Which actions (regimens) should be used in estimation from the observed simulated data. 
+    # If NULL then all actions that were defined in DAG will be considered.
+  # @param package Character vector for R package name to use for estimation. Currently only "ltmle" is implemented.
+  # @param fun Character name for R function name to employ for estimation. Currently only "ltmleMSM" is implemented.
+  # @param ... Additional named arguments that will be passed on to ltmleMSM function
+  est.targetMSM <- function(DAG, obs_df, Aname="A", Cname="C", Lnames, Ytvec, ACLtvec, actions=NULL, package="ltmle", fun="ltmleMSM", ...) {
+    outnodes <- attr(DAG, "target")$outnodes
+    param_name <- attr(DAG, "target")$param_name
+    if (is.null(outnodes$t)) stop("estimation is only implemented for longitudinal data with t defined")
+    if (!param_name%in%"MSM") stop("estimation is only implemented for MSM target parameters")
+    if (is.null(actions)) {
+      message("actions argument underfined, using all available actions")
+      actions <- A(DAG)
+    }
+    # all time points actually used in the observed data
+    t_all <- attr(obs_df, "tvals")  
+    tvec <- outnodes$t
+    t_sel <- ACLtvec
+    # ltmle allows for pooling Y's over smaller subset of t's (for example t=(2:8))
+    # in this case summary measures HAVE TO MATCH the dimension of finYnodes, not t_sel
+    # currently this is not supported, thus, if tvec is a subset of t_sel this will cause an error
+    finYnodes <- outnodes$gen_name%+%"_"%+%Ytvec
+    Ynodes <- outnodes$gen_name%+%"_"%+%Ytvec
+    Anodes <- Aname%+%"_"%+%ACLtvec
+    Cnodes <- Cname%+%"_"%+%ACLtvec
+    Lnodes <- t(sapply(Lnames, function(Lname) Lname%+%"_"%+%ACLtvec[-1]))
+    Lnodes <- as.vector(matrix(Lnodes, nrow=1, ncol=ncol(Lnodes)*length(Lnames), byrow=FALSE))
+    Nobs <- nrow(obs_df)
+    #------------------------------------------------------------
+    # getting MSM params
+    #------------------------------------------------------------
+    params.MSM <- attr(DAG, "target")$params.MSM
+    working.msm <- params.MSM$form
+    msm.family <- params.MSM$family
+    if (params.MSM$hazard) stop("ltmleMSM cannot estimate hazard MSMs...")
+    # the number of attributes and their dimensionality have to match between different actions 
+    n_attrs <- length(attr(actions[[1]], "attnames"))
+    #------------------------------------------------------------
+    # define the final ltmle arrays
+    regimens_arr <- array(dim = c(Nobs, length(ACLtvec), length(actions)))
+    summeas_arr <- array(dim = c(length(actions), (n_attrs+1), length(Ytvec)))
+    # loop over actions (regimes) creating counterfactual mtx of A's for each action:
+    for (action_idx in seq(actions)) {
+        # I) CREATE COUNTERFACTUAL TREATMENTS & 
+        # II) CREATE summary.measure that describes each attribute by time + regimen
+        #------------------------------------------------------------    
+        # needs to assign observed treatments and replace the action timepoints with counterfactuals
+        A_mtx_act <- as.matrix(obs_df[,Anodes]) 
+        #------------------------------------------------------------    
+        action <- actions[[action_idx]]
+         # action-spec. time-points
+        t_act <- as.integer(attr(action, "acttimes"))   
+        # action-spec. attribute names
+        attnames <- attr(action, "attnames")  
+        # list of action-spec. attributes
+        attrs <- attr(action, "attrs")        
+        # time points for which we need to evaluate the counterfactual treatment assignment as determined by action:
+        #------------------------------------------------------------
+        # Action t's need always be the same subset of t_sel (outcome-based times), otherwise we are in big trouble
+        t_act_idx <- which(t_sel%in%t_act)
+        t_chg <- t_sel[t_act_idx]
+        # modify only A's which are defined in this action out of all Anodes
+        As_chg <- Anodes[t_act_idx] 
+        #------------------------------------------------------------
+        # creates summary measure array that is of dimension (length(t_chg)) - time-points only defined for this action
+        # which t's are in the final pooled MSM => need to save the summary measures only for these ts
+        t_vec_idx <- which(t_act%in%tvec) 
+        summeas_attr <- matrix(nrow=length(attnames), ncol=length(tvec))
+        #------------------------------------------------------------
+        # extract values of terms in MSM formula: get all attribute values from +action(...,attrs)
+        #------------------------------------------------------------
+        obs_df_attr <- obs_df # add all action attributes to the observed data
+        for (attr_idx in seq(attnames)) { # self-contained loop # grab values of the attributes, # loop over all attributes
+          if (length(attrs[[attnames[attr_idx]]])>1) {
+            attr_i <- attnames[attr_idx]%+%"_"%+%t_chg
+            val_attr_i <- attrs[[attnames[attr_idx]]][t_act_idx]
+          } else {
+            attr_i <- attnames[attr_idx]
+            val_attr_i <- attrs[[attnames[attr_idx]]]
+          } 
+          # summary measures, for each action/measure
+          summeas_attr[attr_idx,] <- matrix(val_attr_i, nrow=1, ncol=length(t_chg))[,t_vec_idx]
+          # observed data values of the attribute
+          df_attr_i <- matrix(val_attr_i, nrow=Nobs, ncol=length(val_attr_i), byrow=TRUE)
+          # create the combined data.frame (attrs + O.dat)
+          colnames(df_attr_i) <- attr_i; obs_df_attr <- cbind(data.frame(df_attr_i), obs_df_attr)
+        } # end of loop
+        summeas_attr <- rbind(summeas_attr, t_chg[t_vec_idx])
+        rownames(summeas_attr) <- c(attnames, "t")
+        #------------------------------------------------------------
+        # add action specific summary measures to the full array
+        summeas_arr[action_idx, , ] <- summeas_attr 
+        dimnames(summeas_arr)[[2]] <- rownames(summeas_attr)
+        #------------------------------------------------------------
+        # GENERATING A MATRIX OF COUNTERFACTUAL TREATMENTS:
+        for (Achange in As_chg) { # for each A defined in the action, evaluate its value applied to the observed data
+          cur.node <- action[As_chg][[Achange]]
+          t <- cur.node$t
+          newAval <- with(obs_df_attr, {  # for static no need to sample from a distr
+            ANCHOR_VARS_OBSDF <- TRUE
+            simcausal:::eval_nodeform(as.character(cur.node$dist_params$prob), cur.node)$evaled_expr
+          })
+
+          if (length(newAval)==1) {
+            newA <- rep(newAval, Nobs)
+          } else {
+            newA <- newAval
+          }
+          A_mtx_act[,which(Anodes%in%Achange)] <- newA
+        }
+        # Result matrix A_mtx_act has all treatments that were defined in that action replaced with 
+        # their counterfactual values
+        #------------------------------------------------------------
+        # add action specific summary measures to the full array
+        regimens_arr[, , action_idx] <- A_mtx_act
+        #------------------------------------------------------------
+    }
+    list(regimens_arr=regimens_arr, summeas_arr=summeas_arr)
+  }
+@
+
+
+\newpage{}
+\tableofcontents
+\newpage{}
+\section{Introduction}\label{secintro}
+\addcontentsline{toc}{section}{Introduction}
+
+This vignette describes the \pkg{simcausal} package \citep{R-simcausal}, a comprehensive set of tools for specification
+and simulation of complex longitudinal data structures to study causal inference methodologies. The package is developed
+using the \proglang{R} system for statistical computing \citep{r} and is available from the Comprehensive \proglang{R}
+Archive Network (CRAN) at \url{http://CRAN.R-project.org/package=simcausal}. The main motivation behind the package is
+to provide a flexible tool to \emph{facilitate} the conduct of \emph{transparent} and \emph{reproducible} simulation
+studies, with a particular emphasis on the types of data and interventions frequently encountered in real-world causal
+inference problems. For example, the package simplifies the simulation of observational data based on random clinical
+monitoring to evaluate the effect of time-varying interventions in the presence of time-dependent confounding and
+sources of selection bias (e.g., informative right censoring). The package is built to provide a novel user-interface
+that allows concise and intuitive expression of complex functional dependencies for a large number of nodes that may
+represent time-varying random variables (e.g., repeated measurements over time of the same subject-matter attribute,
+such as, blood pressure).\\
+
+Each data generating distribution is specified via a structural equation model (SEM) \citep{pearl1995, Pearl2009,
+pearl2010}. The package allows for specification and simulation of counterfactual data (referred to as ``full data'')
+under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic), which are referred to
+as ``actions''. These actions may represent exposure to treatment regimens, the occurrence or non-occurrence of right-
+censoring events, or of clinical monitoring events (e.g., laboratory measurements based on which treatment decisions may
+be made). Finally, the package enables the computation of a selected set of user-specified features of the distribution
+of the full data that represent common causal quantities of interest, referred to as causal target parameters, such as,
+treatment-specific means, the average treatment effects (ATE) (on the multiplicative or additive scale) and coefficients
+from working marginal structural model (MSM) \citep{neugebauer2007}. We demonstrate an application of the
+\pkg{simcausal} package by replicating the results of two published simulation studies from the causal inference
+literature \citep{neugebauer2014,neugebauer2015,lefebvre2008}.\\
+
+We note that the \pkg{simcausal} package differs from other R packages that implement data simulation based on
+structural equation modeling in the following ways. First, \pkg{simcausal} does not restrict the set of distributions
+available to the analyst to conduct a simulation study, i.e., any distribution that is currently available in
+\proglang{R} or that can be user-defined in the \proglang{R} programming environment can be used to sample observations
+in the \pkg{simcausal} package. In particular, the \pkg{simcausal} package is not restricted to data simulation based on
+linear structural equations only. Thus, this package allows the analyst to specify arbitrary functional dependencies
+between random variables, and, hence, enables data simulation from a much larger set of data generating mechanisms.
+Second, the \pkg{simcausal} package introduces an intuitive user-interface for specifying complex data-generating
+distributions to emulate realistic real-world longitudinal data studies characterized by a large number of repeated
+measurements of the same subject-matter attributes over time. Third, this package is particularly tailored to conduct
+data simulations to study causal inference methodologies for investigating the effect of complex intervention regimens
+such as dynamic and stochastic interventions (not just the common static and deterministic intervention regimens), and
+summary measures of these effects defined by (working) marginal structural models. The anticipated practical utility of
+this package thus extends beyond methodological research purposes by providing a tool for simulation-based power
+calculations to inform the design and analyses of real-world studies. Finally, the \pkg{simcausal} package provides a
+pipeline for conducting the typical steps of most simulation studies that consists of defining the observed data
+distribution, defining intervention/counterfactual distributions, defining causal parameters, simulating observed and
+counterfactual data, and evaluating the true value of causal parameters.\\
+
+The rest of this vignette is organized as follows. In Section~\ref{sectechn}, we provide an overview of the technical
+details for a typical use of the package. In Section~\ref{simstudy.pt}, we describe a template workflow for a simple
+simulation study with single time point interventions. In Section~\ref{simstudy.timevar}, we describe the use of the
+package for a more realistic and complex simulation study example based on survival data with repeated measures and
+dynamic interventions at multiple time points. In Section~\ref{repsimstudy1}, we apply the \pkg{simcausal} package to
+replicate results of a previously published simulation study by \citet{neugebauer2014, neugebauer2015}. In
+Section~\ref{repsimstudy2}, we apply the \pkg{simcausal} package to replicate results of another published simulation
+study by \citet{lefebvre2008}. We conclude with a discussion in Section~\ref{secdiscus}.
+
+\newpage{}
+\section{Technical details}\label{sectechn}
+\addcontentsline{toc}{section}{Technical details}
+
+\subsection{The workflow}
+\addcontentsline{toc}{subsection}{The workflow}
+
+The following schematic shows the order in which \pkg{simcausal} routines would be utilized in a typical simulation study:
+\[
+\begin{array}{ccc}
+D=\mathtt{DAG.empty}()\\
+\downarrow\\
+D=D+\mathtt{node}(\ldots)+\mathtt{node}(\ldots)\\
+\downarrow\\
+D=\mathtt{set.DAG}(D) & \longrightarrow & \mathtt{sim}(D)\\
+\downarrow\\
+D=D+\mathtt{action}(\ldots) & \longrightarrow & \mathtt{sim}(D,\mathtt{actions}=\ldots)\\
+\downarrow\\
+D=\mathtt{set.targetE}(D,\ldots)\\
+D=\mathtt{set.targetMSM}(D,\ldots)\\
+\downarrow\\
+\mathtt{eval.target}(D)
+\end{array}
+\]
+
+\paragraph{Data structures.}
+The following most common types of output are produced by the package.
+\begin{description}
+\item [\emph{parameterized causal \code{DAG} model}] - object that
+specifies the structural equation model, along with interventions and the
+causal target parameter of interest.
+\item [\emph{observed data}] - data simulated from the (pre-intervention)
+distribution specified by the structural equation model.
+\item [\emph{full data}] - data simulated from one or more post-intervention
+distributions defined by actions on the structural equation model.
+\item [\emph{causal target parameter}] - the true value of the causal
+target parameter evaluated with full data. 
+\end{description}
+
+\paragraph{Routines.}
+The following routines will be generally invoked by a user, in the same
+order as presented below.
+\begin{description}
+\item [{\code{DAG.empty}}] initiates an empty \code{DAG} object that contains
+no nodes.
+\item [{\code{node}}] defines a node in the structural equation model and
+its conditional distribution, i.e., the outcome of one equation in the
+structural equation model and the formula that links the outcome value
+to that of earlier covariates, referred to as parent nodes. A call to \code{node}
+can specify either a single node or multiple nodes at once, with \code{name}
+and \code{distr} being the only required arguments. To specify multiple
+nodes with a single \code{node} call, one must also provide an indexing
+vector of integers as an argument \code{t}. In this case, each node shares
+the same name, but is indexed by distinct values in \code{t}. The simultaneous
+specification of multiple nodes is particularly relevant for providing
+a shorthand syntax for defining a time-varying covariate, i.e., for defining
+repeated measurements over time of the same subject-matter attribute, as
+shown in the example in Section~\ref{node2}.
+\item [{\code{add.node} or \code{D + node}}] provide two equivalent ways of
+growing the structural equation model by adding new nodes and their conditional
+distributions. Informally, these routines are intended to be used to sequentially
+populate a \code{DAG} object with all the structural equations that make
+up the causal model of interest. See Sections~\ref{node1} and \ref{node2}
+for examples.
+\item [{\code{set.DAG}}] locks the \code{DAG} object in the sense that
+no additional nodes can be subsequently added to the structural equation
+model. In addition, this routine performs several consistency checks of
+the user-populated \code{DAG} object. In particular, the routine attempts
+to simulate observations to verify that all conditional distributions in
+the \code{DAG} object are well-defined.
+\item [{\code{sim}}] simulates independent and identically distributed (iid)
+observations of the complete node sequence defined by a \code{DAG} object.
+The output dataset is stored as a \code{data.frame} and is referred to
+as the \emph{observed data}. It can be structured in one of two formats,
+as discussed in Section~\ref{longdat}.
+\item [{\code{add.action} or \code{D + action}}] provides two equivalent ways
+to define one or more actions. An action modifies the conditional distribution
+of one or more nodes of the structural equation model. The resulting data
+generating distribution is referred to as the post-intervention distribution.
+It is saved in the \code{DAG} object alongside the original structural
+equation model. See Sections~\ref{actions1} and \ref{actions2} for examples.
+\item [{\code{sim(..., actions = ...)}}] can also be used for simulating independent
+observations from one or more post-intervention distributions, as specified
+by the \code{actions} argument. The resulting output is a named list
+of \code{data.frame} objects, collectively referred to as the \emph{full
+data}. The number of \code{data.frame} objects in this list is equal
+to the number of post-intervention distributions specified in the \code{actions}
+argument, where each \code{data.frame} object is an iid sample from a
+particular post-intervention distribution.
+\item [{\code{set.targetE} and \code{set.targetMSM}}] define two distinct types
+of target causal parameters. The output from these routines is the input
+\code{DAG} object with the definition of the target causal parameter
+saved alongside the interventions. See Sections~\ref{targets1} and \ref{targets2}
+for examples defining various target parameters.
+\item [{\code{eval.target}}] evaluates the causal parameter of interest using
+simulated full data. As input, it can take previously simulated full data
+(i.e., the output of a call to the \code{sim(..., actions = ...)} function)
+or, alternatively, the user can specify the sample size \code{n}, based
+on which full data will be simulated first. 
+\end{description}
+
+\subsection{Specifying a structural equation model}\label{SEMintro}
+\addcontentsline{toc}{subsection}{Specifying a structural equation model}
+
+
+The \pkg{simcausal} package encodes a structural equation model using
+a \code{DAG} object. The \code{DAG} object is a collection of nodes,
+each node represented by a \code{DAG.node} object that captures a single
+equation of the structural equation model. \code{DAG.node} objects are
+created by calling the \code{node} function. When the \code{node} function is used
+to simultaneously define multiple nodes, these nodes share the
+same name, but must be indexed by distinct user-specified integer values
+of the time variable \code{t}, as shown in the example in Section~\ref{node2}.
+We will refer to a collection of nodes defined simultaneously in this manner
+as a \emph{time-varying node} and we will refer to each node of such a
+collection as a measurement at a specific time point.\\
+
+Each node is usually added to a growing \code{DAG} object by using either
+the \code{add.node} function or equivalently the \code{'+'} function,
+as shown in the example in Sections~\ref{node1} and \ref{node2}. Each
+new node added to a \code{DAG} object must be uniquely identified by
+its name or the combination of a name and a value for the time variable
+argument \code{t}.\\
+
+The user may explicitly specify the temporal ordering of each node using
+the \code{order} argument of the \code{node()} function. However, if
+this argument is omitted, the \code{add.node} function assigns the temporal
+ordering to a node by using the actual order in which this node was added
+to the \code{DAG} object and, if applicable, the value of the time variable
+that indexes this node (earlier added nodes receive a lower order value,
+compared to those that are added later; nodes with a lower value for the
+\code{t} argument receive a lower order value, compared to those with
+a higher value of \code{t}).\\
+
+The \code{node} function also defines the conditional distribution of
+a node, given its parents, with a combination of the sampling distribution
+specified by the \code{distr} argument and the distributional parameters
+specified as additional named arguments to the \code{node()} function.
+This \code{distr} argument can be set to the name of any \proglang{R}
+function that accepts an integer argument named \code{n} and returns
+a vector of size \code{n}. Examples and specifications for the types
+of distribution functions that can be used in \pkg{simcausal} are provided
+in Section~\ref{custom}.\\
+
+The distributional parameters (also referred to as \emph{node formulas}
+thereafter) are specified as additional named arguments of the \code{node()}
+function and can be either constants or some summary measures of the parent
+nodes. Their values can be set to any evaluable \code{R} expressions
+that may reference any standard or user-specified \code{R} function,
+and also, may invoke a novel and intuitive shorthand syntax for referencing
+specific measurements of time-varying parent nodes, i.e., nodes identified
+by the combination of a node name and a time point value \code{t}. The
+syntax for identifying specific measurements of time-varying nodes is based
+on a re-purposed \proglang{R} square-bracket vector subsetting function
+\code{'['}: e.g., writing the expression \code{sum(A[0:5])},
+where \code{A} is the name of a previously defined time-varying node,
+defines the summary measure that is the sum of the node values over time
+points \code{t = 0},$\ldots$,\code{5}. This syntax may also be invoked
+to simultaneously define the conditional distribution of the measurements
+of a time-varying node over multiple time points \code{t} at once. For
+example, defining the conditional distribution of a time-varying node with
+the \proglang{R} expression \code{sum(A[max(0, t - 5):t]) + t}
+will resolve to different node formulas for each measurement of the time-varying
+node, depending on the value of \code{t}: 
+\begin{enumerate}
+\item \code{A[0]} at \code{t = 0}; 
+\item \code{sum(A[0:1]) + 1} at \code{t = 1}, $\ldots$, \code{sum(A[0:5])
++ 5} at \code{t = 5}; 
+\item \code{sum(A[1:6]) + 6} at \code{t = 6}, $\ldots$, \code{sum(A[5:10])
++ 10} at \code{t = 10}. 
+\end{enumerate}
+Concrete applications of this syntax are described in Section \ref{node2},
+as well as in the documentation of the \code{node()} function (\code{?node}).\\
+
+Note that the user can also define a causal model with one or more nodes
+that represent the occurrence of \emph{end of follow-up} (EFU) events (e.g.,
+right-censoring events or failure events of interest). Such nodes are defined
+by calling the \code{node()} function with the \code{EFU} argument
+being set to \code{TRUE}. The EFU nodes encode binary random variables
+whose value of 1 indicates that, by default, all of the subsequent nodes
+(i.e., nodes with a higher temporal order value) are to be replaced with
+a constant \code{NA} (missing) value. As an alternative, the user may
+choose to impute missing values for the time-varying node that represents
+the failure event of interest using the \emph{last time point value carried
+forward} (LTCF) imputation method. This imputation procedure consists in
+replacing missing values for measurements of a time-varying node at time
+points \code{t} after an end of follow-up event with its last known measurement
+value prior to the occurrence of an end of follow-up event. Additional
+details about this imputation procedure are provided in Sections~\ref{introsim} and \ref{LTCFdat}
+and its relevance is demonstrated in Section~\ref{Ex1survMSM} (Example 1 of \code{set.targetMSM}).\\
+
+Finally, we note that the package includes pre-written wrapper functions
+for random sampling from some commonly employed distributions. These routines
+can be passed directly to the \code{distr}\textbf{ }argument of the node
+function with the relevant distributional parameters on which they depend.
+These built-in functions can be listed at any time by calling \code{distr.list()}.
+In particular, the routines \code{"rbern"}, \code{"rconst"}, and \code{"rcategor"}
+can be used for specifying a Bernoulli distribution, a degenerate distribution
+(constant at a given value), and a categorical distribution, respectively.
+One can also use any of the standard random generating \proglang{R} functions,
+e.g., \code{"rnorm"} for sampling from the normal distribution and \code{"runif"}
+for sampling from the uniform distribution, as demonstrated in Sections~\ref{node1}
+and ~\ref{custom}.
+
+\subsection{Specifying interventions}
+\addcontentsline{toc}{subsection}{Specifying interventions}
+
+An intervention regimen (also referred to as action regimen) is defined
+as a sequence of conditional distributions that replace the original distributions
+of a subset of nodes in a \code{DAG} object. To specify an intervention
+regimen, the user must identify the set of nodes to be intervened upon
+and provide new node distributions for them. The user may define a static,
+dynamic, deterministic or stochastic intervention on any given node, depending
+on the type of distributions specified. A deterministic static intervention
+is characterized by replacing a node distribution with a degenerate distribution
+such that the node takes on a constant value. A deterministic dynamic intervention
+is characterized by a conditional degenerate distribution such that the
+node takes on a value that is only a function of the values of its parents
+(i.e., a decision rule). A stochastic intervention is characterized by
+a non-degenerate conditional distribution. A stochastic intervention is
+dynamic if it is characterized by a non-degenerate conditional distribution
+that is defined as a function of the parent nodes and it is static otherwise.
+Note that a particular intervention may span different types of nodes and
+consist of different types of distributions, e.g., an intervention on a
+monitoring node can be static, while the intervention on a treatment node
+from the same structural equation model may be dynamic.\\
+
+To define an intervention the user must call \code{D + }\code{action(A,
+nodes = B)} (or equivalently \code{add.action(}\code{D, A, nodes =
+B)}), where \code{D} is a \code{DAG} object, \code{A} is a unique
+character string that represents the intervention name, and \code{B}
+is a list of \code{DAG.node} objects defining the intervention regimen.
+To construct \code{B} the user must first aggregate the output from one
+or more calls to \code{node} (using \code{c(..., ...)}), with the \code{name}
+argument of the \code{node} function call set to node names that already
+exist in the locked \code{DAG} object \code{D}. The example in Section~\ref{actions2}
+demonstrates this functionality. Alternatively, repeated calls to \code{add.action}
+or \code{D+action} with the same intervention name, e.g., \code{A =
+}\code{"A1"}, allow the incremental definition of an intervention regimen
+by passing each time a different \code{node} object, enabling iterative
+build-up of the collection \code{B} of the intervened nodes that define
+the intervention regimen. Note, however, that by calling \code{D + action}
+or \code{add.action(D, ...)} with a new action name, e.g., \code{action("A2",
+...)}, the user initiates the definition of a new intervention regimen.
+
+\subsection{Specifying a target causal parameter}
+\addcontentsline{toc}{subsection}{Specifying a target causal parameter}
+
+The causal parameter of interest (possibly a vector) is defined by either
+calling the function \code{set.targetE} or \code{set.targetMSM}. The
+function \code{set.targetE} defines causal parameters as the expected
+value(s) of \code{DAG} node(s) under one post-intervention distribution
+or the contrast of such expected value(s) from two post-intervention distributions.
+The function \code{set.targetMSM} defines causal parameters based on
+a \textbf{working} marginal structural model \citep{neugebauer2007}. In
+both cases, the true value of the causal parameter is defined by one or
+several post-intervention distributions and can thus be approximated using
+full data.\\
+
+The following types of causal parameters can be defined with the function
+\code{set.targetE}: 
+\begin{itemize}
+\item The expectation of an outcome node under an intervention regimen denoted
+by $d$, where the outcome under $d$ is denoted by $Y_{d}$. This parameter
+can be naturally generalized to a vector of measurements of a time-varying
+node, i.e., the collection of nodes $Y_{d}(t)$ sharing the same name,
+but indexed by distinct time points \code{t} that represents a sequence
+of repeated measurements of the same attribute (e.g., a CD4 count or the
+indicator of past occurrence of a given failure event): 
+\[
+E(Y_{d})\textrm{ or }(E(Y_{d}(t)))_{t=0,1,\ldots}.
+\]
+
+\item The difference between two expectations of an outcome node under two interventions,
+$d_{1}$ and $d_{0}$. This parameter can also be naturally generalized
+to a vector of measurements of a time-varying node: 
+\[
+E(Y_{d_{1}})-E(Y_{d_{0}})\textrm{ or }(E(Y_{d_{1}}(t))-E(Y_{d_{0}}(t)))_{t=0,1,\ldots}.
+\]
+
+\item The ratio of two expectations of an outcome node under two interventions.
+This parameter can also be naturally generalized to a vector of measurements
+of a time-varying node: 
+\[
+\frac{E(Y_{d_{1}})}{E(Y_{d_{0}})}\textrm{ or }\bigg(\frac{E(Y_{d_{1}}(t))}{E(Y_{d_{0}}(t))}\bigg)_{t=0,1,\ldots}.
+\]
+
+\end{itemize}
+Note that if the \code{DAG} object contains nodes of type \code{EFU
+= TRUE} other than the outcome nodes of interest $Y_{d}(t)$, the target
+parameter must be defined by intervention regimens that set all such nodes
+that precede all outcomes of interest $Y_{d}(t)$ to $0$. Also note that
+with such intervention regimens, if the outcome node is time-varying of
+type \code{EFU = TRUE} then the nodes $Y_{d}(t)$ remain well defined
+(equal to $1$) even after the time point when the simulated value for
+the outcome jumps to $1$ for the first time. The nodes $Y_{d}(t)$ can
+then be interpreted as indicators of past failures in the absence of right-censoring
+events. The specification of these target parameters is covered with examples
+in Sections~\ref{targets1NP} and \ref{targets2NP}.\\
+
+When the definition of the target parameter is based on a working marginal
+structural model, the vector of coefficients (denoted by $\alpha$) of
+the working model defines the target parameter. The definition of these
+coefficients relies on the specification of a particular weighting function
+when the working model is not a correct model (see \citet{neugebauer2007}
+for details). This weighting function is set to the constant function of
+1 in this package. The corresponding true value of the coefficients $\alpha$
+can then be approximated by running a standard (unweighted) regression
+routines applied to simulated full data observations. The following types
+of working models, denoted by $m()$, can be defined with the function
+\code{set.targetMSM}:
+\begin{itemize}
+\item The working linear or logistic model for the expectation of one outcome node under
+intervention $d$, possibly conditional on baseline node(s) $V$, where
+a baseline node is any node preceding the earliest node that is intervened
+upon, i.e., $E(Y_{d}\mid V)$: 
+\[
+m(d,V\:|\:\alpha).
+\]
+Such a working model can, for example, be used to evaluate the effects
+of HIV treatment regimens on the mean CD4 count measured at one point in
+time. 
+\item The working linear or logistic model for the expectation vector of measurements
+of a time-varying outcome node, possibly conditional on baseline node(s) $V$,
+i.e., $E(Y_{d}(t)\mid V)$: 
+\[
+m(t,d,V\:|\:\alpha)\textrm{, for }t=0,1,\ldots.
+\]
+Such a working model can, for example, be used to evaluate the effects
+of HIV treatment regimens on survival probabilities over time. 
+\item The logistic working model for discrete-time hazards, i.e., for the probabilities
+that a measurement of a time-varying outcome node of type \code{EFU=TRUE} is
+equal to $1$ under intervention $d$, given that the previous measurement
+of the time-varying outcome node under intervention $d$ is equal to $0$, possibly
+conditional on baseline node(s) $V$, i.e., $E(Y_{d}(t)\mid Y_{d}(t-1)=0,V)$:
+\[
+m(t,d,V)\textrm{, for }t=0,1,\ldots.
+\]
+Such a working model can, for example, be used to evaluate the effects
+of HIV treatment regimens on discrete-time hazards of death over time. 
+\end{itemize}
+Examples of the specification of the above target parameters are provided
+in Sections~\ref{targets1MSM} and \ref{targets2MSM}. As shown above,
+the working MSM formula $m()$ can be a function of $t$, $V$ and $d$, where $d$ is a unique
+identifier of each intervention regimen. In Sections~\ref{targets1MSM}
+and \ref{MSMwS.2} we describe in detail how to specify such identifiers
+for $d$ as part of the \code{action} function call. Also note that the
+working MSM formula, $m$, may reference time-varying nodes using the square-bracket
+syntax introduced in Section~\ref{SEMintro}, as long as all such instances
+are embedded within the syntax \code{S(...)}. This formula syntax can
+be used to define $V$, where $V$ is defined by a baseline measurement
+of a time-varying node. Example uses of this syntax are provided in Section \ref{MSMwS.1} (Example 6 of \code{set.targetMSM}) and Section \ref{MSMwS.2} (Example 7 of \code{set.targetMSM}).
+
+\subsection{Simulating data and evaluating the target causal parameter}\label{introsim}
+\addcontentsline{toc}{subsection}{Simulating data and evaluating the target causal parameter}
+
+The \pkg{simcausal} package can simulate two types of data: 1) observed
+data, sampled from the (pre-intervention) distribution specified by the
+structural equation model and 2) full data, sampled from one or more post-intervention
+distributions defined by actions on the structural equation model. Both
+types of data are simulated by invoking the \code{sim} function and the
+user can set the seed for the random number generator using the argument
+\code{rndseed}. The examples showing how to simulate observed data are
+provided in Sections~\ref{simobs1} and \ref{simobs2}, whereas the examples
+showing how to simulate full data are provided in Sections~\ref{simfull1}
+and \ref{simfull2}.\\
+
+We note that two types of structural equation models can be encoded with
+the \code{DAG} object: 1) models where some or all nodes are defined
+by specifying the ``time'' argument \code{t} to the \code{node} function,
+or 2) models where the argument \code{t} is not used for any of the nodes.
+For the first type of structural equation models, the simulated data can
+be structured in either \emph{long} or \emph{wide} formats. A dataset
+is considered to be in wide format when each simulated observation of the
+complete sequence of nodes is represented by only one row of data, with
+each time-varying node represented by columns spanning distinct values
+of \code{t}. In contrast, for a dataset in long format, each simulated
+observation is typically represented by multiple rows of data, with separate
+rows of the same observation indexed by distinct values of \code{t} and
+each time-varying node represented by a single column. The format of the
+output data is controlled by setting the argument \code{wide} of the
+\code{sim} function to \code{TRUE} or \code{FALSE}. The default setting
+for \code{sim} is to simulate data in wide format, i.e., \code{wide
+= TRUE}. An example describing these two formats is provided in Section~\ref{longdat}
+in the context of time-varying measurements.\\
+
+In addition, as previously described, for nodes representing the occurrence
+of end of follow-up events (i.e., censoring or outcome nodes declared with
+\code{EFU = TRUE}), the value of $1$ indicates that, during data simulation,
+by default, all values of subsequent nodes (including the outcome nodes)
+are set to missing (\code{NA}). To instead impute these missing values
+after a particular end of follow-up event occurs (typically the outcome
+event) with the \emph{last time point value carried forward} (LTCF) method,
+the user must set the argument \code{LTCF} of the \code{sim} function
+to the name of the \code{EFU}-type node that represents the end of follow-up
+event of interest. This will result in carrying forward the last observed
+measurement value for all time-varying nodes, after the value of the EFU
+node whose name is specified by the \code{LTCF} argument is observed
+to be $1$. For additional details see the package documentation for the
+function \code{sim}. Examples demonstrating the use of the \code{LTCF}
+argument for data simulation are provided in Sections~\ref{LTCFdat} and \ref{targets2NP} (Example 1 of \code{set.targetMSM}).\\
+
+In the last step of a typical workflow, the function \code{eval.target}
+is generally invoked for estimation of the true value of a previously defined
+target causal parameter. The true value is estimated using full data simulated
+from post-intervention distributions. The function \code{eval.target}
+can be called with either previously simulated full data, specified by
+the argument \code{data} or a sample size value, specified by the argument
+\code{n}. In the latter case, full data with the user-specified sample
+size will be simulated first.
+
+\newpage{}
+\section{Simulation study with single time point interventions}\label{simstudy.pt}
+\addcontentsline{toc}{section}{Simulation study with single time point interventions}
+
+This example describes a typical workflow for specifying a simple structural equation model, defining various
+interventions, simulating observed and full data, and calculating various causal target parameters. The structural
+equation model chosen here illustrates a common point treatment problem in which one is interested in evaluating the
+effect of an intervention on one treatment node on a single outcome node using observational data with confounding by
+baseline covariates. This example also demonstrates the use of a plotting functionality of the \pkg{simcausal} package
+that builds upon the \pkg{igraph} \proglang{R} package \citep{igraph} to visualize the Directed Acyclic Graph (DAG)
+\citep{pearl1995, Pearl2009, pearl2010} implied by the structural equation model encoded in the \code{DAG} object.
+
+\subsection{Specifying the structural equation model}\label{node1}
+\addcontentsline{toc}{subsection}{Specifying the structural equation model}
+
+The example below shows how to specify a structural equation model with six nodes to represent a single time point
+intervention study: one categorical baseline covariate with 3 categories (\code{race}), one normally distributed
+baseline confounder (\code{W1}), one uniformly distributed baseline confounder (\code{W2}), one binary baseline
+confounder (\code{W3}), one binary exposure (\code{Anode}), and one binary outcome (\code{Y}). This example uses pre-
+defined \proglang{R} functions \code{rcategor},  \code{rbern}, \code{rnorm} and \code{runif} for sampling from the
+categorical, Bernoulli, normal, and uniform distributions, respectively. For details and examples on writing sampling
+functions for arbitrary distributions see Section~\ref{custom}. We also refer to Section~\ref{custom} for a description
+on how to specify node formulas (distributional parameters), such as with the use of \proglang{R} expressions specified
+by the \code{probs}, \code{mean} and \code{prob} arguments in the example below.
+
+<<message=FALSE>>=
+  library(simcausal)
+  D <- DAG.empty()
+  D <- D + 
+          node("race",
+                distr = "rcategor",
+                probs = c(0.5, 0.25, 0.25)) + 
+          node("W1",
+                distr = "rnorm",
+                mean = ifelse(race == 1, 0, ifelse(race == 2, 3, 10)),
+                sd = 1) + 
+          node("W2",
+                distr = "runif",
+                min = 0, max = 1) + 
+          node("W3",
+                distr = "rbern",
+                prob = plogis(-0.5 + 0.7 * W1 + 0.3 * W2)) + 
+          node("Anode",
+                distr = "rbern",
+                prob = plogis(-0.5 - 0.3 * W1 - 0.3 * W2 - 0.2 * W3)) + 
+          node("Y",
+                distr = "rbern",
+                prob = plogis(-0.1 + 1.2 * Anode + 0.1 * W1 + 0.3 * W2 + 0.2 * W3))
+  Dset <- set.DAG(D)
+@
+
+Running the code above results in implicitly assigning a sampling order (temporal order) to each node, based on the
+order in which the nodes were added to the \code{DAG} object \code{D}. Alternatively, one can use the optional
+\code{node()} argument \code{order} to explicitly specify the integer value of the sampling order of each node, as
+described in more detail in the documentation for the \code{node} function.\\
+
+The resulting internal representation of the structural equation model encoded by the \code{DAG} object \code{Dset} can
+be examined as follows (output showing only the first node of \code{Dset}).
+
+<<message=FALSE>>=
+  str(Dset[1])
+@
+
+Figure~\ref{fig:DAG1t} shows the plot of the DAG that is generated by calling function \code{plotDAG}. This DAG is
+implied by the structural equation model specified above and the plotting is accomplished by using the visualization
+functionality from the \pkg{igraph} package \citep{igraph}. The directional arrows represent the functional dependencies
+in the structural equation model. More specifically, the node of origin of each arrow is an extracted node name from the
+\emph{node formula(s)}. Note that the appearance of the resulting diagram can be customized with additional arguments,
+as shown in the example below and in the \code{plotDAG} example in Section~\ref{node2}.
+
+<<eval=FALSE>>=
+  plotDAG(Dset, xjitter = 0.3, yjitter = 0.01, 
+          edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8),
+          vertex_attrs = list(size = 12, label.cex = 0.8))
+@
+
+<<DAG1t, fig.pos='H', fig.width=10,fig.height=8,out.width='0.8\\linewidth', echo=FALSE, message=FALSE, fig.cap='Graphical representation of the structural equation model using a DAG.', pdfcrop=TRUE>>=
+  plotDAG(Dset, xjitter = 0.3, yjitter = 0.01, 
+          edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8),
+          vertex_attrs = list(size = 12, label.cex = 0.8))
+@
+
+\subsection[Simulating observed data (sim)]{Simulating observed data (\code{sim})}\label{simobs1}
+\addcontentsline{toc}{subsection}{Simulating observed data (sim)}
+
+Simulating observed data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG} and
+\code{n} that indicate the causal model and sample size of interest. Below is an example of how to simulate an observed
+dataset with 10,000 observations using the causal model defined in the previous section. The output is a
+\code{data.frame} object.
+
+<<message=FALSE>>=
+  Odat <- sim(DAG = Dset, n = 10000, rndseed = 123)
+@
+
+The format of the output dataset is easily understood by examining the first row of the \code{data.frame} object:
+
+<<message=FALSE>>=
+  Odat[1,]
+@
+
+\subsection[Specifying interventions (+ action)]{Specifying interventions (\code{+ action})}\label{actions1}
+\addcontentsline{toc}{subsection}{Specifying interventions (+ action)}
+
+The example below defines two actions on the treatment node. The first action named \code{"A1"} consists in replacing
+the distribution of the treatment node \code{Anode} with the degenerate distribution at value 1. The second action named
+\code{"A0"} consists in replacing the distribution of the treatment node \code{Anode} with the degenerate distribution
+at value 0. As shown below, these interventions are defined by invoking the \code{ + action} syntax on the existing
+\code{DAG} object. This syntax automatically adds and saves the new intervention object within the original \code{DAG}
+object, without overwriting it.
+
+<<message=FALSE>>=
+  A1 <- node("Anode", distr = "rbern", prob = 1)
+  Dset <- Dset + action("A1", nodes = A1)
+  A0 <- node("Anode", distr = "rbern", prob = 0)
+  Dset <- Dset + action("A0", nodes = A0)
+@
+
+The added actions can be examined by looking at the result of the call \code{A(Dset)}. Note that \code{A(Dset)} returns
+a list of \code{DAG.action} objects, with each \code{DAG.action} encoding a particular post-intervention distribution,
+i.e., it is a modified copy of the original \code{DAG} object, where the original distribution of the node \code{Anode}
+is replaced with the degenerate distribution at value 0 or 1, for actions \code{"A0"} and \code{"A1"}, respectively.
+
+<<message=FALSE>>=
+  names(A(Dset))
+  class(A(Dset)[["A0"]])
+@
+
+The following example shows how to display the modified distribution of the intervention node \code{Anode} under action
+\code{"A0"}:
+
+<<>>=
+A(Dset)[["A0"]]$Anode
+@
+
+To examine the complete internal representation of the \code{DAG.action} object for action \code{"A0"}, invoke the
+\code{str()} function as follows (output not shown):
+
+<<eval=FALSE>>=
+str(A(Dset)[["A0"]])
+@
+
+\subsection[Simulating full data (sim)]{Simulating full data (\code{sim})}\label{simfull1}
+\addcontentsline{toc}{subsection}{Simulating full data (sim)}
+
+Simulating full data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG},
+\code{actions} and \code{n} to indicate the causal model, interventions, and sample size of interest. Full data can be
+simulated for all actions stored in the \code{DAG} object or a subset by setting the \code{actions} argument to the
+vector of the desired action names.\\
+
+The example below shows how to use the \code{sim} function to simulate 100,000 observations for each of the two actions,
+\code{"A1"} and \code{"A0"}. These actions were defined as part of the \code{DAG} object \code{Dset} above. The call to
+\code{sim} below produces a list of two named \code{data.frame} objects, where each \code{data.frame} object contains
+observations simulated from the same post-intervention distribution defined by one particular action only.
+
+<<message=FALSE, cache=cache_opt>>=
+  Xdat1 <- sim(DAG = Dset, actions = c("A1", "A0"), n = 100000, rndseed = 123)
+  names(Xdat1)
+  nrow(Xdat1[["A1"]])
+  nrow(Xdat1[["A0"]])  
+@
+
+The format of the output list is easily understood by examining the first row of each \code{data.frame} object:
+
+<<message=FALSE>>=
+  Xdat1[["A1"]][1, ]
+  Xdat1[["A0"]][1, ]
+@
+
+\subsection{Defining and evaluating various causal target parameters}\label{targets1}
+\addcontentsline{toc}{subsection}{Defining and evaluating various causal target parameters}
+\subsubsection[Causal parameters defined with set.targetE]{Causal parameters defined with \code{set.targetE}}\label{targets1NP}
+
+The first example below defines the causal quantity of interest as the expectation of node \code{Y} under action
+\code{"A1"}:
+
+<<message=FALSE>>=
+  Dset <- set.targetE(Dset, outcome = "Y", param = "A1")
+@
+
+The true value of the above causal parameter is now evaluated by calling the function \code{eval.target} and passing the
+previously simulated full data object \code{Xdat1}.
+
+<<message=FALSE>>=
+  eval.target(Dset, data = Xdat1)$res
+@
+
+Alternatively, \code{eval.target} can be called without the simulated full data, specifying the sample size argument
+\code{n} instead. In this case a full dataset with the user-specified sample size is simulated first.
+
+<<message=FALSE>>=
+  eval.target(Dset, n = 100000, rndseed = 123)$res
+@
+
+The example below defines the causal target parameter as the ATE on the additive scale, i.e. the expectation of \code{Y}
+under action \code{"A1"} minus its expectation under action \code{"A0"}.
+
+<<message=FALSE>>=
+  Dset <- set.targetE(Dset, outcome = "Y", param = "A1-A0")
+  eval.target(Dset, data = Xdat1)$res
+@
+
+Similarly, the ATE on the multiplicative scale can be evaluated as follows:
+
+<<message=FALSE>>=
+  Dset <- set.targetE(Dset, outcome = "Y", param = "A1/A0")
+  eval.target(Dset, data = Xdat1)$res
+@
+
+\subsubsection[Causal parameters defined with set.targetMSM]{Causal parameters defined with \code{set.targetMSM}}\label{targets1MSM}
+
+To specify the MSM target causal parameter, the user must provide the following arguments to \code{set.targetMSM}: (1)
+the \code{DAG} object that contains all and only the actions of interest; (2) \code{outcome}, the name of the outcome
+node (possibly time-varying); (3) for a time-varying outcome node, the vector of time points \code{t} that index the
+outcome measurements of interest; (4) \code{form}, the regression formula defining the working MSM; (5) \code{family},
+the working model family that is passed on to \code{glm}, e.g., \code{family = "binomial"} or \code{family = "gaussian"}
+for a logistic or a linear working model; and (6) for time-to-event outcomes, the logical flag \code{hazard} that
+indicates whether the working MSM describes discrete-time hazards (\code{hazard = TRUE}) or survival probabilities
+(\code{hazard = FALSE}). \\
+
+In the examples above, the two actions \code{"A1"} and \code{"A0"} are defined as deterministic static interventions on
+the node \code{Anode}, setting it to either constant 0 or 1. Thus, each of these two interventions is uniquely indexed
+by the post-intervention value of the node \code{Anode} itself. In the following example, we instead introduce the
+variable $d\in\{0,1\}$ to explicitly index each of the two post-intervention distributions when defining the two actions
+of interest. We then define the target causal parameter as the coefficients of the following linear marginal structural
+model $m(d\:|\:\alpha)=\alpha_{0}+\alpha_{1}d$. As expected, the estimated true value for $\alpha_{1}$ obtained below
+corresponds exactly with the estimated value for the ATE on the additive scale obtained above by running
+\code{set.targetE} with the parameter \code{param = "A1-A0"}.\\
+
+As just described, we now redefine the actions \code{"A1"} and \code{"A0"} by indexing the intervention node formula
+(the distributional parameter \code{prob}) with parameter \code{d} before setting its values to $0$ or $1$ by
+introducing an additional new argument named \code{d} into the \code{action} function call. This creates an action-
+specific attribute variable \code{d} whose value uniquely identifies each of the two actions and that will be included
+as an additional column variable to the simulating full data sets.
+
+<<message=FALSE>>=
+  A1 <- node("Anode", distr = "rbern", prob = d)
+  Dset <- Dset + action("A1", nodes = A1, d = 1)
+  A0 <- node("Anode",distr = "rbern", prob = d)
+  Dset <- Dset + action("A0", nodes = A0, d = 0)
+@
+
+Creating such an action-specific attribute \code{d} allows it to be referenced in the MSM regression formula as shown
+below:
+
+<<message=FALSE, cache=cache_opt>>=
+  msm.form <- "Y ~ d"
+  Dset <- set.targetMSM(Dset, outcome = "Y", form = msm.form, family = "gaussian")
+  msm.res <- eval.target(Dset, n = 100000, rndseed = 123)
+  msm.res$coef
+@
+
+\subsection{Defining node distributions and vectorizing node formula functions} \label{custom}
+\addcontentsline{toc}{subsection}{Defining node distributions and vectorizing node formula functions}
+
+To facilitate the comprehension of the following two subsections, we note that, in the \pkg{simcausal} package,
+simulation of observed or full data follows the temporal ordering of the nodes that define the DAG object and is
+\textbf{vectorized}. More specifically, the simulation of a dataset with sample size \code{n} is carried out by first
+sampling the vector of all \code{n} observations of the first node, before sampling the vector of all \code{n}
+observations of the second node and so on, where the node ranking is defined by the temporal ordering that was
+explicitly or implicitly specified by the user during the creation of the DAG object (see Section~\ref{SEMintro} for a
+discussion of temporal ordering).
+
+\subsubsection{Defining node distributions}
+
+The distribution of a particular node is specified by passing the name of an evaluable \proglang{R} function to the
+\code{distr} argument of the function \code{node}. Such a distribution function must implement the mapping of \code{n}
+independent realizations of the parent nodes into \code{n} independent realizations of this node. In general, any node
+with a lower temporal ordering can be defined as a parent. Thus, such a distribution function requires an argument
+\code{n}, but will also typically rely on additional input arguments referred to as distributional parameters. In
+addition, the output of the distribution function must also be a vector of length \code{n}. Distributional parameters
+must be either scalars or vectors of \code{n} realizations of summary measures of the parent nodes. The latter types of
+distributional arguments are referred to as the \emph{node formula(s)} because they are specified by evaluable
+\proglang{R} expressions. Node formulas are passed as named arguments to the \code{node} function so they can be mapped
+uniquely to the relevant argument of the function that is user-specified by the \code{distr} argument of the \code{node}
+function call. The node formula(s) of any given node may invoke the name(s) of any other node(s) with a lower temporal
+order value. The parents of a particular node are thus defined as the collection of nodes that are referenced by its
+node formula(s). Note that unlike the values of distributional parameters, the value of the argument \code{n} of the
+\code{distr} function is internally determined during data simulation and is set to the sample size value passed to the
+\code{sim} function by the user.\\
+
+For example, as shown below, the pre-written wrapper function for the Bernoulli distribution \code{rbern} is defined
+with two arguments, \code{n} and \code{prob}. When defining a node with the \code{distr} argument set to \code{"rbern"},
+only the second argument must be explicitly user-specified by a distributional parameter named \code{prob} in the call
+to the \code{node} function, e.g., \code{node("N1", distr="rbern", prob = 0.5)}. The argument \code{prob} can be either
+a numeric constant as in the previous example or an evaluable \proglang{R} expression. When \code{prob} is a numeric
+constant, the distribution function \code{rbern} returns \code{n} iid realizations of the Bernoulli random variable with
+probability \code{prob}. When \code{prob} is an \proglang{R} expression (e.g., see the definition of node \code{W3} in
+Section~\ref{node1}) that involves parent nodes, the \code{prob} argument passed to the \code{rbern} function becomes a
+vector of length \code{n}. The value of each of its component is determined by the \proglang{R} expression evaluated
+using one of the \code{n} iid realizations of the parent nodes simulated previously. Thus, the resulting simulated
+independent observations of the child node (e.g., \code{W3} in Section ~\ref{node1}) are not necessarily identically
+distributed if the vector \code{prob} contains distinct values. We note that the \proglang{R} expression in the
+\code{prob} argument is evaluated in the environment containing the simulated observations of all previous nodes (i.e.,
+nodes with a lower temporal order value). \\
+
+To see the names of all pre-written distribution wrapper functions that are specifically optimized for use as
+\code{distr} functions in the \pkg{simcausal} package, invoke \code{distr.list()}, as shown below:
+
+<<message=FALSE>>=
+  distr.list()
+@
+
+For a template on how to write a custom distribution function, see the documentation \code{?rdistr.template} and
+\code{rdistr.template}, as well as any of the pre-written distribution functions above. For example, the \code{rbern}
+function below simply wraps around the standard \proglang{R} function \code{rbinom} to define the Bernoulli random
+variable generator:
+
+<<message=FALSE>>=
+  rbern
+@
+
+Another example on how to write a custom distribution function to define a custom left-truncated normal distribution
+function based on the standard \proglang{R} function \code{rnorm} with arguments \code{mean} and \code{sd} is
+demonstrated below. The truncation level is specified by an additional distributional parameter \code{minval}, with
+default value set to $0$.
+
+<<message=FALSE, results='hide'>>=
+  rnorm_trunc <- function(n, mean, sd, minval = 0) {
+    out <- rnorm(n = n, mean = mean, sd = sd)
+    minval <- minval[1]
+    out[out < minval] <- minval
+    out
+  }
+@
+
+The example below makes use of this function to define the outcome node \code{Y} with positive values only:
+
+<<message=FALSE>>=
+  Dmin0 <- DAG.empty() 
+
+  Dmin0 <- Dmin0 + 
+                  node("W",    distr = "rbern", 
+                        prob = plogis(-0.5)) +
+                  node("Anode", distr = "rbern", 
+                        prob = plogis(-0.5 - 0.3 * W)) + 
+                  node("Y", distr = "rnorm_trunc", 
+                        mean = -0.1 + 1.2 * Anode + 0.3 * W, 
+                        sd = 10)
+
+  Dmin0set <- set.DAG(Dmin0)
+@
+
+In the next example, we overwrite the previous definition of node \code{Y} to demonstrate how alternative values for the
+truncation parameter \code{minval} may be passed by the user as part of the \code{node} function call:
+
+<<message=FALSE>>=
+
+  Dmin0 <- Dmin0 + 
+                  node("Y", distr = "rnorm_trunc", 
+                        mean = -0.1 + 1.2 * Anode + 0.3 * W, 
+                        sd = 10, 
+                        minval = 10)
+
+  Dmin10set <- set.DAG(Dmin0)
+@
+
+Finally, we illustrate how the \code{minval} argument can also be defined as a function of parent node realizations:
+
+<<message=FALSE>>=
+  Dmin0 <- Dmin0 + 
+                  node("Y", distr = "rnorm_trunc", 
+                        mean = -0.1 + 1.2 * Anode + 0.3 * W, 
+                        sd = 10, 
+                        minval = ifelse(Anode == 0, 5, 10))
+
+  Dminset <- set.DAG(Dmin0)
+@
+
+\subsubsection[Vectorizing node formula functions vecfun.add]{Vectorizing node formula functions (\code{vecfun.add})}
+
+As just described, the distributional parameters defining a particular node distribution can be evaluable \proglang{R}
+expressions referred to as \emph{node formulas}. These expressions can contain any build-in or user-defined \proglang{R}
+functions. By default any function inside such an \proglang{R} expression is assumed non-vectorized, except for
+functions on the \pkg{simcausal} built-in list of known vectorized functions. To see this list, call the
+\code{vecfun.all.print} function:
+
+<<message=FALSE>>=
+  vecfun.all.print()  
+@
+
+When parsing node formulas, the default behavior implemented in \pkg{simcausal} is to replace each call to any function
+not on this list (i.e., a function not recognized as vectorized) with a call to the \code{apply} function to loop over
+the rows of the dataset containing the simulated realizations of the parents nodes stored in wide format and to call the
+unrecognized function individually on every row of the data. For example, with the user-defined function \code{power2}
+below, the simulation of observations of the node \code{W3} first involves automatic replacement of the calls
+\code{power2(W1)} and \code{power2(W2)} in the node formulas \code{mean} and \code{sd} with the \code{apply} function
+calls \code{apply(W1, 1, power2)} and \code{apply(W2, 1, power2)}, respectively:
+
+<<message=FALSE,cache=cache_opt>>=
+  power2 <- function(arg) arg^2
+
+  D <- DAG.empty()
+  D <- D + 
+          node("W1", distr = "rnorm", 
+                mean = 0, sd = 1) + 
+          node("W2", distr = "rnorm", 
+                mean = 0, sd = 1) + 
+          node("W3", distr = "rnorm", 
+                mean = power2(W1), sd = power2(W2))
+@
+
+This behavior results in increased computing time that can be avoided as described here. The list of known vectorized
+functions can be easily expanded to include any function \code{funname}, by simply invoking the call
+\code{vecfun.add(funname)} prior to data simulation with the \code{sim} function. Doing this avoids the often
+unnecessary calls to the \code{apply} loops shown above and typically results in a significant performance boost for
+data simulation.\\
+
+The performance gain from vectorization is demonstrated with the \code{power2} function in the example below. We first
+examine the simulation time when \code{power2} is not added to the list of recognized vectorized functions as follows:
+
+<<message=FALSE,cache=cache_opt>>=
+  D1 <- set.DAG(D)
+  (tnonvec <- system.time(sim1nonvec <- simobs(D1, n = 1000000, rndseed = 123)))
+@
+
+Second, we examine the simulation time after adding \code{power2} to the list of recognized vectorized functions as follows:
+
+<<message=FALSE>>=
+  vecfun.add(c("power2"))
+  D1vec <- set.DAG(D)
+  (tvec <- system.time(sim1vec <- simobs(D1vec, n = 1000000, rndseed = 123)))
+  all.equal(sim1nonvec,sim1vec)
+@
+
+We note that data simulation is approximately \Sexpr{round(tnonvec['elapsed']/tvec['elapsed'],0)} times faster with the
+second approach above.\\
+
+To see the names of user-added recognized vectorized functions, call \code{vecfun.print}. To reset this list, call
+\code{vecfun.reset}. Note that the built-in list of known vectorized functions cannot be modified/reset.
+
+<<message=FALSE>>=
+  vecfun.print()
+  vecfun.reset()
+  vecfun.print()
+@
+
+It is important to note that all non-vectorized (or unrecognized vectorized) functions referenced in a node formula,
+such as \code{ifelse1} in the example below, must be declared with at most one argument. Trying to declare such a
+function with more than one argument will result in an error. Indeed, the default behavior when parsing node formulas in
+\pkg{simcausal} is to aggregate the arguments of a node formula function not on the list of recognized vectorized
+functions into a matrix using a call to the \code{cbind} function. This matrix is then passed as a single argument to
+the \code{apply} loop that replaces the call to the user-specified node formula. For example with the custom version of
+the \code{ifelse} function defined below, the call to \code{ifelse1(c(W1, 0.5, 0.1))} is automatically replaced with a
+call to \code{apply(cbind(W1, 0.5, 0.1), 1, ifelse1)}:
+
+<<message=FALSE>>=
+  vecfun.reset()  
+  ifelse1 <- function(arg) {
+    ifelse(arg[1], arg[2], arg[3])
+  }
+
+  D <- DAG.empty()
+  D <- D + 
+          node("W1", distr = "rbern", 
+                prob = 0.05) +
+          node("W2", distr = "rbern", 
+                prob = ifelse1(c(W1, 0.5, 0.1)))
+
+  D2nonvec <- set.DAG(D)
+@
+
+The restriction in the number of arguments for the node formula functions is easily avoided by adding functions such as
+\code{ifelse1} above to the list of recognized vectorized functions. Doing so allows the function to be declared with an
+arbitrary number of arguments. The example below demonstrates the use of the second custom version of \code{ifelse},
+called \code{ifelse2}, which is declared with 3 arguments, added to the list of recognized vectorized functions and then
+called as part of the node formula of \code{W2}:
+
+<<message=FALSE>>=
+  ifelse2 <- function(arg, val1, val2) {
+    ifelse(arg, val1, val2)
+  }
+
+  vecfun.add(c("ifelse2"))
+
+  D <- DAG.empty()
+  D <- D + 
+          node("W1", distr = "rbern", 
+                prob = 0.05) +
+          node("W2", distr = "rbern", 
+                prob = ifelse2(W1, 0.5, 0.1))
+  D2vec <- set.DAG(D)
+@
+
+The performance gain from vectorization is demonstrated below for the previous two custom versions of the \code{ifelse}
+function:
+
+<<message=FALSE>>=
+  (t2nonvec <- system.time(sim2nonvec <- simobs(D2nonvec, n = 100000, rndseed = 123)))
+  (t2vec <- system.time(sim2vec <- simobs(D2vec, n = 100000, rndseed = 123)))
+@
+
+We note that the above data simulation is approximately \Sexpr{round(t2nonvec['elapsed']/t2vec['elapsed'],0)} times
+faster with the \code{ifelse2} function compared to the \code{ifelse1} function. We also note that the above performance
+gain of vectorization will be larger if the sample size \code{n} is increased.
+
+\newpage{}
+\section{Simulation study with multiple time point interventions}\label{simstudy.timevar}
+\addcontentsline{toc}{section}{Simulation study with multiple time point interventions}
+
+In this example we replicate results from the longitudinal data simulation protocol used in two published manuscripts
+\citet{neugebauer2014, neugebauer2015}. We first describe the structural equation model that implies the data generating
+distribution of the observed data, with time-to-event outcome, as reported in Section 5.1 of \citet{neugebauer2015}. We
+then show how to specify this model using the \pkg{simcausal} \proglang{R} interface, simulate observed data, define
+static and dynamic time-varying interventions, simulate full data, and calculate various causal parameters based on
+these interventions. In particular, we replicate estimates of true counterfactual risk differences under the dynamic
+interventions reported in \citet{neugebauer2014}.
+
+\subsection{Specifying the structural equation model}\label{node2}
+\addcontentsline{toc}{subsection}{Specifying the structural equation model}
+
+In this section, we demonstrate how to specify the structural equation model described by the following longitudinal
+data simulation protocol (Section 5.1 of \citet{neugebauer2015}):
+
+\begin{enumerate}
+\item $L_{2}(0)\sim\mathcal{B}(0.05)$ where $\mathcal{B}$ denotes the Bernoulli distribution (e.g., $L_{2}(0)$ 
+represents a baseline value of a time-dependent variable such as low versus high A1c) 
+\item If $L_{2}(0)=1$ then $L_{1}(0)\sim\mathcal{B}(0.5)$, else $L_{1}(0)\sim\mathcal{B}(0.1)$ (e.g., $L_{1}(0)$ 
+represents a time-independent variable such as history of cardiovascular disease at baseline) 
+\item If $(L_{1}(0),L_{2}(0))=(1,0)$ then $A_{1}(0)\sim\mathcal{B}(0.5)$,
+else if $(L_{1}(0),L_{2}(0))=(0,0)$ then $A_{1}(0)\sim\mathcal{B}(0.1)$,
+else if $(L_{1}(0),L_{2}(0))=(1,1)$ then $A_{1}(0)\sim\mathcal{B}(0.9)$,
+else if $(L_{1}(0),L_{2}(0))=(0,1)$ then $A_{1}(0)\sim\mathcal{B}(0.5)$
+(e.g., $A_{1}(0)$ represents the binary exposure to an intensified type 2 diabetes pharmacotherapy)
+\item $A_{2}(0)\sim\mathcal{B}(0)$ (e.g., $A_{2}(0)$ represents occurrence of a right-censoring event) 
+\item for $t=1,\ldots,16$ and as long as $Y(t-1)=0$ (by convention, $Y(0)=0$):
+\begin{enumerate}
+\item $Y(t)\sim\mathcal{B}(\frac{1}{1+\exp{(-(-6.5+L_{1}(0)+4L_{2}(t-1)+0.05*\sum_{j=0}^{t-1}I(L_{2}(j)=0)))}})$
+(e.g., Y(t) represents the indicator of failure such as onset or progression of albuminuria) 
+\item If $A_{1}(t-1)=1$ then $L_{2}(t)\sim\mathcal{B}(0.1)$, else if $L_{2}(t-1)=1$
+then $L_{2}(t)\sim\mathcal{B}(0.9)$, else $L_{2}(t)\sim\mathcal{B}(\min(1,0.1+t/16))$ 
+\item If $A_{1}(t-1)=1$ then $A_{1}(t)=1$, else if $(L_{1}(0),L_{2}(t))=(1,0)$
+then $A_{1}(t)\sim\mathcal{B}(0.3)$, else if $(L_{1}(0),L_{2}(t))=(0,0)$
+then $A_{1}(t)\sim\mathcal{B}(0.1)$, else if $(L_{1}(0),L_{2}(t))=(1,1)$ then $A_{1}(t)\sim\mathcal{B}(0.7)$,
+else if $(L_{1}(0),L_{2}(t))=(0,1)$ then $A_{1}(t)\sim\mathcal{B}(0.5)$
+\item If $t=16$ then $A_{2}(t)\sim\mathcal{B}(1)$ (e.g., administrative end of study), else $A_{2}(t)\sim\mathcal{B}(0)$
+ (e.g., no right-censoring).
+\end{enumerate}
+\end{enumerate}
+
+\newpage{} 
+First, the example below shows how to define the nodes \code{L2}, \code{L1}, \code{A1} and \code{A2} at time
+point \code{t = 0} as Bernoulli random variables, using the distribution function \code{"rbern"}:
+
+% get rid of the gray background:
+% <<message=FALSE,background='white'>>=
+<<message=FALSE>>=
+  library(simcausal)
+  D <- DAG.empty()
+  D <- D + 
+          node("L2", t = 0, distr = "rbern", 
+              prob = 0.05) +
+          node("L1", t = 0, distr = "rbern", 
+              prob = ifelse(L2[0] == 1, 0.5, 0.1)) +
+          node("A1", t = 0, distr = "rbern", 
+              prob = ifelse(L1[0] == 1 & L2[0] == 0, 0.5,
+                        ifelse(L1[0] == 0 & L2[0] == 0, 0.1,
+                          ifelse(L1[0] == 1 & L2[0] == 1, 0.9, 0.5)))) +
+          node("A2", t = 0, distr = "rbern", 
+              prob = 0, EFU = TRUE)
+@
+
+Second, the example below shows how one may use the \code{node} function with node formulas based on the square bracket
+function \code{'['} to easily define the time-varying nodes \code{Y}, \code{L1}, \code{A1} and \code{A2} simultaneously
+for all subsequent time points \code{t} ranging from 1 to 16:
+
+<<message=FALSE>>=
+  t.end <- 16
+  D <- D + 
+          node("Y", t = 1:t.end, distr = "rbern",
+              prob = 
+                plogis(-6.5 + L1[0] + 4 * L2[t-1] + 0.05 * sum(I(L2[0:(t-1)] == rep(0, t)))), 
+              EFU = TRUE) +
+          node("L2", t = 1:t.end, distr = "rbern",
+              prob = 
+                ifelse(A1[t-1] == 1, 0.1, 
+                  ifelse(L2[t-1] == 1, 0.9, min(1, 0.1 + t / 16)))) +
+          node("A1", t = 1:t.end, distr = "rbern", 
+              prob = ifelse(A1[t-1] == 1, 1,
+                        ifelse(L1[0] == 1 & L2[t] == 0, 0.3,
+                          ifelse(L1[0] == 0 & L2[t] == 0, 0.1,
+                            ifelse(L1[0] == 1 & L2[t] == 1, 0.7, 0.5))))) +
+          node("A2", t = 1:t.end, distr = "rbern", 
+              prob = {if(t == 16) {1} else {0}},
+              EFU = TRUE)
+  lDAG <- set.DAG(D)
+@
+
+Note that the \code{node} formulas specified with the \code{prob} argument above use the generic time variable \code{t}
+both outside and inside the square-bracket vector syntax. For example, the conditional distribution of the time-varying
+node \code{Y} is defined by an \proglang{R} expression that contains the syntax \code{sum(I(L2[0:(t - 1)] == rep(0,
+t)))}, which evaluates to different \proglang{R} expressions, as \code{t} ranges from 0 to 16:
+\begin{enumerate}
+\item \code{sum(I(L2[0] == 0))}, for \code{t = 1}; and 
+\item \code{sum(I(L2[0:1] == c(0, 0)))}, for \code{t = 2}, \ldots, \code{sum(I(L2[0:16] == c(0, ..., 0)))}, 
+for \code{t = 16}.
+\end{enumerate}
+
+For more details on the specification of node formulas, see Section~\ref{custom}.\\
+
+One can visualize the observed data generating distribution defined in the \code{lDAG} object as shown in
+Figures~\ref{fig:DAGlong} and \ref{fig:DAGlongtmax3} by calling \code{plotDAG}. The directional arrows represent the
+functional dependencies in the structural equation model. More specifically, the node of origin of each arrow is an
+extracted node name from the \emph{node formula(s)}. Note that the appearance of the resulting diagram can be customized
+with additional arguments, as shown in the following examples. The argument \code{tmax} can be used to restrict the
+plotting of the DAG object to only the nodes indexed by time points below the user-specified \code{tmax} value, as shown
+in Figure~\ref{fig:DAGlongtmax3}.\\
+
+Figure~\ref{fig:DAGlong} is created by running the following code:
+
+<<eval=FALSE>>=
+  plotDAG(lDAG, xjitter = 0.3, yjitter = 0.01)
+@
+
+Figure~\ref{fig:DAGlongtmax3} is created by running the following code:
+
+<<eval=FALSE>>=
+  plotDAG(lDAG, tmax = 3, xjitter = 0.3, yjitter = 0.02,
+        edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8), 
+        vertex_attrs = list(size = 12, label.cex = 0.8))    
+@
+
+<<DAGlong, echo=FALSE, message=FALSE, fig.pos='H', out.width='0.8\\linewidth', fig.cap='Graphical representation of the structural equation model using a DAG', pdfcrop=TRUE>>=
+  plotDAG(lDAG, xjitter = 0.3, yjitter = 0.01)
+@
+<<DAGlongtmax3, echo=FALSE, message=FALSE, fig.pos='H', out.width='0.8\\linewidth', fig.cap='Graphical representation of a portion of the structural equation model using a DAG. Only the nodes indexed by time points lower than or equal to 3 are represented.', pdfcrop=TRUE>>=
+  plotDAG(lDAG, tmax = 3, xjitter = 0.3, yjitter = 0.02,
+          edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8), 
+          vertex_attrs = list(size = 12, label.cex = 0.8))    
+@
+
+\subsection[Simulating observed data (sim)]{Simulating observed data (\code{sim})}\label{simobs2}
+\addcontentsline{toc}{subsection}{Simulating observed data (sim)}
+
+Simulating observed data is accomplished by calling the function \code{sim}
+and specifying its arguments \code{DAG} and \code{n} that indicate
+the causal model and sample size of interest. Below is an example of how to simulate
+an observed dataset with $10,000$ observations using the causal model
+defined previously. The output is a \code{data.frame} object.
+
+<<message=FALSE>>=
+  Odat <- sim(DAG = lDAG, n = 10000, rndseed = 123)
+@
+
+The format of the output dataset is easily understood by examining the first 10 columns of the first row of the
+\code{data.frame} object:
+
+<<>>=
+  Odat[1,1:10]
+@
+
+\subsection[Specifying interventions (+ action)]{Specifying interventions (\code{+ action})}\label{actions2}
+\addcontentsline{toc}{subsection}{Specifying interventions (+ action)}
+
+\subsubsection{Dynamic interventions}\label{dynact} The following two dynamic interventions on the time-varying node
+\code{A1} of the structural equation model encoded by the previously defined \code{lDAG} object were studied in
+\citet{neugebauer2014}: `\emph{Initiate treatment $A_{1}$ the first time $t$ that the covariate $L_{2}$ is greater than
+or equal to $\theta$ and continue treatment thereafter (i.e., $\bar{A}_{1}(t-1)=0$ and $A(t)=1, A(t+1)=1$, $\ldots$)}',
+for $\theta=0,1$. The example below demonstrates how to specify these two dynamic interventions.\\
+
+First, we define the list of intervention nodes and their post-intervention distributions. Note that these distributions
+are indexed by the attribute \code{theta}, whose value is not yet defined:
+
+<<>>=
+  act_theta <-c(node("A1", t = 0, distr = "rbern", 
+                      prob = ifelse(L2[0] >= theta , 1, 0)),
+                node("A1", t = 1:(t.end), distr = "rbern", 
+                      prob = ifelse(A1[t-1] == 1, 1, ifelse(L2[t] >= theta, 1, 0))))
+@
+
+Second, we add the two dynamic interventions to the \code{lDAG} object while defining the value of \code{theta} for each
+intervention:
+
+<<message=FALSE>>=
+  Ddyn <- lDAG
+  Ddyn <- Ddyn + action("A1_th0", nodes = act_theta, theta = 0)
+  Ddyn <- Ddyn + action("A1_th1", nodes = act_theta, theta = 1)
+@
+
+We refer to the argument \code{theta} passed to the \code{+action} function as an \emph{action attribute}.\\
+
+One can select and inspect particular actions saved in a DAG object by invoking the function \code{A()}:
+
+<<>>=
+  class(A(Ddyn)[["A1_th0"]])
+  A(Ddyn)[["A1_th0"]]
+@
+
+Figure~\ref{fig:actDAGlongtmax3} shows the plot of the \code{DAG.action} object associated with the dynamic intervention
+named \code{"A1_th0"} (with plotting restricted to nodes indexed by time points lower than or equal to 3). Note that the
+intervention nodes are marked in red and that the action attribute \code{theta} is represented as a separate node. The
+following code is used to generate Figure~\ref{fig:actDAGlongtmax3}:
+
+<<eval=FALSE>>=
+  plotDAG(A(Ddyn)[["A1_th0"]], tmax = 3, xjitter = 0.3, yjitter = 0.02,
+        edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8),
+        vertex_attrs = list(size = 15, label.cex = 0.7))
+@
+<<actDAGlongtmax3, echo=FALSE, fig.pos='H', message=FALSE, out.width='0.8\\linewidth', fig.cap='Graphical representation of the modified structural equation model resulting from a dynamic intervention. Only the nodes indexed by time points lower than or equal to 3 are represented.', pdfcrop=TRUE>>=
+  plotDAG(A(Ddyn)[["A1_th0"]], tmax = 3, xjitter = 0.3, yjitter = 0.02,
+        edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8),
+        vertex_attrs = list(size = 15, label.cex = 0.7))    
+@
+
+The distribution of some or all of the the intervention nodes that define an action saved within a \code{DAG} object can
+be modified by adding a new intervention object with the same action name to the \code{DAG} object. The new intervention
+object can involve actions on only a subset of the original intervention nodes for a partial modification of the
+original action definition. For example, the code below demonstrates how the existing action \code{"A1\_th0"} with the
+previously defined dynamic and deterministic intervention on the node \code{A1[0]} is partially modified by replacing
+the intervention distribution for the node \code{A1[0]} with a deterministic and static intervention defined by a
+degenerate distribution at value $1$. Note that the other intervention nodes previously defined as part of the action
+\code{"A1\_th0"} remain unchanged.
+
+<<message=FALSE>>=
+  A(Ddyn)[["A1_th0"]]$A1_0
+  Ddyntry <- Ddyn + action("A1_th0", nodes = node("A1", t = 0, distr = "rbern", prob = 0))
+  A(Ddyntry)[["A1_th0"]]$A1_0
+@
+
+Similarly, some or all of the action attributes that define an action saved within a \code{DAG} object can be modified
+by adding a new intervention object with the same action name but a different attribute value to the \code{DAG} object.
+This functionality is demonstrated with the example below in which the previous value $0$ of the action attribute
+\code{theta} that defines the action named \code{"A1_th0"} is replaced with the value $1$ and in which a new attribute
+\code{newparam} is simultaneously added to the previously defined action \code{"A1_th0"}:
+
+<<message=FALSE>>=
+  A(Ddyntry)[["A1_th0"]]
+  Ddyntry <- Ddyntry + action("A1_th0", nodes = act_theta, theta = 1, newparam = 100)
+  A(Ddyntry)[["A1_th0"]]
+@
+
+Finally, we note that an action attribute can also be defined as a time-varying vector, rather than a scalar, i.e., a
+vector of scalars that are each indexed by a time point. This functionality is demonstrated in the example below to
+define interventions that are indexed by a scalar \code{theta} whose value changes over time. Note that in this example
+the square-bracket syntax \code{theta[t]} is used for referencing the time-varying values of the action attribute
+\code{theta}. More details on the use of time-varying action attributes are provided in the next section.
+
+<<>>=
+  act_theta_t <-c(node("A1",t = 0, distr = "rbern", 
+                      prob = ifelse(L2[0] >=  theta[t], 1, 0)),
+                  node("A1",t = 1:t.end, distr = "rbern", 
+                      prob = ifelse(A1[t-1]==1, 1, ifelse(L2[t] >= theta[t], 1, 0)))
+                  )
+  Ddyntry <- Ddyntry + action("A1_th0", nodes = act_theta_t, theta = rep(0,(t.end)+1))
+  A(Ddyntry)[["A1_th0"]]
+@
+
+\subsubsection{Static interventions}\label{staticact}
+
+Here we diverge from the replication of simulation results presented in \citet{neugebauer2014}. Instead, we build on the
+structural equation model introduced in that paper to illustrate the specification of static interventions on the
+treatment nodes \code{A1}. These static interventions are defined by more or less early treatment initiation during
+follow-up followed by subsequent treatment continuation. Each of these static interventions is thus uniquely identified
+by the time when the measurements of the time-varying node \code{A1} switch from value $0$ to $1$. The time of this
+value switch is represented by the parameter \code{tswitch} in the code below. Note that the value \code{tswitch = 16}
+identifies the static intervention corresponding with no treatment initiation during follow-up in our example while the
+values $0$ through $15$ represent $16$ distinct interventions representing increasingly delayed treatment initiation
+during follow-up.\\
+
+First, we define the list of intervention nodes and their post-intervention distributions. Note that these distributions
+are indexed by the attribute \code{tswitch}, whose value is not yet defined:
+
+<<message=FALSE>>=
+  `%+%` <- function(a, b) paste0(a, b)
+  Dstat <- lDAG
+  act_A1_tswitch <- node("A1",t = 0:(t.end), distr = "rbern", 
+                        prob = ifelse(t >= tswitch, 1, 0))
+@
+
+Second, we add the 17 static interventions to the \code{lDAG} object while defining the value of \code{tswitch} for each
+intervention:
+
+<<message=FALSE, cache=cache_opt>>=
+  tswitch_vec <- (0:t.end)
+  for (tswitch_i in tswitch_vec) {
+    abar <- rep(0, length(tswitch_vec))
+    abar[which(tswitch_vec >= tswitch_i)] <- 1
+    Dstat <- Dstat + action("A1_ts"%+%tswitch_i, 
+                            nodes = act_A1_tswitch,
+                            tswitch = tswitch_i,
+                            abar = abar)
+  }
+@
+
+Note that in addition to the action attribute \code{tswitch}, each intervention is also indexed by an additional action
+attribute \code{abar} that also uniquely identifies the intervention and that represents the actual sequence of
+treatment decisions that defines the intervention, i.e., $\bar{a}(tswitch-1)=0$, $a(tswitch)=1$, $\ldots$:
+
+<<message=FALSE>>=
+    A(Dstat)[["A1_ts3"]]
+@
+
+The purpose of this additional action attribute \code{abar} will become clear when we illustrate the definition of
+target parameters defined by working MSMs based on these 17 static interventions in Section~\ref{MSMwS.2} (Example 7 of
+\code{set.targetMSM}).\\
+
+Figure~\ref{fig:act2DAGlongtmax3} shows the plot of the \code{DAG.action} object associated with the action named
+\code{"A1_ts3"} (with plotting restricted to nodes indexed by time points lower than or equal to 3 and with exclusion of
+the action attribute \code{"abar"} from the plot). Note that the intervention nodes are marked in red by default. The
+following code is used to generate Figure~\ref{fig:act2DAGlongtmax3}:
+
+<<eval=FALSE>>=
+  plotDAG(A(Dstat)[["A1_ts3"]], tmax = 3, xjitter = 0.3, yjitter = 0.02,
+        edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8),
+        vertex_attrs = list(size = 15, label.cex = 0.7), excludeattrs = "abar")
+@
+<<act2DAGlongtmax3, echo=FALSE,fig.pos='H', message=FALSE, out.width='0.8\\linewidth', fig.cap='Graphical representation of the modified structural equation model resulting from a static intervention. Only the nodes indexed by time points lower than or equal to 3 are represented. The action attribute \\code{abar} is also not represented.', pdfcrop=TRUE>>=
+  plotDAG(A(Dstat)[["A1_ts3"]], tmax = 3, xjitter = 0.3, yjitter = 0.02,
+        edge_attrs = list(width = 0.5, arrow.width = 0.4, arrow.size = 0.8),
+        vertex_attrs = list(size = 15, label.cex = 0.7), excludeattrs = "abar")
+@
+
+\subsection[Simulating full data (sim)]{Simulating full data (\code{sim})}\label{simfull2}
+\addcontentsline{toc}{subsection}{Simulating full data (sim)}
+
+Simulating full data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG},
+\code{actions} and \code{n} to indicate the causal model, interventions, and sample size of interest. The full data can
+be simulated for all actions stored in the \code{DAG} object or a subset by setting the \code{actions} argument to the
+vector of the desired-action names.
+
+\subsubsection{Dynamic interventions}\label{simfull2.dyn}
+
+The example below shows how to use the \code{sim} function to simulate 100,000 observations for each of the two dynamic
+actions, \code{"A1_th0"} and \code{"A1_th1"}, defined in Section~\ref{dynact}. The call to \code{sim} below produces a
+list of two named \code{data.frame} objects, where each \code{data.frame} object contains observations simulated from
+the same post-intervention distribution defined by one particular action only.
+
+<<message=FALSE, cache=cache_opt>>=
+  Xdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 100000, rndseed = 123)
+  nrow(Xdyn[["A1_th0"]])
+  nrow(Xdyn[["A1_th1"]])
+  names(Xdyn)
+@
+
+The default format of the output list generated by the \code{sim} function is easily understood by examining the first
+$15$ columns of the first row of each \code{data.frame} object:
+
+<<message=FALSE>>=
+  Xdyn[["A1_th0"]][1, 1:15]
+  Xdyn[["A1_th1"]][1, 1:15]
+@
+
+\subsubsection{Static interventions}\label{simfull2.stat}
+
+This example shows how to use the \code{sim} function to simulate 1,000 observations for each of the 17 static actions
+defined in Section \ref{staticact}. The call to the \code{sim} function below produces a list of named \code{data.frame}
+objects, where each \code{data.frame} object contains observations simulated from the same post-intervention
+distribution defined by one particular action only.
+
+<<message=FALSE, cache=cache_opt>>=
+  Xstat <- sim(Dstat, actions = names(A(Dstat)), n = 1000, rndseed = 123)
+  length(Xstat)
+  nrow(Xstat[["A1_ts3"]])
+@
+
+The default format of the output list generated by the \code{sim} function is easily understood by examining the first
+row of the \code{data.frame} object associated with the action \code{"A1_ts3"}:
+
+<<message=FALSE>>=
+  Xstat[["A1_ts3"]][1, ]
+@
+
+\subsection[Converting datasets from wide to long format (DF.to.long)]{Converting a dataset from \emph{wide} to \emph{long} format (\code{DF.to.long})}\label{longdat}
+\addcontentsline{toc}{subsection}{Converting datasets from wide to long format (DF.to.long)}
+
+The specification of structural equation models based on time-varying nodes such as the one described in
+Section~\ref{node2} allows for simulated (observed or full) data to be structured in either long or wide formats. Below,
+we illustrate these two alternatives. We note that, by default, simulated (observed or full) data from the \code{sim}
+function are stored in wide format. The data output format from the \code{sim} function can, however, be changed to the
+long format by setting the \code{wide} argument of the \code{sim} function to \code{FALSE} or, equivalently, by applying
+the function \code{DF.to.long} to an existing simulated dataset in wide format.\\
+
+The following code demonstrates the default data formatting behavior of the \code{sim} function and how this behavior
+can be modified to generate data in the long format:
+
+<<message=FALSE>>=
+  Odat.wide <- sim(DAG = lDAG, n = 1000, wide = TRUE, rndseed = 123)
+  Odat.wide[1:2, 1:18]
+  Odat.long <- sim(DAG = lDAG, n = 1000, wide = FALSE, rndseed = 123)
+  Odat.long[1:10, ]
+@
+
+As with observed data, the default behavior of the \code{sim} function can be changed so that simulated full data are
+instead structured in long format:
+
+<<message=FALSE, cache=cache_opt>>=
+  lXdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 100000, wide = FALSE, rndseed = 123)
+  head(lXdyn[["A1_th0"]], 5)
+@
+
+The following example demonstrates how the function \code{DF.to.long} can be used to convert simulated (full or
+observed) data stored in wide format to long format:
+
+<<message=FALSE>>=
+  Odat.long2 <- DF.to.long(Odat.wide)
+  all.equal(Odat.long, Odat.long2)
+@
+
+\subsection[Implementing imputation by last time point value carried forward (doLTCF)]{Implementing imputation by \emph{last time point value carried forward} (\code{doLTCF})}\label{LTCFdat}
+\addcontentsline{toc}{subsection}{Implementing imputation by last time point value carried forward (doLTCF)}
+
+As described in Sections~\ref{SEMintro} and \ref{introsim}, the default behavior of the \code{sim} function consists in
+setting all nodes that temporally follow an \code{EFU} node whose simulated value is 1 to missing (i.e., \code{NA}). The
+argument \code{LTCF} of the \code{sim} function can however be used to change this default behavior and impute some of
+these missing values with \emph{last time point value carried forward} (LTCF). More specifically, only the missing
+values of time-varying nodes (i.e., those with non-missing \code{t} argument) that follow the end of follow-up event
+encoded by the \code{EFU} node specified by the \code{LTCF} argument will be imputed. Equivalently, one can use the
+function \code{doLTCF} to apply the same \emph{last time point value carried forward} imputation to an existing
+simulated dataset obtained from the function \code{sim} that was called with its default imputation setting (i.e., with
+no \code{LTCF} argument). Illustration of the use of this LTCF imputation functionality is given in
+Section~\ref{Ex1survMSM} (Example 1 of \code{set.targetMSM}).\\
+
+The following code demonstrates the default data format of the \code{sim} function after an end of follow-up event and
+how this behavior can be modified to generate data with LTCF imputation by either using the \code{LTCF} argument of the
+\code{sim} function or by calling the \code{doLTCF} function.
+
+<<message=FALSE,warning=FALSE>>=
+  Odat.wide <- sim(DAG = lDAG, n = 1000, rndseed = 123)
+  Odat.wide[c(11,76), 1:18]
+  Odat.wideLTCF <- sim(DAG = lDAG, n = 1000, LTCF = "Y", rndseed = 123)
+  Odat.wideLTCF[c(11,76), 1:18]
+@
+
+The code below demonstrates how to use the \code{doLTCF} function to perform LTCF imputation on already existing data
+simulated with the \code{sim} function based on its default non-imputation behavior:
+
+<<message=FALSE,warning=FALSE>>=
+  Odat.wideLTCF2 <- doLTCF(data = Odat.wide, LTCF = "Y")
+  Odat.wideLTCF2[c(11,76), 1:18]
+  all.equal(Odat.wideLTCF, Odat.wideLTCF2)
+@
+
+\subsection{Defining and evaluating various causal target parameters}\label{targets2}
+\addcontentsline{toc}{subsection}{Defining and evaluating various causal target parameters}
+\subsubsection[Causal parameters defined with set.targetE]{Causal parameters defined with \code{set.targetE}}\label{targets2NP}
+
+\paragraph{Example 1.} In the example below, we first define two causal target parameters as two vectors, each containing the expectations of
+the node \code{Y[t]}, for time points \code{t}=1, $\ldots$, 16, under the post-intervention distribution defined by one
+of the two dynamic interventions \code{"A1_th0"} and \code{"A1_th1"} defined in Section~\ref{dynact}. Second, we
+evaluate these target parameters using the full data simulated previously in Section~\ref{simfull2.dyn}. Third, we map
+the resulting estimates of cumulative risks into estimates of survival probabilities. Fourth, we plot the corresponding
+two counterfactual survival curves using the \pkg{simcausal} routine \code{plotSurvEst} as shown in
+Figure~\ref{fig:survfig1}. Finally, we note that Figure~\ref{fig:survfig1} replicates the simulation study results
+reported in Figure 4 of \citet{neugebauer2014}.
+
+<<message=FALSE, cache=cache_opt>>=
+  Ddyn <- set.targetE(Ddyn, outcome = "Y", t = 1:16, param = "A1_th1")
+  surv_th1 <- 1 - eval.target(Ddyn, data = Xdyn)$res
+  Ddyn <- set.targetE(Ddyn, outcome = "Y", t = 1:16, param = "A1_th0");
+  surv_th0 <- 1 - eval.target(Ddyn, data = Xdyn)$res
+@
+
+<<survfig1, fig.pos='htb!', fig.width=8,fig.height=7,out.width='.6\\linewidth', message=FALSE, fig.cap='Estimates of the true survival curves under the two dynamic interventions'>>=
+  plotSurvEst(surv = list(d_theta1 = surv_th1, d_theta0 = surv_th0),
+              xindx = 1:17,
+              ylab = "Counterfactual survival for each intervention",
+              ylim = c(0.75,1.0))
+@
+
+\paragraph{Example 2.} In the example below, we first define the causal target parameters as the ATE on the additive
+scale (cumulative risk differences) and the ATE on the multiplicative scale (cumulative risk ratios), for the two
+dynamic interventions (\code{"A1_th1"} and \code{"A1_th0"}) defined in Section~\ref{dynact} at time point \code{t = 12}.
+Second, we evaluate these target parameters using the previously simulated full data from Section~\ref{simfull2.dyn}.\\
+
+ATE on the additive scale:
+
+<<message=FALSE, cache=cache_opt>>=
+  Ddyn <- set.targetE(Ddyn, outcome = "Y", t = 12, param = "A1_th1-A1_th0")
+  (psi <- eval.target(Ddyn, data = Xdyn)$res)
+@
+
+ATE on the multiplicative scale:
+
+<<message=FALSE, cache=cache_opt>>=
+  Ddyn <- set.targetE(Ddyn, outcome = "Y", t = 12, param = "A1_th0/A1_th1")
+  eval.target(Ddyn, data = Xdyn)$res
+@
+
+We also note that the above result for the ATE on the additive scale (\code{psi}=\Sexpr{psi}) replicates the simulation
+result reported for $\psi$ in Section 5.1 and Figure 4 of \citet{neugebauer2014}, where $\psi$ was defined as the
+difference between the cumulative risks of failure at $t_0 = 12$ for the two dynamic interventions $d_1$ and $d_0$.
+
+\subsubsection[Causal parameters defined with set.targetMSM]{Causal parameters defined with \code{set.targetMSM}}\label{targets2MSM}
+
+In Section~\ref{targets1MSM}, we described the arguments of the function \code{set.targetMSM} that the user must specify
+to define MSM target causal parameters. They include the specification of the argument \code{form} which encodes the
+working MSM formula. This formula can only be a function of the time index \code{t}, action attributes that uniquely
+identify each intervention of interest, and baseline nodes (defined as nodes that precede the earliest intervention
+node). Both baseline nodes that are measurements of time-varying nodes and time-varying action attributes must be
+referenced in the \proglang{R} expression passed to the \code{form} argument within the wrapping syntax \code{S(...)} as
+illustrated in several examples below.
+
+\paragraph{Example 1. Working dynamic MSM for survival probabilities over time.}\label{Ex1survMSM}  Here, we illustrate
+the evaluation of the counterfactual survival curves $E(Y_{d_{\theta}}(t))$ for $t=1, \ldots, 16$ under the dynamic
+interventions $d_{\theta}$ for $\theta=0,1$ introduced in Section~\ref{dynact} using the following pooled working
+logistic MSM: $$ \mbox{expit}\left(\alpha_{0}+\alpha_{1}\theta+\alpha_{2}t+\alpha_{3}t\theta\right),  $$ where the true
+values of the coefficients $(\alpha_{i},i=0,\ldots,3)$ define the target parameters of interest. First, we define these
+target parameters:
+
+<<message=FALSE>>=
+  msm.form <- "Y ~ theta + t + I(theta*t)"
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, form = msm.form, 
+                        family = "binomial", hazard = FALSE)
+@
+
+Note that when the outcome is a time-varying node of type \code{EFU}, the argument \code{hazard = FALSE} indicates that
+the working MSM of interest is a model for survival probabilities. The argument \code{family = "binomial"} indicates
+that the working model is a logistic model. Second, we evaluate the coefficients of the working model:
+
+<<message=FALSE, cache=cache_opt>>=
+  MSMres <- eval.target(Ddyn, n = 100000, rndseed = 123)
+  MSMres$coef
+@
+
+We also note that no previously simulated full data were passed as argument to the function \code{eval.target} above.
+Instead, the sample size argument \code{n} was specified and the routine will thus first sample \code{n = 10,000}
+observations from each of the two post-intervention distributions before fitting the working MSM with these full data to
+derive estimates of the true coefficient values. Alternatively, the user could have passed the previously simulated full
+data. Note however that in this case, the user must either simulate full data by calling the \code{sim} function with
+the argument \code{LTCF = "Y"} or convert the previously simulated full data with the \emph{last time point value
+carried forward} imputation function \code{doLTCF}. Both approaches are described in Section~\ref{LTCFdat} and the
+latter approach is demonstrated in the example below, where we first impute the \code{EFU} outcome \code{Y} in the
+previously simulated full data \code{Xdyn}.
+
+<<message=FALSE, cache=cache_opt>>=
+  XdynLTCF <- lapply(Xdyn, doLTCF, LTCF = "Y")
+  eval.target(Ddyn, data = XdynLTCF)$coef
+@
+
+The resulting coefficient estimates can be mapped into estimates of the two counterfactual survival curves and plotted
+as shown in Figure~\ref{fig:survfig2} using the \code{plotSurvEst} function:
+
+<<survfig2, fig.pos='htb!', fig.width=8,fig.height=7,out.width='.6\\linewidth', message=FALSE, fig.cap='Survival curve estimates evaluated based on working MSM 1'>>=
+  surv_th0 <- 1 - predict(MSMres$m, newdata = data.frame(theta = rep(0, 16), t = 1:16), 
+                          type = "response")
+  surv_th1 <- 1 - predict(MSMres$m, newdata = data.frame(theta = rep(1, 16), t = 1:16), 
+                          type = "response")
+  plotSurvEst(surv = list(MSM_theta1 = surv_th1, MSM_theta0 = surv_th0),
+              xindx = 1:16,
+              ylab = "MSM Survival, P(T>t)",
+              ylim = c(0.75, 1.0))
+@
+
+\paragraph{Example 2. More complex working dynamic MSM for survival probabilities over time.} The previous example can be modified to illustrate the evaluation of the survival curves of interest with a more
+flexible (i.e., more non-parametric) working MSM as follows:
+
+<<message=FALSE, cache=cache_opt>>=
+
+  msm.form <- "Y ~ theta + t + I(t^2) + I(t^3) + I(t^4) + I(t^5) + I(t*theta) + I(t^2*theta) + 
+                I(t^3*theta) + I(t^4*theta) + I(t^5*theta)"
+
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, formula = msm.form, 
+                        family = "binomial", hazard = FALSE)
+  MSMres2 <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres2$coef
+@
+
+<<survfig3, fig.pos='htb!', fig.width=8,fig.height=7,out.width='.6\\linewidth', message=FALSE, fig.cap='Survival curve estimates evaluated based on working MSM 2'>>=
+  surv_th0 <- 1 - predict(MSMres2$m, newdata = data.frame(theta = rep(0, 16), t = 1:16),
+                          type = "response")
+  surv_th1 <- 1 - predict(MSMres2$m, newdata = data.frame(theta = rep(1, 16), t = 1:16),
+                          type = "response")
+  plotSurvEst(surv = list(MSM_theta1 = surv_th1, MSM_theta0 = surv_th0),
+              xindx = 1:16,
+              ylab = "MSM Survival, P(T>t)",
+              ylim = c(0.75, 1.0))  
+@
+
+The resulting estimates of the survival curves shown in Figure~\ref{fig:survfig3} are indeed visually closer to the true
+survival curves reported in Figure 4 of \citet{neugebauer2014}.
+
+
+\paragraph{Example 3. Saturated dynamic MSM for survival probabilities over time.}\label{saturMSM} Here, we further
+modify the working model formula by specifying a saturated MSM to directly replicate the results reported in Figure 4 of
+\citet{neugebauer2014} that are based on a non-parametric MSM approach:
+
+<<message=FALSE, cache=cache_opt>>=
+  msm.form <- "Y ~ theta + as.factor(t) + as.factor(t):theta "
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, formula = msm.form, 
+                        family = "binomial", hazard = FALSE)
+  MSMres3 <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres3$coef
+@
+
+<<survfig4, fig.pos='htb!', fig.width=8,fig.height=7,out.width='.6\\linewidth', message=FALSE, fig.cap='Survival curve estimates evaluated based on working MSM 3'>>=
+  surv_th0 <- 1 - predict(MSMres3$m, newdata = data.frame(theta = rep(0, 16), t = 1:16),
+                          type = "response")
+  surv_th1 <- 1 - predict(MSMres3$m, newdata = data.frame(theta = rep(1, 16), t = 1:16),
+                          type = "response")
+  plotSurvEst(surv = list(MSM_theta1 = surv_th1, MSM_theta0 = surv_th0),
+              xindx = 1:16,
+              ylab = "MSM Survival, P(T>t)",
+              ylim = c(0.75, 1.0))
+@
+
+The resulting estimates of the survival curves shown in Figure~\ref{fig:survfig4} approximate that reported in Figure 4
+of \citet{neugebauer2014}. Differences can be explained by the relative small sample size of the full data based on
+which the following plot is based (\code{n=1,000} here vs. \code{n=1,000,000} in the simulation study from
+\citet{neugebauer2014}).
+
+\paragraph{Example 4. Working dynamic MSM for discrete-time hazards over time.} Here, we illustrate the evaluation of
+discrete-time hazards $E(Y_{d_{\theta}}(t))|Y_{d_{\theta}}(t-1)=0)$, for $t=1,\ldots,16$ under the dynamic interventions
+$d_{\theta}$, for $\theta=0,1$ introduced in Section~\ref{dynact} using the following pooled working logistic MSM: $$
+\mbox{expit}\left(\alpha_{0}+\alpha_{1}\theta+\alpha_{2}t+\alpha_{3}t\theta\right), $$ where the true values of
+coefficients $(\alpha_{i},i=0,\ldots,3)$ define the target parameters of interest. First, we define these target
+parameters:
+
+<<>>=
+  msm.form <- "Y ~ theta + t + I(theta*t)"
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, form = msm.form, 
+                        family = "binomial", hazard = TRUE)
+@
+
+Note that when the outcome is a time-varying node of type \code{EFU}, the argument \code{hazard = TRUE} indicates that
+the working MSM of interest is now a model for hazards.\\
+
+Second, we evaluate the coefficients of the working model:
+
+<<message=FALSE, cache=cache_opt>>=
+  MSMres <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres$coef
+@
+
+Note that no previously simulated full data were passed as argument to the call to \code{eval.target} above. Instead,
+the sample size argument \code{n} was specified and the routine will thus first sample \code{n=10,000} observations from
+each of the two post-intervention distributions before fitting the working MSM with these full data to derive estimates
+of the true coefficient values. Alternatively, the user could have passed the previously simulated full data using the
+argument \code{data = Xdyn}.
+
+The resulting coefficient estimates can be mapped into estimates of the two counterfactual hazard curves and plotted as
+shown in Figure~\ref{fig:survfig5} using the \code{plotSurvEst} function:
+
+<<survfig5, fig.pos='htb!', fig.width=8,fig.height=7,out.width='.6\\linewidth', message=FALSE, fig.cap='Hazard estimates evaluated based on working MSM 4'>>=
+  h_th0 <- predict(MSMres$m, newdata = data.frame(theta = rep(0, 16), t = 1:16), 
+                  type = "response")
+  h_th1 <- predict(MSMres$m, newdata = data.frame(theta = rep(1, 16), t = 1:16), 
+                  type = "response")
+  plotSurvEst(surv = list(MSM_theta1 = h_th1, MSM_theta0 = h_th0),
+              xindx = 1:16,
+              ylab = "MSM hazard function",
+              ylim = c(0.0, 0.03))
+@
+
+Alternatively, the resulting coefficient estimates can also be mapped into estimates of the two counterfactual survival
+curves and plotted as shown in Figure~\ref{fig:survfig6} using the \code{plotSurvEst} function:
+
+<<survfig6, fig.pos='htb!', fig.width=8,fig.height=7,out.width='.6\\linewidth', message=FALSE, fig.cap='Survival curve estimates evaluated based on working MSM 4'>>=
+  Surv_h_th0 <- cumprod(1 - h_th0)
+  Surv_h_th1 <- cumprod(1 - h_th1)
+  plotSurvEst(surv = list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0),
+              xindx = 1:16,
+              ylab = "Survival P(T>t) derived from MSM hazard",
+              ylim = c(0.75, 1.0))
+@
+
+\paragraph{Example 5. Working dynamic MSM to evaluate effect modification by a time-independent covariate.} The previous example can be modified to illustrate the evaluation of effect modification by a
+baseline covariate through the inclusion of an interaction term between $\theta$ and $L_1$ in the working logistic MSM
+for $E(Y_{d_{\theta}}(t))|Y_{d_{\theta}}(t-1)=0,L_{1})$: $$
+\mbox{expit}\left(\alpha_{0}+\alpha_{1}\theta+\alpha_{2}t+\alpha_{3}t\theta+\alpha_{4}\theta L_{1}\right),\ \mbox{for
+}t=1,\ldots,16 \textrm{ and } \theta=0,1, $$ where the true values of coefficients $\alpha_{i}\textrm{, for
+}i=0,\ldots,4$ define the target parameters of interest. First, we define and estimate these target parameters:
+
+<<message=FALSE, cache=cache_opt>>=
+  msm.form_sum <- "Y ~ theta + t + I(theta*t) + I(theta*L1)"
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, form = msm.form_sum, 
+                        family = "binomial", hazard = TRUE)
+  MSMres <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres$coef
+@
+
+Second, we map the coefficient estimates into counterfactual survival curves within subgroups defined by the baseline
+covariate \code{L1} levels:
+
+<<>>=
+  get_haz <- function(thetaval, L1val) {
+    predict(MSMres$m, newdata = data.frame(theta = rep(thetaval, 16), t = 1:16, L1 = L1val),
+            type = "response")
+  }
+  Sth0L1_0 <- cumprod(1 - get_haz(thetaval = 0, L1val = 0))
+  Sth1L1_0 <- cumprod(1 - get_haz(thetaval = 1, L1val = 0))
+  Sth0L1_1 <- cumprod(1 - get_haz(thetaval = 0, L1val = 1))
+  Sth1L1_1 <- cumprod(1 - get_haz(thetaval = 1, L1val = 1))
+@
+
+Third, we plot the resulting survival curves for each subgroup of interest as shown in Figure~\ref{fig:survfig7}:
+
+<<survfig7, message=FALSE, fig.pos='htb!', fig.width=16,fig.height=7,out.width='1\\linewidth', fig.cap='Survival curve estimates evaluated based on working MSM 5'>>=
+  par(mfrow = c(1,2))
+  plotSurvEst(surv = list(MSM_theta1 = Sth1L1_0, MSM_theta0 = Sth0L1_0),
+              xindx = 1:16,
+              ylab = "Survival P(T>t), for L1=0",
+              ylim = c(0.5, 1.0))
+  plotSurvEst(surv = list(MSM_theta1 = Sth1L1_1, MSM_theta0 = Sth0L1_1),
+              xindx = 1:16,
+              ylab = "Survival P(T>t), for L1=1",
+              ylim = c(0.5, 1.0))
+@
+
+\paragraph{Example 6. Working dynamic MSM to evaluate effect modification by the baseline measurement of a time-dependent covariate.}\label{MSMwS.1}
+Here, the previous example is modified to illustrate the evaluation of effect modification by the baseline measurement
+of the time-varying node \code{L2} using the following working logistic MSM: $$
+\mbox{expit}\left(\alpha_{0}+\alpha_{1}\theta+\alpha_{2}t+\alpha_{3}t\theta+\alpha_{4}\theta L_{2}(0)\right), $$ where
+the true values of coefficients $\alpha_{i}\textrm{ for }i=0,\ldots,4$ define the target parameters of interest. First,
+we define and estimate these target parameters:
+
+<<message=FALSE, cache=cache_opt>>=
+  msm.form.correct <- "Y ~ theta + t + I(theta*t) + I(theta * S(L2[0]))"
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, form = msm.form.correct, 
+                        family = "binomial", hazard = TRUE)
+  MSMres.correct <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres.correct$coef
+@
+
+Note that the baseline measurement of the time-varying node \code{L2} must be referenced within the \code{S(...)} in the
+working MSM formula.
+
+\paragraph{Example 7. Working static MSM for survival probabilities over time.}\label{MSMwS.2} Here, we illustrate the
+evaluation of discrete-time hazards $E(Y_{\bar{a}}(t))|Y_{\bar{a}}(t-1)=0)$, for $t=1,...,16$ under the $17$ static
+interventions introduced in Section~\ref{staticact} using the following pooled working logistic MSM: $$
+expit\big(\alpha_{0}+\alpha_{1}t+\alpha_{2}\frac{1}{t}\sum_{j=0}^{t-1}a(j) + \alpha_{3} \sum_{j=0}^{t-1}a(j) \big), $$
+where we use the notation $\bar{a}=(a(0),a(1),...,a(16))$ to denote the $17$ static intervention regimens on the time-
+varying treatment node \code{A1}. Note that the time-varying action attribute \code{abar} introduced in
+Section~\ref{staticact} directly encodes the $17$ treatment regimens values $\bar{a}$ referenced in the MSM working
+model above. To evaluate the target parameters $\alpha_{j}$ above, for $j=0,...,3$, we first simulate full data for the
+$17$ static interventions of interest as follows:
+
+<<message=FALSE, results='hide', cache=cache_opt>>=
+  Xts <- sim(Dstat, actions = names(A(Dstat)), n = 10000, rndseed = 123)
+@
+
+Second, we define the target parameters and estimate them using the full data just simulated as follows:
+
+<<message=FALSE, cache=cache_opt>>=
+  msm.form_1 <- "Y ~  t + S(mean(abar[0:(t-1)])) + I(t*S(mean(abar[0:(t-1)])))"
+  Dstat <- set.targetMSM(Dstat, outcome = "Y", t = 1:16, form = msm.form_1, 
+                          family = "binomial", hazard = TRUE)
+  MSMres <- eval.target(Dstat, data = Xts)
+  MSMres$coef
+@
+
+Note that the working MSM formulas can reference arbitrary summary measures (functions) of time-varying action
+attributes such as \code{abar}. The square-bracket \code{'['} syntax can then be used to identify specific elements of
+the time-varying action attributes in the same way it can be used in node formulas to reference particular measurements
+of time-varying nodes. For example, the term \code{sum(abar[0:t])} indicates a summation over the elements of the action
+attribute \code{abar} indexed by time points lower than or equal to value \code{t} and the syntax \code{S(abar[max(0, t
+- 2)])} creates a summary measure representing time-lagged values of \code{abar} that are equal to \code{abar[0]} if
+\code{t}$<2$ and to \code{abar[t-2]} if \code{t}$\geq2$. Note also that references to time-varying action attributes in
+the working MSM formula must be wrapped within a call to the \code{S(...)} function, e.g., \code{Y}$\sim$\code{t +
+S(mean(abar[0:t]))}. \\
+
+The \code{eval.target} function returns a list with the following named attributes: the working MSM fit returned by a
+\code{glm} function call (\code{msm}), the coefficient estimates (\code{coef}), the mapping (\code{S.msm.map}) of the
+formula terms defined by expressions enclosed within the \code{S(...)} function into the corresponding variable names in
+the design matrix that was used to implement the regression, and the design matrix (\code{df_long}) stored as a list of
+\code{data.table} objects from the \proglang{R} package \pkg{data.table} \citep{R-data.table}. Each of these
+\code{data.table} objects contains full data indexed by a particular intervention. These full data are stored in long
+format with possibly additional new columns representing terms in the working MSM formula defined by expressions
+enclosed with the \code{S()} function. The design matrix can be derived by row binding these \code{data.table} objects.
+
+<<message=FALSE, cache=cache_opt>>=
+  names(MSMres)
+  MSMres$S.msm.map
+  names(MSMres$df_long)
+  MSMres$df_long[["A1_ts2"]]
+@
+
+Finally, we plot the resulting counterfactual survival curve estimates using the function \code{survbyMSMterm} (source
+code provided in the appendix) as shown in Figure~\ref{fig:survfig8}.
+
+<<survfig8, fig.pos='htb!', fig.width=10, fig.height=5, message=FALSE, fig.cap='Survival curve estimates evaluated based on working MSM 7'>>=
+  survMSMh_wS <- survbyMSMterm(MSMres = MSMres, t_vec = 1:16, 
+                                MSMtermName = "mean(abar[0:(t - 1)])")
+  print(plotsurvbyMSMterm(survMSMh_wS))
+@
+
+\newpage{}
+\section[Replication study of the comparative performances of two estimators]{\protect\parbox{0.95\textwidth}{\protect\centering Replication study of the comparative performances of two estimators}}\label{repsimstudy1}
+\addcontentsline{toc}{section}{Replication study of the comparative performances of two estimators}
+
+In this section, we demonstrate how the \pkg{simcausal} package can be used to conduct a complex but transparent and
+reproducible simulation study to compare the finite sample properties (bias an relative efficiency) of two causal effect
+estimators. Specifically, we aim to replicate the results of the simulation study described by \citet{neugebauer2014}
+that compared targeted minimum loss based estimation (TMLE) and inverse probability weighting (IPW) estimation of a
+causal risk difference defined by two dynamic treatment regimens (see ATE in \emph{Example 2} of \code{set.targetE} in
+Section~\ref{targets2NP}). We carried out this replication study using simulation protocol 3 described in
+\textbf{Section 5.3.} of \citet{neugebauer2014} and compared the bias and relative efficiency of TMLE and IPW estimation
+using the same performance metrics as that reported in \textbf{Table 6} of \citet{neugebauer2014}. The observed data
+were thus generated using the following slightly modified version of the structural equation model from
+Section~\ref{node2} to match the data generating distribution described in protocol 3 of \textbf{Section 5.3.} of
+\citet{neugebauer2014}:
+
+<<message=FALSE>>=
+  t.end <- 12
+  D <- DAG.empty()
+  D <- D + 
+          node("L2", t = 0, distr = "rbern", 
+                prob = 0.05) +
+          node("m1L2", t = 0, distr = "rconst", 
+                const = 1 - L2[0]) +
+          node("L1", t = 0, distr = "rbern", 
+                prob = ifelse(L2[0] == 1, 0.8, 0.3)) +
+          node("A1", t = 0, distr = "rbern",
+                prob = ifelse(L1[0] == 1 & L2[0] == 0, 0.5,
+                        ifelse(L1[0] == 0 & L2[0] == 0, 0.2,
+                          ifelse(L1[0] == 1 & L2[0] == 1, 0.8, 0.5)))) +
+          node("A2", t = 0, distr = "rbern", prob = 0, EFU = TRUE)
+
+  D <- D + 
+          node("Y", t = 1:t.end, distr = "rbern",
+                prob = plogis(-7 + 3 * L1[0] + 5 * L2[t-1] + 
+                              0.1 * sum(I(L2[0:(t-1)] == rep(0, t)))),
+                EFU = TRUE) +
+          node("L2", t = 1:t.end, distr = "rbern",
+                prob = ifelse(A1[t-1] == 1, 0.1,
+                        ifelse(L2[t-1] == 1, 0.9, min(1,0.1 + t/16)))) +
+          node("m1L2", t = 1:t.end, distr = "rconst", const = 1-L2[t]) +
+          node("A1", t = 1:t.end, distr = "rbern",
+                prob = ifelse(A1[t-1] == 1, 1,
+                        ifelse(L1[0] == 1 & L2[t] == 0, 0.4,
+                          ifelse(L1[0] == 0 & L2[t] == 0, 0.2,
+                            ifelse(L1[0] == 1 & L2[t] == 1, 0.8, 0.6))))) +
+          node("A2", t = 1:t.end, distr = "rbern",
+                prob = {if(t == .(t.end)) {1} else {0}},
+                EFU = TRUE)
+
+  lDAG <- set.DAG(D)
+  Ddyn <- lDAG
+@
+% SINCE THE ACTIONS HAVE BEEN DEFINED PREVIOUSLY, DON'T NEED TO SHOW THE CODE BELOW:
+% Below code defines two dynamic interventions, $d_1$ and $d_2$, as done previously in \ref{actions2}:
+<<message=FALSE, echo=FALSE>>=
+  anodes <- node("A1", t = (0:t.end), distr = "rbern", 
+                  prob = {if (t == 0) {ifelse(L2[0] >= theta, 1, 0)} else
+                          {ifelse(A1[t-1] == 1, 1, ifelse(L2[t] >= theta, 1, 0))}})
+  Ddyn <- Ddyn + 
+                action("A1_th0", nodes = anodes, theta = 0) + 
+                action("A1_th1", nodes = anodes, theta = 1)
+@
+
+The target causal parameter $\psi_{0}$ in this replication study is defined as the difference between the cumulative
+risks of failure at $t_{0}=11$ under the two dynamic regimes $d_{0}$ and $d_{1}$ introduced in Section~\ref{dynact},
+i.e., $\psi_{0}=P(Y_{d_{1}}(t_{0}+1)=1)-P(Y_{d_{0}}(t_{0}+1)=1)$:\\
+
+<<message=FALSE, cache=cache_opt>>=
+  `%+%` <- function(a, b) paste0(a, b)
+  t0 <- 12
+  Ddyn <- set.targetE(Ddyn, outcome = "Y", t = (1:t0), param = "A1_th1-A1_th0")
+  resNP <- eval.target(Ddyn, n = 150000, rndseed = 123)$res
+  # resNP <- eval.target(Ddyn, n = 1000000, rndseed = 123)$res
+  (psi0.NP <- as.vector(resNP["Diff_Y_"%+%t0]))
+@
+
+The above estimate of the true value of $\psi_{0}$ closely matches the value reported in Figure 10 of
+\citet{neugebauer2014}.
+
+We note that the target parameter $\psi_{0}$ can also be defined and thus evaluated with the following saturated MSM: $$
+\mbox{logit}(P(Y_{d_{\theta}}(t+1)=1))=\alpha_{0}+\alpha_{0}^{1}\theta+\sum_{k=1}^{t_{0}}\alpha_{k}^{0}I(t=k)+\sum_{k=1}
+^{t_{0}}\alpha_{k}^{1}\theta I(t=k), $$ for $t=0,1,\ldots,t_{0}$ and $\theta\in\{0,1\}$. Indeed, the risk difference
+$\psi_{0}$ can then be derived from the coefficients of this MSM as follows:
+\begin{equation} \label{eq:psi0MSM}
+ \psi_{0}=\mbox{expit}(\alpha_{0}+\alpha_{0}^{1}+\alpha_{t_{0}}^{0}+\alpha_{t_{0}}^{1})-\mbox{expit}(\alpha_{0}+\alpha_{t_{0}}^{0}).
+\end{equation}
+
+Evaluation of the target parameter $\psi_{0}$ can thus be implemented through fitting of a saturated MSM as shown below:
+
+<<message=FALSE, eval=TRUE, cache=cache_opt>>=
+  MSM_RD_t <- function(resMSM, t) {
+    invlogit <- function(x) 1 / (1 + exp(-x))
+    Riskth0 <- invlogit(resMSM["(Intercept)"] + resMSM["as.factor(t)"%+%t])
+    Riskth1 <- invlogit(resMSM["(Intercept)"] + resMSM["as.factor(t)"%+%t] +
+                            resMSM["theta"] + resMSM["theta:as.factor(t)"%+%t])
+    return(as.vector(Riskth1-Riskth0))
+  }
+
+  msm.form <- "Y ~ theta + as.factor(t) + as.factor(t):theta "
+  Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = (1:t0), formula = msm.form, 
+                          family = "binomial", hazard = FALSE)
+  resMSM <- eval.target(Ddyn, n = 150000, rndseed = 123)$coef
+  # resMSM <- eval.target(Ddyn, n = 1000000, rndseed = 123)$coef
+  psi0.MSM <- MSM_RD_t(resMSM = resMSM, t = t0)
+  all.equal(psi0.NP, psi0.MSM)
+@
+<<message=FALSE, echo=FALSE, eval=FALSE>>=
+  save(list = "psi0.MSM", file = "vignette_dat/repstudy1_psi0.MSM.Rdata")
+@
+
+To evaluate the bias and relative efficiency of TMLE and IPW estimation of the risk difference $\psi_{0}$ with observed
+data, we generated $1,000$ observed datasets, each with sample size $50,000$. With each simulated observed data set, the
+coefficients of the saturated MSM were then estimated by TMLE and IPW estimation using the \code{ltmeMSM} function from
+the \pkg{ltmle} \proglang{R} package \citep{R-ltmle} as shown in the appendix. For an in-depth description of TMLE, we
+refer to \citet{ltmleMSMs2014} and the \pkg{ltmle} package manual. The IPW and TMLE estimates of $\psi_{0}$ were then
+derived from the estimated MSM coefficients $\alpha$ using  formula~\eqref{eq:psi0MSM}. As in \citet{neugebauer2014},
+both TMLE and IPW estimators of $\psi_{0}$ were derived using a correctly specified model for the treatment mechanism
+but also a misspecified model (covariate \code{L2[0]} missing from the logistic model for the propensity scores).\\
+
+We report our simulation results in Table~\ref{tab6aNeugebauer}. For each estimator, we report the empirical mean of the
+$1,000$ estimates ($\psi_{n}$), corresponding bias and the empirical standard deviation of the $1,000$ estimates
+($\sigma_{emp}$). We also report the relative efficiency for IPW vs. TMLE, evaluated as the ratio of their respective
+empirical standard deviations. The function \code{simrun_ltmleMSM()} (source code provided in the appendix) can be used
+to generate the results presented in Table~\ref{tab6aNeugebauer}.\\
+
+Our TMLE results match those reported in \textbf{Table 6} by \citet{neugebauer2014}, while our IPW results differ from
+those reported in \citet{neugebauer2014}. Specifically, in our simulations the IPW was shown to have a smaller empirical
+standard deviation, compared to \citet{neugebauer2014}, resulting in a smaller reported relative efficiency of 12\%,
+compared to 39\% relative efficiency reported by \citet{neugebauer2014}. We note though that the IPW estimator
+implemented by \citet{neugebauer2014} is different from the IPW estimator implemented in the \pkg{ltmle} package. The
+latter IPW estimator is defined based on the fitting of a separate treatment mechanism model for each time point.
+Additionally, the IPW estimator for $\psi_{0}$ implemented with the \pkg{ltmle} package is based on a saturated MSM for
+the counterfactual \emph{survival} functions, whereas the IPW estimator implemented in \citet{neugebauer2014} was
+constructed using the survival probability estimates derived from a saturated MSM for the counterfactual \emph{hazard}
+functions. To our knowledge, such an approach is not automated currently in an existing \proglang{R} package. Therefore,
+the IPW estimation performance in this simulation study should not be expected to match that reported in
+\citet{neugebauer2014}.
+
+<<chunk.simrunltmleMSM1, eval=TRUE, echo=FALSE>>=
+  times <- c(0:(t.end-1))
+  gforms <- c("A1_0 ~ L1_0 + L2_0","A2_0 ~ L1_0")
+  timesm0 <- times[which(times > 0)]
+  # correctly specified g:
+  gforms <- c("A1_0 ~ L1_0 + L2_0","A2_0 ~ L1_0")
+  gformm0 <- as.vector(sapply(timesm0, function(t) 
+                c("A1_"%+%t%+%" ~ A1_"%+%(t-1)%+%" + L1_0"%+%" + L2_"%+%t%+%" + I(L2_"%+%t%+%"*A1_"%+%(t-1)%+%")+ I(L1_0*A1_"%+%(t-1)%+%")",
+                  "A2_"%+%t%+%" ~ L1_0")))
+  gforms <- c(gforms, gformm0)
+  # mis-specified g (no TV covar L2):
+  gforms_miss <- c("A1_0 ~ L1_0","A2_0 ~ L1_0")
+  gformm0_miss <- as.vector(sapply(timesm0, function(t) 
+                                c("A1_"%+%t%+%" ~ L1_0*A1_"%+%(t-1),
+                                  "A2_"%+%t%+%" ~ L1_0")))
+  gforms_miss <- c(gforms_miss, gformm0_miss)
+  Qformallt <- "Q.kplus1 ~ L1_0"
+  Lterms <- function(var, tlast){
+    tstr <- c(0:tlast)
+    strout <- paste(var%+%"_"%+%tstr, collapse = " + ")
+    return(strout)
+  }
+  tY <- (0:11)
+  Ynames <- paste("Y_"%+%c(tY+1))
+  Qforms <- unlist(lapply(tY, function(t)  {
+                    a <- Qformallt%+%" + I("%+%Lterms("m1L2",t)%+%") + "%+%Lterms("L2",t)
+                    return(a)
+    }))
+  names(Qforms) <- Ynames
+  survivalOutcome <- TRUE
+  stratify_Qg <- TRUE
+  mhte.iptw <- TRUE
+  Anodesnew <- "A1_"%+%(0:(t.end-1))
+  Cnodesnew <- "A2_"%+%(0:(t.end-1))
+  L2nodesnew <- "L2_"%+%(1:(t.end-1))
+  mL2nodesnew <- "m1L2_"%+%(1:(t.end-1))
+  Lnodesnew <- as.vector(rbind(L2nodesnew, mL2nodesnew))
+  Ynodesnew <- "Y_"%+%(1:t.end)
+  finYnodesnew <- Ynodesnew
+  dropnms <- c("ID","L2_"%+%t.end,"m1L2_"%+%t.end, "A1_"%+%t.end, "A2_"%+%t.end)
+  pooledMSM <- FALSE
+  weight.msm <- FALSE
+@
+
+<<chunk.simrunltmleMSM2, eval=TRUE, echo=FALSE>>=
+  simrun_ltmleMSM <- function(sim, DAG, N, t0,gbounds, gforms) {
+    library(ltmle)
+    O_datnew <- sim(DAG = DAG, n = N)
+    ltmleMSMparams <- est.targetMSM(DAG, O_datnew, Aname = "A1", Cname = "A2", Lnames = "L2", 
+                                    Ytvec = (1:t.end), ACLtvec = (0:t.end), package = "ltmle")
+    summeas_arr <- ltmleMSMparams$summeas_arr
+    regimens_arr <- ltmleMSMparams$regimens_arr[,c(1:t.end),]
+    O_datnewLTCF <- doLTCF(data = O_datnew, LTCF = "Y")
+    O_dat_selCnew <- O_datnewLTCF[,-which(names(O_datnewLTCF)%in%dropnms)]
+    O_dat_selCnew[,Cnodesnew] <- 1-O_dat_selCnew[,Cnodesnew]
+    reslTMLE.MSM <- ltmleMSM(data = O_dat_selCnew, Anodes = Anodesnew, Cnodes = Cnodesnew, 
+                                Lnodes = Lnodesnew, Ynodes = Ynodesnew, 
+                                survivalOutcome = survivalOutcome,
+                                gform = gforms, Qform = Qforms,
+                                stratify = stratify_Qg, mhte.iptw = mhte.iptw, 
+                                iptw.only = FALSE, 
+                                working.msm = msm.form, pooledMSM = pooledMSM, 
+                                final.Ynodes = finYnodesnew, regimes = regimens_arr, 
+                                summary.measures = summeas_arr, weight.msm=weight.msm,
+                                estimate.time = FALSE, gbounds = gbounds)
+    iptwMSMcoef <- summary(reslTMLE.MSM, estimator = "iptw")$cmat[,1]
+    iptwRD <- MSM_RD_t(resMSM = iptwMSMcoef, t = t0)
+    tmleMSMcoef <- summary(reslTMLE.MSM, estimator = "tmle")$cmat[,1]
+    tmleRD <- MSM_RD_t(resMSM = tmleMSMcoef, t = t0)
+    return(c(simN = sim, iptwRD = iptwRD, tmleRD = tmleRD))
+  }
+@
+
+<<chunk.simrunltmleMSM3, message=FALSE, eval=FALSE, echo=FALSE>>=
+  t0 <- 12
+  Nltmle <- 50000
+  Nsims <- 1000
+  source("./determineParallelBackend.R")
+  sim50K.stratQg.notrunc.g <- foreach(sim = seq(Nsims), .combine = 'rbind')%dopar%{
+                        simrun_ltmleMSM(sim = sim,DAG = Ddyn, N = Nltmle, t0 = t0, 
+                          gbounds = c(0.0000001, 1), gforms = gforms) 
+              }
+  save(list = "sim50K.stratQg.notrunc.g", file = "vignette_dat/sim50K.stratQg.notrunc.g.Rdata")
+  sim50K.stratQg.notrunc.missg <- foreach(sim = seq(Nsims), .combine = 'rbind')%dopar%{
+                        simrun_ltmleMSM(sim = sim,DAG = Ddyn, N = Nltmle, t0 = t0, 
+                          gbounds = c(0.0000001, 1), gforms = gforms_miss) 
+              }
+  save(list = "sim50K.stratQg.notrunc.missg", file = "vignette_dat/sim50K.stratQg.notrunc.missg.Rdata")
+@
+<<message=FALSE, echo=FALSE>>=
+  library(Hmisc)
+  load(file = "vignette_dat/repstudy1_psi0.MSM.Rdata")
+  load(file = "vignette_dat/sim50K.stratQg.notrunc.g.Rdata")
+  iptw_sims <- sim50K.stratQg.notrunc.g[,"iptwRD"]
+  tmle_sims <- sim50K.stratQg.notrunc.g[,"tmleRD"]
+  getrestab <- function(iptw_sims, tmle_sims, origres, modelnm) {
+    resrow <- function(sims, estname) {
+      data.frame(estname, 
+                  sprintf("%.3f",mean(sims)), # round(mean(sims),3),
+                  sprintf("%.4f",mean(sims)-psi0.MSM), # round(((mean(sims)-psi0.MSM)/psi0.MSM)*100,3),
+                  sprintf("%.4f",sd(sims)), # round(sd(sims),4)
+                  stringsAsFactors=FALSE
+                  )
+    }
+    tabcolnames <- c("Estimator", "$\\psi_{n}$", "Bias", "$\\sigma_{emp}$", "$\\sigma_{emp}^{IPTW}/\\sigma_{emp}^{TMLE}$")    
+    restab <- rbind(resrow(tmle_sims, "TMLE "%+%modelnm), resrow(iptw_sims, "IPTW "%+%modelnm))
+    restab <- cbind(restab, c(round(sd(iptw_sims)/sd(tmle_sims),2), ""))
+    restab <- rbind(c("\\emph{Results from this replication study}", "", "", "", ""), restab)
+
+    restab <- rbind(restab, c("\\emph{Results reported by Neugebauer et al. (2014)}", "", "", "", ""))
+    colnames(restab) <- tabcolnames
+    colnames(origres) <- tabcolnames
+    restab <- rbind(restab, origres)
+    restab
+  }
+  # Results reported by Neugebauer for correct model:
+  tmleorigres <- c("TMLE (correct model)", "0.108", "0.0010", "0.0060", "1.392")
+  iptworigres <- c("IPTW (correct model)", "0.108", "0.0011", "0.0078", "")
+  # TMLE (correct model), 0.108, 0.001, 0.006, 1.392
+  # IPTW (correct model), 0.108, 0.0011, 0.0078
+  restab_corrg <- getrestab(iptw_sims, tmle_sims, origres=rbind(tmleorigres,iptworigres), modelnm="(correct model)")
+@
+<<message=FALSE, echo=FALSE>>=
+  load(file = "vignette_dat/sim50K.stratQg.notrunc.missg.Rdata")
+  iptw_sims <- sim50K.stratQg.notrunc.missg[,"iptwRD"]
+  tmle_sims <- sim50K.stratQg.notrunc.missg[,"tmleRD"]
+  # Results reported by Neugebauer for incorrect model 1:
+  tmleorigres <- c("TMLE (incorrect model 1)", "0.109", "0.0019", "0.0074", "")
+  iptworigres <- c("IPTW (incorrect model 1)", "0.182", "0.0750", "0.0107", "")
+  # TMLE (incorrect model 1), 0.109, 0.0019, 0.0074,
+  # TMLE (incorrect model 1), 0.182, 0.075, 0.0107
+  restab_missg <- getrestab(iptw_sims, tmle_sims, origres=rbind(tmleorigres,iptworigres), modelnm="(incorrect model 1)")
+  restab <- rbind(restab_corrg, restab_missg)
+@
+<<message=FALSE, echo=FALSE, results="asis">>=
+  cat("\n")
+  latex(restab,file = "",where = "!htpb", caption.loc = 'bottom', caption = "Replication of the results from simulation protocol 3 reported in Table 6 of \\citet{neugebauer2014} based on two models for estimating the treatment mechanism: 1) a correctly specified model and 2) a misspecified model missing a term for the time-dependent variable. $\\psi_{n}$ - mean point estimates over 1,000 simulated data sets; $\\sigma_{emp}$ - empirical standard deviation (SD) of point estimates over 1,000 simulated data sets; $\\sigma_{emp}^{IPTW}/\\sigma_{emp}^{TMLE}$ - the relative efficiency measured by the ratio of the empirical SDs associated with the IPW and TMLE point estimates.", label = 'tab6aNeugebauer', booktabs = TRUE, rowname = NULL, landscape = FALSE, col.just = c("l", rep("r", 4)), size = "small")
+@
+
+\newpage{}
+\section[Replication study of the impact of misspecification of propensity score models]{\protect\parbox{0.95\textwidth}{\protect\centering Replication study of the impact of misspecification of propensity score models}}\label{repsimstudy2}
+\addcontentsline{toc}{section}{Replication study of the impact of misspecification of propensity score models}
+
+In this section, we demonstrate how the \pkg{simcausal} package can be used to replicate a simulation study from
+\citet{lefebvre2008}. Specifically, we replicate the results first reported in Tables II and IV of that paper. We first
+specify the observed data generating distribution using the two structural equation models corresponding with Scenarios
+1 and 3 described in \citet{lefebvre2008}. Second, for each scenario, we evaluate the true values of the coefficients of
+the MSM using full data and compare them to those reported by \citet{lefebvre2008}. Finally for each scenario, we
+implement the same IPW estimators of these MSM coefficients and evaluate their performances using the same two metrics
+(bias and mean squared error) as in \citet{lefebvre2008}. Each IPW estimator is defined by a distinct model for the
+propensity scores. Our replication results are reported in Tables~\ref{tab2Lefebvre} and \ref{tab4Lefebvre}, and we show
+the simulations results as they were reported by \citet{lefebvre2008} in Tables~\ref{origtab2Lefebvre} and
+\ref{origtab4Lefebvre}.\\
+
+To carry out the simulation study, we first define a new distribution function \code{rbivNorm} for simulating
+observations from a bivariate normal distribution with a user-specified mean vector (specified by the argument
+\code{mu}) and a user-specified covariance matrix (specified by the arguments \code{var1}, \code{var2}, and \code{rho}
+to represent the diagonal and off-diagonal scalars, respectively). This new distribution function is based on Cholesky
+decomposition of the covariance matrix and independent observations simulated from the standard normal distribution
+which are provided by the input argument \code{norms}. The argument \code{whichbiv} indicates whether the function
+should return independent observations from the first or second element of the bivariate normal vector.\\
+
+<<message=FALSE, results='hide'>>=
+  rbivNorm <- function(n, whichbiv, norms, mu, var1 = 1, var2 = 1, rho = 0.7) {
+    whichbiv <- whichbiv[1]; var1 <- var1[1]; var2 <- var2[1]; rho <- rho[1]
+    sigma <- matrix(c(var1, rho, rho, var2), nrow = 2)
+    Scol <- chol(sigma)[, whichbiv]
+    bivX <- (Scol[1] * norms[, 1] + Scol[2] * norms[, 2]) + mu
+    bivX
+  }
+@
+
+Second, using this distribution function, we define the structural equation model specified for data simulation
+according to Scenario 1 in \citet{lefebvre2008}.\\
+
+<<message=FALSE, results='hide'>>=
+  `%+%` <- function(a, b) paste0(a, b)
+  Lnames <- c("LO1", "LO2", "LO3", "LC1")
+  D <- DAG.empty()
+
+  for (Lname in Lnames) {
+    D <- D + 
+            node(Lname%+%".norm1", distr = "rnorm", mean = 0, sd = 1) + 
+            node(Lname%+%".norm2", distr = "rnorm", mean = 0, sd = 1)
+  }
+
+  D <- D + 
+          node("LO1", t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
+                norms = c(LO1.norm1, LO1.norm2), 
+                mu = 0) + 
+          node("LO2", t = 0:1, distr = "rbivNorm", whichbiv = t + 1,
+                norms = c(LO2.norm1, LO2.norm2), 
+                mu = 0) + 
+          node("LO3", t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
+                norms = c(LO3.norm1, LO3.norm2), 
+                mu = 0) + 
+          node("LC1", t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
+                norms = c(LC1.norm1, LC1.norm2), 
+                mu = {if (t == 0) {0} else {-0.30 * A[t-1]}}) + 
+          node("alpha", t = 0:1, distr = "rconst", 
+                const = {if(t == 0) {log(0.6)} else {log(1.0)}}) + 
+          node("A", t = 0:1, distr = "rbern", 
+                prob = plogis(alpha[t] + 
+                              log(5)*LC1[t] + {if(t == 0) {0} else {log(5)*A[t-1]}})) + 
+          node("Y", t = 1, distr = "rnorm", 
+                mean = (0.98 * LO1[t] + 0.58 * LO2[t] + 0.33 * LO3[t] + 
+                        0.98 * LC1[t] - 0.37 * A[t]),
+                sd = 1)
+
+  DAGO.sc1 <- set.DAG(D)
+@
+
+Third, we define the target parameter as the coefficients $\beta_{1}$ and $\beta_{2}$ of the following correctly
+specified marginal structural model: $$E[Y_{a(0),a(1)}]=\beta_{0}+\beta_{1}a(0)+\beta_{2}a(1),$$ defined by the
+following four possible static and deterministic interventions ($a(0),a(1)$) on the treatment process ($A(0),A(1)$):
+$(0,0)$, $(1,0)$, $(0,1)$, and $(1,1)$.
+
+<<message=FALSE, results='hide'>>=
+  defAct <- function (Dact) {
+    act.At <- node("A", t = 0:1, distr = "rbern", prob = abar[t])
+    Dact <- Dact + 
+                  action("A00", nodes = act.At, abar = c(0, 0)) + 
+                  action("A10", nodes = act.At, abar = c(1, 0)) + 
+                  action("A01", nodes = act.At, abar = c(0, 1)) + 
+                  action("A11", nodes = act.At, abar = c(1, 1))
+    return(Dact)
+  }
+
+  Dact.sc1 <- defAct(DAGO.sc1)
+  msm.form <- "Y ~ S(abar[0]) + S(abar[1])"
+  Dact.sc1 <- set.targetMSM(Dact.sc1, outcome = "Y", t = 1, 
+                            form = msm.form, family = "gaussian")
+@
+
+Fourth, we evaluate the true values of these MSM coefficients using the \code{eval.target} function and note that our
+results closely match the true value of the MSM coefficients reported in Table II of \citet{lefebvre2008}:
+
+<<message=FALSE, results='hide', eval=FALSE>>=
+  trueMSM.sc1 <- NULL; reptrue <- 50
+  for (i in (1:reptrue)) {
+    res.sc1.i <- eval.target(Dact.sc1, n = 500000)$coef
+    trueMSM.sc1 <- rbind(trueMSM.sc1, res.sc1.i)
+  }
+
+  save(list = "trueMSM.sc1", file = "vignette_dat/trueMSM.sc1.Rdata")
+  (trueMSM.sc1 <- apply(trueMSM.sc1, 2, mean))
+@
+<<message=FALSE,echo=FALSE>>=
+  load(file = "vignette_dat/trueMSM.sc1.Rdata")
+  trueMSM.sc1 <- apply(trueMSM.sc1, 2, mean)
+  trueMSM.sc1
+@
+
+Note that the true values of the MSM coefficients above were obtained from the averages of coefficient estimates
+obtained from several simulated full data sets. This approach was implemented to avoid the memory limitation that can be
+encountered when trying to simulate a single very large full data set.\\
+
+Finally, we replicate the IPW estimation results for Scenario 1 presented originally in Table II of \citet{lefebvre2008}
+using the source \proglang{R} code provided in the appendix. To estimate the propensity scores $P(A(0)|L(0))$ and
+$P(A(1)|A(0),L(1))$ that define each of the three IPW estimators considered, we used the same three models presented in
+Table I of \citet{lefebvre2008}. For the three sample sizes $N=300$; $1,000$; and $10,000$, we report the bias of each
+IPW estimator, multiplied by 10 (\emph{Bias*10}) and the mean-squared error, also multiplied by 10 (\emph{MSE*10}) in
+Table~\ref{tab2Lefebvre}. We note that our results closely match those in Table~\ref{origtab2Lefebvre} which were
+originally reported in \citet{lefebvre2008}.\\
+
+<<chunk.runMSMsw, eval=TRUE, echo=FALSE>>=
+  runMSMsw <- function(DAGO, Lnames, trueA, nsamp, nsims) {
+    Lnames_0 <- Lnames%+%"_0"
+    Lnames_1 <- Lnames%+%"_1"
+    gforms <- c("A_0 ~ "%+%paste(Lnames_0, collapse = " + "), "A_1 ~ A_0 + "%+%paste(Lnames_1, collapse = " + "))
+    res_sw <- NULL
+    for (sims in (1:nsims)) {
+      datO <- sim(DAGO, n = nsamp)
+      glmA_0 <- glm(datO[,c("A_0",Lnames_0)], formula = gforms[1], family = "binomial")
+      glmA_1 <- glm(datO[,c("A_1","A_0",Lnames_0,Lnames_1)], formula = gforms[2], family = "binomial")
+      probA0_1 <- predict(glmA_0,  type = "response")
+      weight_t0 <- 1 / (probA0_1^(datO$A_0) * (1-probA0_1)^(1-datO$A_0))
+      probA1_1 <- predict(glmA_1,  type = "response")
+      weight_t1 <- 1 / (probA1_1^(datO$A_1) * (1-probA1_1)^(1-datO$A_1))
+      sw1 <- weight_t0*weight_t1
+      emp.pA1cA0 <- table(datO$A_1,datO$A_0)/nrow(datO)
+      empPA1 <- data.frame(A_0 = c(0,0,1,1),A_1 = c(0,1,1,0))
+      empPA1$empPA_1_cA_0 <- apply(empPA1, 1, function(rowA) emp.pA1cA0[as.character(rowA["A_1"]), as.character(rowA["A_0"])])
+      empPA1 <- merge(datO[, c("ID","A_0","A_1")],empPA1, sort = FALSE)
+      empPA1 <- empPA1[order(empPA1$ID),]
+      swts <- empPA1$empPA_1_cA_0*(weight_t0*weight_t1)
+      datO$swts <- swts
+      MSMres_sw <- glm(datO, formula = "Y_1 ~ A_0 + A_1", weights = swts, family = "gaussian")
+      res_sw <- rbind(res_sw, coef(MSMres_sw))
+    }
+    meanres <- apply(res_sw, 2, mean)
+    Varres <- apply(res_sw, 2, var)
+    bias <- c(meanres["A_0"]-trueA["A_0"], meanres["A_1"]-trueA["A_1"])
+    MSE <- c(bias^2+Varres[c("A_0","A_1")])
+    bias10 <- sprintf("%.3f",bias*10)
+    MSE10 <- sprintf("%.3f",MSE*10)
+    resrow <- c(bias10[1], MSE10[1], bias10[2], MSE10[2])
+    col36names <- c("\\specialcell[t]{A(0)\\\\ Bias*10}", 
+                    "\\specialcell[t]{A(0)\\\\ MSE*10}", 
+                    "\\specialcell[t]{A(1)\\\\ Bias*10}",
+                    "\\specialcell[t]{A(1)\\\\ MSE*10}")
+    names(resrow) <- col36names
+    return(resrow)
+  }
+@
+<<chunk.lefebrepT2andT4, message=FALSE, eval=TRUE, results='hide', echo=FALSE>>=
+  # recreating Tables 2 & 4 reported in Lefebvre et al.
+  nsamp <- c(300,1000,10000)
+  # Lefebvre et al. Tab 2:
+  covnmT2 <- c(c("\\emph{Lefebvre et al.}: Confounder(s) only", rep("",2)), 
+              c("\\emph{Lefebvre et al.}: Confounder(s) &", "risk factors", rep("",1)))
+  lefebvreT2 <- data.frame(
+    covnm = covnmT2,
+    N = rep(nsamp,2),
+    A0Bias10 = sprintf("%.3f",c(0.768, 0.265, 0.057, 0.757, 0.283, 0.056)),
+    A0MSE10 = sprintf("%.3f",c(1.761, 0.761, 0.146, 1.642, 0.718, 0.139)),
+    A1Bias10 = sprintf("%.3f",c(0.889, 0.312, 0.086, 0.836, 0.330, 0.081)),
+    A1MSE10 = sprintf("%.3f",c(1.728, 0.723, 0.120, 1.505, 0.638, 0.114)),stringsAsFactors = FALSE)
+  # Lefebvre et al. Tab 4:
+  covnmT4 <- c(c("\\emph{Lefebvre et al.}: Confounder(s) only", rep("",2)),
+                c("\\emph{Lefebvre et al.}: Confounder(s) &", "risk factors", ""),
+                c("\\emph{Lefebvre et al.}: Confounder(s) &", "IVs", ""),
+                c("\\emph{Lefebvre et al.}: Confounder(s),", "IVs & risk factors",""),
+                c("\\emph{Lefebvre et al.}: Mis-specified", rep("",2)),
+                c("\\emph{Lefebvre et al.}: Full Model", rep("",2)))
+  lefebvreT4 <- data.frame(
+    covnm = covnmT4,
+    N = rep(nsamp,6),
+    A0Bias10 = sprintf("%.3f",c(-0.080, -0.371, -0.368, -0.110, -0.330, -0.378, 1.611, 
+                                0.824, 0.241, 1.600, 0.867, 0.235, 3.146, 2.460, 2.364, 
+                                1.524, 0.878, 0.240)),
+    A0MSE10 = sprintf("%.3f",c(1.170, 0.385, 0.056, 1.092, 0.340, 0.051, 3.538, 2.063, 
+                                0.684, 3.477, 2.053, 0.676, 3.326, 1.700, 0.832, 3.648, 
+                                2.099, 0.679)),
+    A1Bias10 = sprintf("%.3f",c(0.099, -0.035, -0.203, 0.112, -0.108, -0.207, 2.069, 1.245, 
+                                0.379, 2.143, 1.170, 0.372, 5.591, 5.258, 4.943, 2.221, 1.185,
+                                0.377)),
+    A1MSE10 = sprintf("%.3f",c(1.155, 0.331, 0.043, 0.865, 0.245, 0.037, 3.841, 2.188, 0.622, 
+                                3.598, 2.043, 0.625, 5.494, 3.851, 2.705, 3.907, 2.099, 0.630)),
+                    stringsAsFactors = FALSE)
+  col1name <- "Covariates in $P(A|L)$"
+  colnames(lefebvreT2)[1] <- colnames(lefebvreT4)[1] <- col1name
+  col36names <- c("\\specialcell[t]{A(0)\\\\ Bias*10}", 
+                  "\\specialcell[t]{A(0)\\\\ MSE*10}", 
+                  "\\specialcell[t]{A(1)\\\\ Bias*10}",
+                  "\\specialcell[t]{A(1)\\\\ MSE*10}")
+  colnames(lefebvreT2)[3:6] <- colnames(lefebvreT4)[3:6] <- col36names
+@
+<<chunk.lefebSc1a, message=FALSE, eval=FALSE, results='hide', echo=FALSE>>=
+  trueA <- c(A_0 = -0.294, A_1 = -0.370)
+  nsims <- 10000; restab <- NULL
+  runsim <- function(Lnames, DAGO) {
+    for (nsamp in c(300,1000,10000)) {
+      resSc <- runMSMsw(DAGO = DAGO, Lnames = Lnames, trueA = trueA, nsamp = nsamp, nsims = nsims)
+      restab <- rbind(restab, c(N = nsamp, resSc))
+    }
+    restab
+  }
+  Lnames <- c("LC1")
+  covnm <- c("Confounder(s) only", rep("",2))
+  restab_1 <- cbind(covnm, runsim(Lnames, DAGO.sc1))
+  # restab_1 <- rbind(restab_1, as.matrix(lefebvreT2[1:3,]))
+  Lnames <- c("LC1", "LO1", "LO2", "LO3")
+  covnm <- c("Confounder(s) &", "risk factors", rep("",1))
+  restab_2 <- cbind(covnm, runsim(Lnames, DAGO.sc1))
+  # restab_2 <- rbind(restab_2, as.matrix(lefebvreT2[4:6,]))
+  restab <- rbind(restab_1, restab_2)
+  col1name <- "Covariates in $P(A|L)$"
+  colnames(restab)[1] <- col1name
+  # restabwLef <- restab
+  # save(list = "restabwLef", file = "vignette_dat/restabwLefSc1_all_1Ksims.Rdata");
+  # restab <- restab[c(1:3, 7:9),]
+  save(list = "restab", file = "vignette_dat/restabSc1_all_1Ksims.Rdata");  
+@
+<<chunk.lefebSc1b, message=FALSE, echo=FALSE, results="asis">>=
+  library(Hmisc)
+  load(file = "vignette_dat/restabSc1_all_1Ksims.Rdata");
+  cat("\n")
+  latex(restab, file = "", where = "!htpb", caption.loc = 'bottom', 
+      caption = "Replication of the simulation results from \\citet{lefebvre2008} for Scenario 1.", 
+      label = 'tab2Lefebvre',booktabs = TRUE,rowname = NULL,landscape = FALSE, 
+      col.just = c("l", rep("r", 5)), size = "small")
+@
+<<chunk.lefebSc1c, message=FALSE, echo=FALSE, results="asis">>=
+  cat("\n")
+  latex(lefebvreT2, file = "", where = "!htpb", caption.loc = 'bottom', 
+      caption = "Simulation results for Scenario 1 as reported in Table II of \\citet{lefebvre2008}.", 
+      label = 'origtab2Lefebvre', booktabs = TRUE, rowname = NULL, landscape = FALSE, 
+      col.just = c("l", rep("r", 5)), size = "small")
+@
+
+Next, using the same approach described above, we replicate the simulation results for Scenario 3 reported in Table IV
+of \citet{lefebvre2008}. We start by defining the structural equation model specified for data simulation according to
+Scenario 3 in \citet{lefebvre2008} as follows:
+
+<<message=FALSE, warning=FALSE, results='hide'>>=
+  `%+%` <- function(a, b) paste0(a, b)
+  Lnames <- c("LO1", "LO2", "LO3", "LE1", "LE2", "LE3", "LC1", "LC2", "LC3")
+  D <- DAG.empty()
+
+  for (Lname in Lnames) {
+    D <- D + 
+            node(Lname%+%".norm1", distr = "rnorm") + 
+            node(Lname%+%".norm2", distr = "rnorm")
+  }
+@
+<<message=FALSE, warning=FALSE, results='hide'>>=
+  coefAi <- c(-0.10, -0.20, -0.30)
+  sdLNi <- c(sqrt(1), sqrt(5), sqrt(10))
+
+  for (i in (1:3)) {
+    D <- D + 
+            node("LO"%+%i, t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
+                  mu = 0, 
+                  params = list(norms = "c(LO"%+%i%+%".norm1, LO"%+%i%+%".norm2)")) + 
+            node("LE"%+%i, t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
+                  mu = 0, var1 = 1, var2 = 1, rho = 0.7, 
+                  params = list(norms = "c(LE"%+%i%+%".norm1, LE"%+%i%+%".norm2)")) + 
+            node("LC"%+%i, t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
+                  mu = {if (t == 0) {0} else {.(coefAi[i]) * A[t-1]}},
+                  params = list(norms = "c(LC"%+%i%+%".norm1, LC"%+%i%+%".norm2)")) + 
+            node("LN"%+%i, t = 0:1, distr = "rnorm", 
+                  mean = 0, sd = .(sdLNi[i]))
+  }
+
+  D <- D + 
+          node("alpha", t = 0:1, distr = "rconst",
+                const = {if(t == 0) {log(0.6)} else {log(1.0)}}) + 
+          node("A", t = 0:1, distr = "rbern", 
+                prob = plogis(alpha[t] + 
+                              log(5) * LC1[t] + log(2) * LC2[t] + log(1.5) * LC3[t] + 
+                              log(5) * LE1[t] + log(2) * LE2[t] + log(1.5) * LE3[t] + 
+                              {if (t == 0) {0} else {log(5) * A[t-1]}})) + 
+          node("Y", t = 1, distr = "rnorm",
+                mean = 0.98 * LO1[t] + 0.58 * LO2[t] + 0.33 * LO3[t] + 
+                        0.98 * LC1[t] + 0.58 * LC2[t] + 0.33 * LC3[t] - 0.39 * A[t],
+                sd = 1)
+
+  DAGO.sc3 <- set.DAG(D)
+@
+
+Similar to Scenario 1, we then define the same four actions on the new \code{DAG} object before defining and evaluating
+the causal target parameter of interest. We note that our results match the true value of the MSM coefficients reported
+in Table IV of \citet{lefebvre2008}:
+
+<<message=FALSE, warning=FALSE, results='hide'>>=
+  Dact.sc3 <- defAct(DAGO.sc3)
+@
+<<message=FALSE, warning=FALSE, results='hide', eval=FALSE>>=
+  msm.form <- "Y ~ S(abar[0]) + S(abar[1])"
+  Dact.sc3 <- set.targetMSM(Dact.sc3, outcome = "Y", t = 1, 
+                            form = msm.form, family = "gaussian")
+
+  trueMSM.sc3 <- NULL; reptrue <- 50
+  for (i in (1:reptrue)) {
+    res.sc3.i <- eval.target(Dact.sc3, n = 500000)$coef
+    trueMSM.sc3 <- rbind(trueMSM.sc3, res.sc3.i)
+  }
+
+  save(list = "trueMSM.sc3", file = "vignette_dat/trueMSM.sc3.Rdata")
+  (trueMSM.sc3 <- apply(trueMSM.sc3,2,mean))
+@
+<<message=FALSE, echo=FALSE>>=
+  load(file = "vignette_dat/trueMSM.sc3.Rdata")
+  trueMSM.sc3 <- apply(trueMSM.sc3, 2, mean)
+  trueMSM.sc3
+@
+
+Finally, using the \proglang{R} code provided in the appendix, we replicate in Table~\ref{tab4Lefebvre} the IPW
+estimation results for Scenario 3 presented originally in Table IV of \citet{lefebvre2008}. We note that our simulation
+results closely match those in Table~\ref{origtab4Lefebvre} which were originally reported by \citet{lefebvre2008}.\\
+
+
+<<chunk.lefebSc3a, message=FALSE, eval=FALSE, echo=FALSE>>=
+  trueA <- c(A_0 = -0.316, A_1 = -0.390)
+  nsims <- 10000; restab <- NULL
+  runsim <- function(Lnames, DAGO) {
+    for (nsamp in c(300,1000,10000)) {
+      resSc <- runMSMsw(DAGO = DAGO, Lnames = Lnames, trueA = trueA, nsamp = nsamp, nsims = nsims)
+      restab <- rbind(restab, c(N = nsamp, resSc))
+    }
+    restab
+  }
+  Lnames <- c("LC1", "LC2", "LC3")
+  covnm <- c("Confounder(s) only", rep("",2))
+  restab_1 <- cbind(covnm, runsim(Lnames, DAGO.sc3))
+  # restab_1 <- rbind(restab_1, as.matrix(lefebvreT4[1:3,]))
+  Lnames <- c("LO1", "LO2", "LO3", "LC1", "LC2", "LC3")
+  covnm <- c("Confounder(s) &", "risk factors", "")
+  restab_2 <- cbind(covnm, runsim(Lnames, DAGO.sc3))
+  # restab_2 <- rbind(restab_2, as.matrix(lefebvreT4[4:6,]))
+  Lnames <- c("LE1", "LE2", "LE3", "LC1", "LC2", "LC3")
+  covnm <- c("Confounder(s) &", "IVs", "")
+  restab_3 <- cbind(covnm, runsim(Lnames, DAGO.sc3))
+  # restab_3 <- rbind(restab_3, as.matrix(lefebvreT4[7:9,]))
+  Lnames <- c("LO1", "LO2", "LO3", "LE1", "LE2", "LE3", "LC1", "LC2", "LC3")
+  covnm <- c("Confounder(s),", "IVs & risk factors","")
+  restab_4 <- cbind(covnm, runsim(Lnames, DAGO.sc3))
+  # restab_4 <- rbind(restab_4, as.matrix(lefebvreT4[10:12,]))
+  Lnames <- c("LE1", "LE2", "LE3", "LC1")
+  covnm <- c("Mis-specified", rep("",2))
+  restab_5 <- cbind(covnm, runsim(Lnames, DAGO.sc3))
+  # restab_5 <- rbind(restab_5, as.matrix(lefebvreT4[13:15,]))
+  Lnames <- c("LO1", "LO2", "LO3", "LE1", "LE2", "LE3", "LC1", "LC2", "LC3", "LN1", "LN2", "LN3")
+  covnm <- c("Full Model", rep("",2))
+  restab_6 <- cbind(covnm, runsim(Lnames, DAGO.sc3))
+  # restab_6 <- rbind(restab_6, as.matrix(lefebvreT4[16:18,]))
+  restab <- rbind(restab_1, restab_2, restab_3, restab_4, restab_5, restab_6)
+  col1name <- "Covariates in $P(A|L)$"
+  colnames(restab)[1] <- col1name
+  # restabwLef <- restab
+  # save(list = "restabwLef", file = "vignette_dat/restabwLefSc3_all_1Ksims.Rdata");
+  # restab <- restab[c(1:3, 7:9, 13:15, 19:21, 25:27, 31:33),]
+  save(list = "restab", file = "vignette_dat/restabSc3_all_1Ksims.Rdata");
+@
+<<chunk.lefebSc3b, message=FALSE, echo=FALSE, results="asis">>=
+  library(Hmisc)
+  load(file = "vignette_dat/restabSc3_all_1Ksims.Rdata");
+  cat("\n")
+  latex(restab,file = "",where = "!htpb", caption.loc = 'bottom', 
+      caption = "Replication of the simulation results from \\citet{lefebvre2008} for Scenario 3.", 
+      label = 'tab4Lefebvre',booktabs = TRUE,rowname = NULL,landscape = FALSE, 
+      col.just = c("l", rep("r", 5)), size = "small")
+@
+<<chunk.lefebSc3c, message=FALSE, echo=FALSE, results="asis">>=
+  cat("\n")
+  latex(lefebvreT4,file = "",where = "!htpb", caption.loc = 'bottom', 
+      caption = "Simulation results for Scenario 3 as reported in Table IV of \\citet{lefebvre2008}.", 
+      label = 'origtab4Lefebvre',booktabs = TRUE,rowname = NULL,landscape = FALSE, 
+      col.just = c("l", rep("r", 5)), size = "small")
+@
+
+\newpage{}
+\section{Discussion}\label{secdiscus}
+\addcontentsline{toc}{section}{Discussion}
+
+We demonstrated that the \pkg{simcausal} \proglang{R} package is a flexible tool that facilitates the conduct of
+transparent and reproducible simulation studies to evaluate causal inference methodologies. The package allows the user
+to simulate complex longitudinal data structures based on structural equation models using a novel interface which
+allows concise and intuitive expression of complex functional dependencies for a large number of nodes. The package
+allows the user to specify and simulate counterfactual data under various interventions (e.g., static, dynamic,
+deterministic, or stochastic). These interventions may represent exposures to treatment regimens, the occurrence or non-
+occurrence of right-censoring events, or of specific monitoring events. The package also enables the computation of a
+selected set of user-specified features of the distribution of the counterfactual data that represent common causal
+target parameters, such as, treatment-specific means, average treatment effects and coefficients from working marginal
+structural models. In addition, the package provides a flexible graphical component that produces plots of directed
+acyclic graphs for observed or post-intervention data generating distributions.\\
+
+We demonstrated the functionality of the package with a single time point intervention simulation study in
+Section~\ref{simstudy.pt} and a complex multiple time point simulation study in Section~\ref{simstudy.timevar}. We also
+showed two real-world applications of the \pkg{simcausal} package in Sections~\ref{repsimstudy1} and \ref{repsimstudy2},
+first, by replicating results of the simulation study by \citet{neugebauer2014,neugebauer2015} that evaluated the
+comparative performance of two estimation procedures, and second, by replicating results of the simulation study by
+\citet{lefebvre2008} that evaluated the impact of model misspecification of the treatment mechanism on IPW inferences
+about MSM coefficients.\\
+
+Finally, we acknowledge that the \pkg{simcausal} package is in the early stages of its development and that
+implementation of additional functionalities in future releases of the package should further expand its utility for
+methods research. Among such possible improvements is the evaluation of additional causal parameters, e.g., the average
+treatment effect on the treated \citep{holland1986,imbens2004,ATETshpitser}, survivorship causal effects
+\citep{joffe2007defining,greene2013balanced} and direct/indirect effects
+\citep{PearlDirInd,petersen2006,vanderweele2009,VanderWeele2014,hafeman2011}. Additionally, future versions of the
+\pkg{simcausal} package may allow simulation of non-iid observations, to study causal inference methodologies to analyze
+data resulting from experiments with more complex sampling methodologies, e.g., survey-based sampled data
+\citep{sarndal2003model} or network-based sampled (dependent) data \citep{eckles2014design}.
+
+\newpage{}
+\section*{Acknowledgments}
+\textbf{FUNDING ACKNOWLEDGEMENT}: 
+This study was partially funded through internal operational funds provided by the Kaiser Permanente Center for
+Effectiveness \& Safety Research (CESR). This work was also partially supported through a Patient-Centered Outcomes
+Research Institute (PCORI) Award (ME-1403-12506) and an NIH grant (R01 AI074345-07).\\
+
+\textbf{DISCLAIMER}: 
+All statements in this report, including its findings and conclusions, are solely those of the authors and do not
+necessarily represent the views of the Patient-Centered Outcomes Research Institute (PCORI), its Board of Governors or
+Methodology Committee.
+
+\newpage{}
+% \bibliographystyle{unsrt}
+\bibliography{SimCausal_2014,R-Pckgs}
+% doesn't work:
+% \addcontentsline{toc}{section}{References}
+% \bibliography{}
+
+\newpage{}
+\appendix
+\section*{Source code}
+% doesn't work:
+% \addcontentsline{toc}{section}{Source code}
+
+\subsection{Source code for obtaining and plotting MSM survival curves}
+<<appendixcode1, ref.label = 'chunkMSMsurvplot', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+
+\newpage{}
+\subsection{Source code for replicating the simulation study in Neugebauer et al., 2014}
+\emph{Source code for the function that creates inputs for the \code{ltmleMSM} function of the \pkg{ltmle} package \citep{R-ltmle}.}
+<<appendixcode2, ref.label='chunk.est.targetMSM', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+\emph{Source code for setting up some of the parameters of the \code{ltmleMSM} function of the \pkg{ltmle} package \citep{R-ltmle}.}
+<<appendixcodesimMSM1, ref.label='chunk.simrunltmleMSM1', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+\emph{Source code for running the data simulation and estimation with the \code{ltmleMSM} function of the \pkg{ltmle} package \citep{R-ltmle}.}
+<<appendixcodesimMSM2, ref.label='chunk.simrunltmleMSM2', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+<<appendixcodesimMSM3, ref.label='chunk.simrunltmleMSM3', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+
+\newpage{}
+\subsection{Source code for replicating the simulation study in Lefebvre et al., 2008}
+\emph{Source code for replicating the IPW estimator used by \citet{lefebvre2008}.}
+<<appendixcode5, ref.label='chunk.runMSMsw', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+\emph{Source code for recreating Tables II and IV from \citet{lefebvre2008}.}
+<<appendixcode6, ref.label='chunk.lefebrepT2andT4', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+\emph{Source code for replicating the simulation results for Scenario 1 in \citet{lefebvre2008}.}
+<<appendixcodeSc1a, ref.label='chunk.lefebSc1a', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+<<appendixcodeSc1b, ref.label='chunk.lefebSc1b', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+<<appendixcodeSc1c, ref.label='chunk.lefebSc1c', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+\emph{Source code for replicating the simulation results for Scenario 3 in \citet{lefebvre2008}.}
+<<appendixcodeSc3a, ref.label='chunk.lefebSc3a', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+<<appendixcodeSc3b, ref.label='chunk.lefebSc3b', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+<<appendixcodeSc3c, ref.label='chunk.lefebSc3c', eval=FALSE, echo=TRUE, size='tiny'>>=
+@
+
+\end{document}

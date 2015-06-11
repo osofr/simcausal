@@ -120,7 +120,7 @@ est.targetE <- function(DAG, obs_df, Aname="A", Cname="C", Lnames, package="ltml
 	#---------------------------------------------------------------------------------------
 	# If the outcome is survival need to carry forward last observation with doLTCF function
 	#---------------------------------------------------------------------------------------
-	obs_df <- doLTCF(data=obs_df, outcome=outnodes$gen_name)
+	obs_df <- doLTCF(data=obs_df, LTCF=outnodes$gen_name)
 	#---------------------------------------------------------------------------------------
 
 	#---------------------------------------------------------------------------------------
@@ -350,7 +350,7 @@ est.targetMSM <- function(DAG, obs_df, Aname="A", Cname="C", Lnames, Ytvec, ACLt
 	#---------------------------------------------------------------------------------------
 	# If the outcome is survival need to carry forward last observation with doLTCF function
 	#---------------------------------------------------------------------------------------
-	obs_df <- doLTCF(data=obs_df, outcome=outnodes$gen_name)
+	obs_df <- doLTCF(data=obs_df, LTCF=outnodes$gen_name)
 	#---------------------------------------------------------------------------------------
 
 	#---------------------------------------------------------------------------------------

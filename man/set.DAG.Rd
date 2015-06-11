@@ -19,94 +19,137 @@ Check current DAG (created with \code{node}) for errors and consistency of its n
 }
 \examples{
 #---------------------------------------------------------------------------------------
-# EXAMPLE 1A: Define some Bernoulli nodes, survival outcome Y and put it together in a
+# EXAMPLE 1A: Define some Bernoulli nodes, survival outcome Y and put it together in a 
 # DAG object
 #---------------------------------------------------------------------------------------
-W1 <- node(name="W1", distr="rbern", prob=plogis(-0.5), order=1)
-W2 <- node(name="W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2)
-A <- node(name="A", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2), order=3)
-Y <- node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2), order=4)
+W1 <- node(name = "W1", distr = "rbern", 
+	prob = plogis(-0.5), order = 1)
+W2 <- node(name = "W2", distr = "rbern", 
+	prob = plogis(-0.5 + 0.5 * W1), order = 2)
+A <- node(name = "A", distr = "rbern", 
+	prob = plogis(-0.5 - 0.3 * W1 - 0.3 * W2), order = 3)
+Y <- node(name = "Y", distr = "rbern", 
+	prob = plogis(-0.1 + 1.2 * A + 0.3 * W1 + 0.3 * W2), order = 4)
 D1A <- set.DAG(c(W1,W2,A,Y))
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 1B: Same as 1A using +node interface and no order argument
 #---------------------------------------------------------------------------------------
 D1B <- DAG.empty()
-D1B <- D1B + node(name="W1", distr="rbern", prob=plogis(-0.5))
-D1B <- D1B + node(name="W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1))
-D1B <- D1B + node(name="A", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2))
-D1B <- D1B + node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2))
+D1B <- D1B + node(name = "W1", distr = "rbern", 
+	prob = plogis(-0.5))
+D1B <- D1B + node(name = "W2", distr = "rbern", 
+	prob = plogis(-0.5 + 0.5 * W1))
+D1B <- D1B + node(name = "A", distr = "rbern", 
+	prob = plogis(-0.5 - 0.3 * W1 - 0.3 * W2))
+D1B <- D1B + node(name = "Y", distr = "rbern", 
+	prob = plogis(-0.1 + 1.2 * A + 0.3 * W1 + 0.3 * W2))
 D1B <- set.DAG(D1B)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 1C: Same as 1A and 1B using add.nodes interface and no order argument
 #---------------------------------------------------------------------------------------
 D1C <- DAG.empty()
-D1C <- add.nodes(D1C, node(name="W1", distr="rbern", prob=plogis(-0.5)))
-D1C <- add.nodes(D1C, node(name="W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1)))
-D1C <- add.nodes(D1C, node(name="A", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2)))
-D1C <- add.nodes(D1C, node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2)))
+D1C <- add.nodes(D1C, node(name = "W1", distr = "rbern", 
+	prob = plogis(-0.5)))
+D1C <- add.nodes(D1C, node(name = "W2", distr = "rbern", 
+	prob = plogis(-0.5 + 0.5 * W1)))
+D1C <- add.nodes(D1C, node(name = "A", distr = "rbern", 
+	prob = plogis(-0.5 - 0.3 * W1 - 0.3 * W2)))
+D1C <- add.nodes(D1C, node(name = "Y", distr = "rbern", 
+	prob = plogis(-0.1 + 1.2 * A + 0.3 * W1 + 0.3 * W2)))
 D1C <- set.DAG(D1C)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 1D: Add a uniformly distributed node and redefine outcome Y as categorical
 #---------------------------------------------------------------------------------------
 D_unif <- DAG.empty()
-D_unif <- D_unif + node("W1", distr="rbern", prob=plogis(-0.5))
-D_unif <- D_unif + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1))
-D_unif <- D_unif + node("W3", distr="runif", min=plogis(-0.5 + 0.7*W1 + 0.3*W2), max=10)
-D_unif <- D_unif + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*sin(W3)))
-# Categorical syntax 1 (probabilities as values)
-D_cat_1 <- D_unif + node("Y", distr="rcategor", probs={0.3;0.4})
-# Categorical syntax 2 (probabilities as formulas)
-D_cat_2 <- D_unif + node("Y", distr="rcategor",
-                         probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*cos(W3));
-                                plogis(-0.5 + 0.7*W1)})
+D_unif <- D_unif + 
+node("W1", distr = "rbern", prob = plogis(-0.5)) + 
+node("W2", distr = "rbern", prob = plogis(-0.5 + 0.5 * W1)) + 
+node("W3", distr = "runif", min = plogis(-0.5 + 0.7 * W1 + 0.3 * W2), max = 10) + 
+node("An", distr = "rbern", prob = plogis(-0.5 - 0.3 * W1 - 0.3 * W2 - 0.2 * sin(W3)))
+# Categorical syntax 1 (probabilities as values):
+D_cat_1 <- D_unif + node("Y", distr = "rcategor", probs = {0.3; 0.4})
 D_cat_1 <- set.DAG(D_cat_1)
+# Categorical syntax 2 (probabilities as formulas):
+D_cat_2 <- D_unif + 
+node("Y", distr = "rcategor", 
+	probs={plogis(-0.1 + 1.2 * An + 0.3 * W1 + 0.3 * W2 + 0.2 * cos(W3)); 
+			plogis(-0.5 + 0.7 * W1)})
 D_cat_2 <- set.DAG(D_cat_2)
 
 #---------------------------------------------------------------------------------------
-# EXAMPLE 1E: Defining new distribution function 'rbern', defining and passing a custom
+# EXAMPLE 2A: Define Bernoulli nodes using R rbinom() function, defining prob argument
+# for L2 as a function of node L1
+#---------------------------------------------------------------------------------------
+D <- DAG.empty()
+D <- D + 
+node("L1", t = 0, distr = "rbinom", 
+	prob = 0.05, size = 1) + 
+node("L2", t = 0, distr = "rbinom", 
+	prob = ifelse(L1[0] == 1, 0.5, 0.1), size = 1)
+D <- set.DAG(D)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 2B: Equivalent to 2A, passing argument size to rbinom inside a named list
+# params
+#---------------------------------------------------------------------------------------
+D <- DAG.empty()
+D <- D + 
+node("L1", t = 0, distr = "rbinom", 
+	prob = 0.05, params = list(size = 1)) + 
+node("L2", t = 0, distr = "rbinom", 
+	prob = ifelse(L1[0] == 1,0.5,0.1), params = list(size = 1))
+D <- set.DAG(D)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 2C: Equivalent to 2A and 2B, define Bernoulli nodes using a wrapper "rbern"
+#---------------------------------------------------------------------------------------
+D <- DAG.empty()
+D <- D + 
+node("L1", t = 0, distr = "rbern", prob = 0.05) + 
+node("L2", t = 0, distr = "rbern", prob = ifelse(L1[0] == 1, 0.5, 0.1))
+D <- set.DAG(D)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 3: Define node with normal distribution using rnorm() R function
+#---------------------------------------------------------------------------------------
+D <- DAG.empty()
+D <- D + node("L2", t = 0, distr = "rnorm", mean = 10, sd = 5)
+D <- set.DAG(D)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 4: Define 34 Bernoulli nodes, or 2 Bernoulli nodes over 17 time points,
+# prob argument contains .() expression that is immediately evaluated in the calling 
+# environment (.(t_end) will evaluate to 16)
+#---------------------------------------------------------------------------------------
+t_end <- 16
+D <- DAG.empty()
+D <- D + 
+node("L2", t = 0:t_end, distr = "rbinom", 
+	prob = ifelse(t == .(t_end), 0.5, 0.1), size = 1) + 
+node("L1", t = 0:t_end, distr = "rbinom", 
+	prob = ifelse(L2[0] == 1, 0.5, 0.1), size = 1)
+D <- set.DAG(D)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 5: Defining new distribution function 'rbern', defining and passing a custom 
 # vectorized node function 'customfun'
 #---------------------------------------------------------------------------------------
 rbern <- function(n, prob) { # defining a bernoulli wrapper based on R rbinom function
- rbinom(n=n, prob=prob, size=1)
+  rbinom(n = n, prob = prob, size = 1)
 }
 customfun <- function(arg, lambda) {
- res <- ifelse(arg==1,lambda,0.1)
- res
+  res <- ifelse(arg == 1, lambda, 0.1)
+  res
 }
 D <- DAG.empty()
-D <- D + node("W1", distr="rbern", prob=0.05)
-D <- D + node("W2", distr="rbern", prob=customfun(W1,0.5))
-D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
-D1d <- set.DAG(D, vecfun=c("customfun"))
-sim1d <- simobs(D1d, n=200, rndseed=1)
-
-#---------------------------------------------------------------------------------------
-# EXAMPLE 2: Define time varying nodes for time points t = 0 to 16
-#---------------------------------------------------------------------------------------
-t_end <- 16
-DTV <- DAG.empty()
-DTV <- DTV + node(name="L2", t=0, distr="rbern", prob=0.05)
-DTV <- DTV + node(name="L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1))
-DTV <- DTV + node(name="A1", t=0, distr="rbern",
-	prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1,
-                                         ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))))
-DTV <- DTV + node(name="A2", t=0, distr="rbern",
-	prob=0)
-DTV <- DTV + node(name="Y",  t=0, distr="rbern",
-	prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), EFU=TRUE)
-DTV <- DTV + node(name="L2", t=1:t_end, distr="rbern",
-	prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/.(t_end)))))
-DTV <- DTV + node(name="A1", t=1:t_end, distr="rbern",
-	prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3,
-                              ifelse(L1[0]==0 & L2[0]==0, 0.1,
-                               ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))))
-DTV <- DTV + node(name="A2", t=1:t_end, distr="rbern",
-	prob=0, order=8+4*(0:(t_end-1)))
-DTV <- DTV + node(name="Y", t=1:t_end, distr="rbern",
-	prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
-DTV <- set.DAG(DTV)
+D <- D + 
+node("W1", distr = "rbern", prob = 0.05) + 
+node("W2", distr = "rbern", prob = customfun(W1, 0.5)) + 
+node("W3", distr = "rbern", prob = ifelse(W1 == 1, 0.5, 0.1))
+D1d <- set.DAG(D, vecfun = c("customfun"))
+sim1d <- simobs(D1d, n = 200, rndseed = 1)
 }
 

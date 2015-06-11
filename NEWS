@@ -2,3 +2,10 @@ simcausal 0.1
 ==============
 
 * Initial version release to CRAN
+
+simcausal 0.1.9
+==============
+
+* Development version update. 
+
+* Added vignette; the node.depr function is no longer supported; updated the documentation for doLTCF, sim, simobs and simfull functions; changed examples for node and set.DAG; added .onAttach message; added simcausalNEWS function;

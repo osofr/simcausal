@@ -4,33 +4,30 @@ if(FALSE) {
   library("RUnit")
   library("roxygen2")
   library("devtools")
-  setwd(".."); setwd(".."); getwd()
+  # setwd(".."); setwd(".."); getwd()
   document()
   setwd("..")
   install("simcausal", build_vignettes=FALSE) # INSTALL W/ devtools:
 
-  # system("/usr/lib/R-Appln/R-3.1.0/lib64/R/bin/R CMD check --no-manual simcausal")
   # system("echo $PATH") # see the current path env var
   # system("R CMD Rd2pdf simcausal")  # just create the pdf manual from help files
 
-  # CHECK AND BUILDING PACKAGE:
+  # CHECK AND BUILD PACKAGE:
   # setwd(".."); setwd(".."); getwd()
   # devtools::check() # runs check with devtools
-  # build() # build package tarball:
-  # devtools::build_win() # build package on CRAN servers:
-  # check R package tar ball:
-  # setwd("..");
-  # system("R CMD check simcausal_0.1.tar.gz")
-  # check R package tar ball prior to CRAN submission:
-  # system("R CMD check --as-cran simcausal_0.1.tar.gz")
+  devtools::build() # build package tarball
+  setwd("..")
+  system("R CMD check --as-cran simcausal_0.1.9.tar.gz") # check R package tar ball prior to CRAN submission
+  # system("R CMD check simcausal_0.1.9.tar.gz") # check R package tar ball
+  # devtools::build_win() # build package on CRAN servers (windows os?)
       ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
       ## system("R CMD build simcausal --no-build-vignettes")
       ## system("R CMD build simcausal")
-  # SET UP TRAVIS CONFIG FILE:
-  # devtools::use_travis()
+  
+  # devtools::use_travis() # SET UP TRAVIS CONFIG FILE
 
   # INSTALLING FROM SOURCE:
-  # install.packages("./simcausal_0.1.tar.gz", repos = NULL, type="source", dependencies=TRUE)
+  # install.packages("./simcausal_0.1.9.tar.gz", repos = NULL, type="source", dependencies=TRUE)
   # library(simcausal)
   # simcausal:::addvectorfcn("poisson")
   # simcausal:::debug_set() # SET TO DEBUG MODE
@@ -93,6 +90,81 @@ as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
 test.bugfixes <- function() {
+    #-------------------------------------------------------------
+    # BUG (TO DO): 
+      # # If node name coincides with internal function name (e.g., "A"), it wont be picked up as a parent inside the node formula
+      # # 1) TO fix this need to test for parenthood INSIDE the simulatd data.frame environment
+      # # or 2) Take ALL formula atoms (+, -, *, etc) and select only those that match to existing node names
+      # D <- DAG.empty()
+      # D <- D+node("W1",distr="rbern",prob=plogis(-0.5),order=1)
+      # D <- D+node("W2",distr="rbern",prob=plogis(-0.5+0.5*W1),order=2)
+      # D <- D+node("W3",distr="rbern",prob=plogis(-0.5+0.7*W1+0.3*W2),order=3)
+      # D <- D+node("A",distr="rbern",prob=plogis(-0.5-0.3*W1-0.3*W2-0.2*W3),order=4)
+      # D <- D+node("Y",distr="rbern",prob=plogis(-0.1+1.2*A+0.3*W1+0.3*W2+0.2*W3),order=5,EFU=TRUE)
+      # D_WAY <- set.DAG(D)
+      # plotDAG(D_WAY)  
+    #-------------------------------------------------------------
+
+    #-------------------------------------------------------------
+    # TO DO in eval.target: 
+      # "data" and "actions" arguments currently do not work in agreement, 
+      # i.e. when data is specified, actions argument is completely ignored.
+      # CHANGE TO: when "actions" not missing, should subset data by action names
+    #-------------------------------------------------------------        
+
+    #-------------------------------------------------------------
+    # TO DO in plotDAG: 
+      # add actions argument for plotting actions saved in D (rather than passing DAG.action)
+      # print action name(s) on the DAG
+    #-------------------------------------------------------------
+
+    #-------------------------------------------------------------
+    ## TO DO: check if set.targetE with race/categorical works
+    #-------------------------------------------------------------    
+
+    #--------------------------------------------------------------------------------
+    # TO DO:
+    # DOESN'T WORK WITHIN R CMD check ENVIRONMENT, BUT WORKS FINE WHEN RAN MANUALLY:
+      # showing how to define custom node formula functions (need to add "customfun" as an argument to set.DAG):
+      # customfun <- function(arg, lambda) {
+      #   res <- ifelse(arg==1,lambda,0.1)
+      #   res
+      # }
+      # D <- DAG.empty()
+      # D <- D + node("W1", distr="rbern", prob=0.05)
+      # D <- D + node("W2", distr="rbern", prob=customfun(W1,0.5))
+      # D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
+      # D1d <- set.DAG(D, vecfun=c("customfun"))
+      # vecfun.reset()
+      # vecfun.remove("N.sporadic.4_vec")
+      # vecfun.add(c("custom2", "N.sporadic.4_vec"))
+      # vecfun.print()
+
+      # sim1d <- simobs(D1d, n=200, rndseed=1)
+      # checkIdentical(as.matrix(sim1a), as.matrix(sim1d))
+    #--------------------------------------------------------------------------------
+    #--------------------------------------------------------------------------------
+    # TO DO :
+    # DOESN'T WORK WITHIN R CMD check ENVIRONMENT, BUT WORKS FINE WHEN RAN MANUALLY:  
+      # showing how to define several DAGs indexed by different values passed to custom node formula functions:
+      # customfun <- function(arg, lambda) {
+      #   res <- ifelse(arg==1,lambda,0.1)
+      #   res
+      # }
+      # lambdas <- c(0.5, 0.7, 0.9)
+      # D_list <- list()
+      # for (lambda in lambdas) {
+      #     print(lambda)
+      #     D <- DAG.empty()
+      #     D <- D + node("W1", distr="rbern", prob=0.05)
+      #     D <- D + node("W2", distr="rbern", prob=customfun(W1, .(lambda)))
+      #     D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
+      #     D <- set.DAG(D, vecfun=c("customfun"))
+      #     D_list <- append(D_list, list(D))
+      # }
+      # sim_list <- lapply(D_list, simobs, n=200, rndseed=1)
+    # --------------------------------------------------------------------------------
+
     library(simcausal)
     #-------------------------------------------------------------
     # BUG (FIXED): 
@@ -126,41 +198,7 @@ test.bugfixes <- function() {
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    # BUG (TO DO): 
-      # # If node name coincides with internal function name (e.g., "A"), it wont be picked up as a parent inside the node formula
-      # # 1) TO fix this need to test for parenthood INSIDE the simulatd data.frame environment
-      # # or 2) Take ALL formula atoms (+, -, *, etc) and select only those that match to existing node names
-      # D <- DAG.empty()
-      # D <- D+node("W1",distr="rbern",prob=plogis(-0.5),order=1)
-      # D <- D+node("W2",distr="rbern",prob=plogis(-0.5+0.5*W1),order=2)
-      # D <- D+node("W3",distr="rbern",prob=plogis(-0.5+0.7*W1+0.3*W2),order=3)
-      # D <- D+node("A",distr="rbern",prob=plogis(-0.5-0.3*W1-0.3*W2-0.2*W3),order=4)
-      # D <- D+node("Y",distr="rbern",prob=plogis(-0.1+1.2*A+0.3*W1+0.3*W2+0.2*W3),order=5,EFU=TRUE)
-      # D_WAY <- set.DAG(D)
-      # plotDAG(D_WAY)  
-    #-------------------------------------------------------------
-
-    #-------------------------------------------------------------
-    # TO DO in eval.target: 
-      # "data" and "actions" arguments currently do not work in agreement, 
-      # i.e. when data is specified, actions argument is completely ignored.
-      # CHANGE TO: when "actions" not missing, should subset data by action names
-    #-------------------------------------------------------------        
-
-    #-------------------------------------------------------------
-    # TO DO in plotDAG: 
-      # add actions argument for plotting actions saved in D (rather than passing DAG.action)
-      # print action name(s) on the DAG
-    #-------------------------------------------------------------
-
-    #-------------------------------------------------------------
-    ## TO DO: 
-      # check if set.targetE with race/categorical works
-    #-------------------------------------------------------------    
-
-    #-------------------------------------------------------------
-    # TO DO (NOT IMPLEMENTED): 
-      # Add a warning when overwriting existing action nodes 
+    # (DONE) Add a warning when overwriting existing action nodes 
       D <- DAG.empty()
       D <- D+node("W1",distr="rbern",prob=plogis(-0.5),order=1)
       D <- D+node("W2",distr="rbern",prob=plogis(-0.5+0.5*W1),order=2)
@@ -178,52 +216,6 @@ test.bugfixes <- function() {
       # class(A(D_WAY)[[1]])
       # class(A(D_WAY))
     #-------------------------------------------------------------
-
-    #--------------------------------------------------------------------------------
-    # TO DO (NOT IMPLEMENTED):
-    # ADD TO THE VIGNETTE
-    # EXPLAIN THE DIFFERENCE BETWEEN VECTORIZED AND NOT VECTORIZED
-    # DOESN'T WORK WITHIN R CMD check ENVIRONMENT, BUT WORKS FINE WHEN RAN MANUALLY:
-      # showing how to define custom node formula functions (need to add "customfun" as an argument to set.DAG):
-      # customfun <- function(arg, lambda) {
-      #   res <- ifelse(arg==1,lambda,0.1)
-      #   res
-      # }
-      # D <- DAG.empty()
-      # D <- D + node("W1", distr="rbern", prob=0.05)
-      # D <- D + node("W2", distr="rbern", prob=customfun(W1,0.5))
-      # D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
-      # D1d <- set.DAG(D, vecfun=c("customfun"))
-      # vecfun.reset()
-      # vecfun.remove("N.sporadic.4_vec")
-      # vecfun.add(c("custom2", "N.sporadic.4_vec"))
-      # vecfun.print()
-
-      # sim1d <- simobs(D1d, n=200, rndseed=1)
-      # checkIdentical(as.matrix(sim1a), as.matrix(sim1d))
-    #--------------------------------------------------------------------------------
-
-    #--------------------------------------------------------------------------------
-    # TO DO (NOT IMPLEMENTED):
-    # DOESN'T WORK WITHIN R CMD check ENVIRONMENT, BUT WORKS FINE WHEN RAN MANUALLY:  
-      # showing how to define several DAGs indexed by different values passed to custom node formula functions:
-      # customfun <- function(arg, lambda) {
-      #   res <- ifelse(arg==1,lambda,0.1)
-      #   res
-      # }
-      # lambdas <- c(0.5, 0.7, 0.9)
-      # D_list <- list()
-      # for (lambda in lambdas) {
-      #     print(lambda)
-      #     D <- DAG.empty()
-      #     D <- D + node("W1", distr="rbern", prob=0.05)
-      #     D <- D + node("W2", distr="rbern", prob=customfun(W1, .(lambda)))
-      #     D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
-      #     D <- set.DAG(D, vecfun=c("customfun"))
-      #     D_list <- append(D_list, list(D))
-      # }
-      # sim_list <- lapply(D_list, simobs, n=200, rndseed=1)
-    # --------------------------------------------------------------------------------
 
     #-------------------------------------------------------------
     # BUG (FIXED):
@@ -262,7 +254,7 @@ test.bugfixes <- function() {
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    # Enabled categoricals with probs=c(...,...) (in addition to probs={...,...})
+    # (DONE) Enabled categoricals with probs=c(...,...) (in addition to probs={...,...})
       # new categorical syntax:
       D <- DAG.empty() + node("race",t=0,distr="rcategor",probs=c(0.2,0.4),order=1)
       D <- set.DAG(D)
@@ -319,26 +311,26 @@ test.bugfixes <- function() {
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    # Removed hazard being TRUE as a default value in set.targetMSM()
+    # (DONE) Removed hazard being TRUE as a default value in set.targetMSM()
     # No need for hazard when outcome is not EFU=TRUE
     # Works without hazard in general and gives error when outcome is EFU=TRUE and hazard argument is missing
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    ## Checked MSM works with a continuous node as outcome and that hazards=TRUE gives proper error message in that case
+    # (DONE) Checked MSM works with a continuous node as outcome and that hazards=TRUE gives proper error message in that case
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    # Added additional checks in add.note() function:
+    # (DONE) Added additional checks in add.note() function:
     # Checking that the node distr function exists (using exist(distr))
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    # Fixed plotDAG function (including subsetting by t)
+    # (DONE) Fixed plotDAG function (including subsetting by t)
     #-------------------------------------------------------------
 
     #-------------------------------------------------------------
-    # Added print method for action object that prints attributes and action nodes (or just names of action nodes)
+    # (DONE) Added print method for action object that prints attributes and action nodes (or just names of action nodes)
     # A(D) prints list attributes that are being used in a particular action
     #-------------------------------------------------------------
 }
@@ -1783,11 +1775,11 @@ test.set.DAG_DAG_informcens <- function() {
     #-------------------------------------------------------------
     O_dat <- simobs(lDAG3, n=n, rndseed = 123)
 
-    O_dat_LTCFY <- doLTCF(data=O_dat, outcome="Y")  # carry forward Y
-    O_dat_LTCFA2 <- doLTCF(data=O_dat, outcome="A2")  # carry forward A2 (censoring indicator)
+    O_dat_LTCFY <- doLTCF(data=O_dat, LTCF="Y")  # carry forward Y
+    O_dat_LTCFA2 <- doLTCF(data=O_dat, LTCF="A2")  # carry forward A2 (censoring indicator)
     # carry forward both Y and A2 (censoring indicator) by first calling doLTCF with "Y" then with "A2" or vice-versa
-    O_dat_LTCFY <- doLTCF(data=O_dat, outcome="Y")
-    O_dat_LTCFA2Y <- doLTCF(data=O_dat_LTCFY, outcome="A2")
+    O_dat_LTCFY <- doLTCF(data=O_dat, LTCF="Y")
+    O_dat_LTCFA2Y <- doLTCF(data=O_dat_LTCFY, LTCF="A2")
 
     O_dat_long <- simobs(lDAG3, n=n, wide=FALSE, rndseed = 123)
     t_tolong <- system.time(O_dat_long_2 <- DF.to.long(O_dat))
@@ -2251,7 +2243,7 @@ test.faster_tolongdata <- function() {
 
     # With carry forward imputation of Y (vs 1):
     O_dat_df <- simobs(D, n=500, rndseed = 123)
-    O_dat_LTCF <- doLTCF(data=O_dat_df, outcome="Y")
+    O_dat_LTCF <- doLTCF(data=O_dat_df, LTCF="Y")
     system.time(O_dat_long_LTCF_v1 <- DF.to.long(O_dat_LTCF))
     system.time(O_dat_long_DT_LTCF_v1 <- DF.to.longDT(O_dat_LTCF))
 
@@ -2372,284 +2364,4 @@ test.faster_tolongdata <- function() {
     # system.time(newVar_vold <- rowSums(I(X_dat_1[,L2_names] == cbind(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))))
 
 }
-
-# DAG2 (from tech specs) by explicitely specifying formulas for each node/time-point
-# needs to be rewritten to work with the new interface
-needs_rerewrite_test_set.DAG_DAG2a_long <- function() {
-    fmakeifelse <- function(nodes, vals, prob) {
-        valschr <- paste0(vals, collapse=",")
-        paste0("ifelse(all(c(", nodes, ")==c(", valschr, ")), ", prob, ", ")
-    }
-    fmakeifelserecur <- function(nodes, vals_list, probs) {
-        cur_string <- NULL
-        for (i in c(1:length(vals_list))) {
-            cur_string <- paste0(cur_string, fmakeifelse("L1_0,L2_0", vals_list[[i]], probs[i]))
-        }
-        if (length(probs)>length(vals_list)) cur_string <- paste0(cur_string, probs[length(probs)])
-        cur_string <- paste0(cur_string, paste0(rep(")", length(vals_list)), collapse=""))
-        return(cur_string)
-    }   
-
-    n <- 500
-    # n <- 1000000
-    n <- n  # faster run time
-
-    # Define DAG 2 (longitudinal DAG from tech specs)
-    t_end <- 16
-
-    #--------------------------------------------------------
-    # long DAG 2: set.DAG & simobs
-    # REPLACE all calls to "all" with & => WILL BE MUCH FASTER!
-    #--------------------------------------------------------
-    gsub_tprev <- function(string, t) {
-      string <- gsub("{t-1}", t-1, string, fixed=TRUE)
-      string <- gsub("{t}", t, string, fixed=TRUE)
-      return(string)
-    }
-    gsub_theta <- function(string, theta) gsub("{theta}", theta, string, fixed=TRUE)
-
-    L2_0 <- fmakeBern("L2_0", 1, 0.05, NULL, FALSE)
-    L1_0 <- fmakeBern("L1_0", 2, "ifelse(L2_0==1,0.5,0.1)", NULL, FALSE)
-    # A1_0 <- fmakeBern("A1_0", 3, "ifelse(all(c(L1_0,L2_0)==c(1,0)), 0.5, ifelse(all(c(L1_0,L2_0)==c(0,0)), 0.1, ifelse(all(c(L1_0,L2_0)==c(1,1)), 0.9, 0.5)))", NULL, FALSE)
-    vals_list <- list(a10=c(1,0), a00=c(0,0), a11=c(1,1))
-    probs <- c(0.5, 0.1, 0.9, 0.5)
-    A1_0 <- fmakeBern("A1_0", 3, fmakeifelserecur("L1_0,L2_0", vals_list, probs), NULL, FALSE)
-    A2_0 <- fmakeBern("A2_0", 4, "0", NULL, FALSE)
-    Y_0 <- fmakeBern("Y_0", 5, "-6.5 + L1_0 + 4*L2_0 + 0.05*I(L2_0==0)", TRUE, TRUE)
-    order <- 5
-
-    testDAG_2_t0 <- list(L1_0=L1_0, L2_0=L2_0, A1_0=A1_0, A2_0=A2_0, Y_0=Y_0)
-    testDAG_2 <- NULL
-    testDAG_2 <- c(testDAG_2, testDAG_2_t0)
-    for (t in (1:t_end)) {
-      L2_t_mean <- "ifelse(A1_{t-1}==1, 0.1, ifelse(L2_{t-1}==1, 0.9, min(1,0.1 + {t}/16)))"
-      L2_t_mean <- gsub_tprev(L2_t_mean, t) # find {t-1} and {t} and replace {...} with its value inside
-      L2_t <- fmakeBern("L2_"%+%t, (order+1), L2_t_mean, NULL, FALSE)
-
-      vals_list <- list(a10=c(1,0), a00=c(0,0), a11=c(1,1))
-      probs <- c(0.3, 0.1, 0.7, 0.5)
-      A1_t_mean <- paste0("ifelse(A1_{t-1}==1,1,",fmakeifelserecur("L1_0,L2_0", vals_list, probs), ")")
-      A1_t_mean <- gsub_tprev(A1_t_mean, t) # find {t-1} and {t} and replace {...} with its value inside
-      A1_t <- fmakeBern("A1_"%+%t, (order+2), A1_t_mean, NULL, FALSE)
-
-      # A2_t_mean <- ifelse(t==t_end, "1", "0")
-      A2_t_mean <- "0"
-      A2_t <- fmakeBern("A2_"%+%t, (order+3), A2_t_mean, NULL, FALSE)
-      
-      sum_term <- paste0("(", paste0(sapply(0:t, function(t) paste0("I(L2_",t,"==0)")), collapse="+"), ")")
-      Y_t_mean <- paste0("-6.5 + L1_0 + 4*L2_{t} + 0.05*", sum_term)
-      Y_t_mean <- gsub_tprev(Y_t_mean, t) # find {t-1} and {t} and replace {...} with its value inside
-      print(Y_t_mean)
-      Y_t <- fmakeBern("Y_"%+%t, (order+4), Y_t_mean, TRUE, TRUE)
-
-      testDAG_2_t <- list(L2_t, A1_t, A2_t,Y_t)
-      names(testDAG_2_t) <- c("L2_"%+%t, "A1_"%+%t, "A2_"%+%t, "Y_"%+%t)
-      testDAG_2 <- c(testDAG_2, testDAG_2_t)
-      order <- order + 4
-    }
-    # str(testDAG_2)
-    # Define datagendistr and simulate O from DAG 2
-    datgendist_DAG2 <- set.DAG(testDAG_2)
-    t_short <- system.time(simODAG_2 <- simobs(datgendist_DAG2, n=n, rndseed = 123))
-    t_short
-    # 13.975   0.022  13.999 
-    nrow(simODAG_2)
-    # t_long <- system.time(simODAG_2_long <- simobs(datgendist_DAG2, n=n, wide=FALSE, rndseed = 123))
-    # t_long
-    # # 23.299   0.169  23.472 
-    # nrow(simODAG_2_long)
-    # head(simODAG_2_long, 500)
-
-    # head(simODAG_2)
-    # fixed: # Error in vecapply(cbind(L1_0, L2_0), 1, c) == vecapply(cbind(1, 0), 1,  : 
-    # non-conformable arrays
-    # nrow(simODAG_2)
-    # head(simODAG_2,100)
-    # check all values after the first failure are missing
-    checkTrue(all(is.na(simODAG_2[simODAG_2$Y_0==1,-c(1:6)])))
-    # sample very large data frame and check time
-    # time_samp1 <- system.time(simODAG_2_large <- simobs(datgendist_DAG2, n=200000, rndseed = 123))
-    # before the node formula parser
-    # time_samp
-    # user  system elapsed 
-    # 8.113   0.072   8.187
-    # after adding the parser (with vecapply)
-    # time_samp
-    # user  system elapsed 
-    # 48.256   0.162  48.425 
-    # time_samp2 <- system.time(simODAG_2_large <- simobs(datgendist_DAG2, n=100000, rndseed = 123))
-    # after adding parser
-    # user  system elapsed 
-    # 24.580   0.051  24.637     
-    # checkTrue(time_samp[3]<60)
-    # nrow(simODAG_2_large)
-    #--------------------------------------------------------
-    # long DAG 2: Actions (theta=0,1) from tech report and full data sim
-    #--------------------------------------------------------
-    # action based on theta and A1 defined above
-    # create an action in a loop over all t
-    f_action_t <- function(theta, nodenm, t0_newmean, t_newmean) {
-      newaction_l <- NULL
-      newnode_t0 <- list(name=nodenm%+%"_0", distr="Bern", prob=gsub_theta(t0_newmean, theta))
-      newaction_l <- c(newaction_l, list(newnode_t0))
-      for (t in (1:t_end)) {
-        newnode_t <- list(name=gsub_tprev(nodenm%+%"_{t}", t), distr="Bern", prob=gsub_tprev(gsub_theta(t_newmean, theta), t))
-        newaction_l <- c(newaction_l, list(newnode_t))
-      }
-      length(newaction_l)
-      names(newaction_l) <- "A1_"%+%c(0:t_end)
-      return(newaction_l)
-    }
-    
-    A1_0_newmean <- "ifelse(L2_0>={theta}, 1, 0)"
-    A1_t_newmean <- "ifelse(A1_{t-1}==1,1, ifelse(L2_{t}>={theta}, 1, 0))"
-    A1_th0 <- f_action_t(theta=0, nodenm="A1", t0_newmean=A1_0_newmean, t_newmean=A1_t_newmean)
-    A1_th1 <- f_action_t(theta=1, nodenm="A1", t0_newmean=A1_0_newmean, t_newmean=A1_t_newmean)
-    newactions_DAG2 <-  list(A1_th0 = A1_th0, A1_th1=A1_th1)
-    # str(newactions_DAG2)
-
-    actions_DAG_2 <- simcausal:::setAction(datgendist_DAG2, newactions_DAG2)
-    length(actions_DAG_2)
-    # str(actions_DAG_2)
-    t_full_dag2 <- system.time(fulldf_DAG_2 <- simfull(actions_DAG_2, n=n, rndseed = 123))
-    # user  system elapsed 
-    # 64.983   0.618  65.611
-
-    #--------------------------------------------------------
-    # long DAG 2: Calculate the true parameter and plot survival
-    #--------------------------------------------------------
-    # test for one intervention (one node and vector of nodes)
-    outnodes <- list(gen_name="Y", t=11)
-    (psi_fuldf <- getTrueParam(outnodes=outnodes, param="A1_th0", df_full=fulldf_DAG_2))
-    (psi_actionDAG <- getTrueParam(outnodes=outnodes, param="A1_th0", actions_DAG=actions_DAG_2, n=n))
-    checkTrue(psi_fuldf==psi_actionDAG)
-
-    t_int <- 0:16
-    outnodes <- list(gen_name="Y", t=t_int)
-    (psi_fuldf_th1 <- 1-getTrueParam(outnodes=outnodes, param="A1_th1", df_full=fulldf_DAG_2))  # survival for regimen theta=1
-    (psi_fuldf_th0 <- 1-getTrueParam(outnodes=outnodes, param="A1_th0", df_full=fulldf_DAG_2))  # survival for regimen theta=0
-    surv_res <- list(d_theta1 = psi_fuldf_th1, d_theta0 = psi_fuldf_th0)
-    # pdf(file.path("../simDAG2_fullsurv.pdf"), width=5,height=7)
-    # plotSurvEst(surv=surv_res, xindx=t_int+1, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
-    # dev.off()
-
-    # test for contrasts - 2 interventions (one node and vector of nodes)
-    outnodes <- list(gen_name="Y", t=t_int)
-    (psi_RDs <- getTrueParam(outnodes=outnodes, param="A1_th1-A1_th0", df_full=fulldf_DAG_2))
-    psi_RDs_DAG2a <<- psi_RDs
-    # Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7 
-    # 0.000000  0.005328  0.014377  0.025153  0.035778  0.044602  0.050341  0.053849 
-    # Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
-    # 0.055009  0.054711  0.053982  0.052659  0.051264  0.049703  0.048757  0.047022 
-    # Diff_Y_16
-    # 0.045849
-    # (psi_RDs2 <- getTrueParam(outnodes=outnodes, param="A1_th0-A1_th1", df_full=fulldf_DAG_2))
-
-    # test for ratios  - 2 interventions(one node and vector of nodes)
-    outnodes <- list(gen_name="Y", t=t_int)
-    (psi_fuldf <- getTrueParam(outnodes=outnodes, param="A1_th1/A1_th0", df_full=fulldf_DAG_2))
-    (psi_fuldf2 <- getTrueParam(outnodes=outnodes, param="A1_th0/A1_th1", df_full=fulldf_DAG_2))
-}
-
-# DAG2 (from tech specs): alternative vector node format, using one call to Node() constructor to specify node over all time-points
-old_test_set.DAG_DAG2b_short <- function() {
-    #-------------------------------------------------------------
-    # long DAG 2: Using time-format and Node constructor
-    # Switching L1[0] and L2[0] in places to get exact same result as in TMLE pub simulation
-    #-------------------------------------------------------------
-    # Define DAG 2 (longitudinal DAG from tech specs)
-    n <- 500
-    # n <- 1000000
-    n <- n  # faster run time
-    t_end <- 16
-
-    L2_0 <- node(name="L2", t=0, distr="rbern", prob=0.05, order=1)
-    L1_0 <- node(name="L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
-    A1_0 <- node(name="A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
-    A2_0 <- node(name="A2", t=0, distr="rbern", prob=0, order=4)
-    Y_0 <-  node(name="Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
-    L2_t <- node(name="L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
-    A1_t <- node(name="A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
-    A2_t <- node(name="A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)))
-    Y_t <- node(name="Y", t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
-
-    # GET CURRENT DEBUG MODE:
-    simcausal:::get_opts()
-    # SET PACKAGE TO DEBUG MODE:
-    simcausal:::debug_set()
-    # GENERATE DAG IN DEBUG MODE:
-    datgendist_DAG2b <- set.DAG(c(L2_0,L1_0, A1_0, A2_0, Y_0, L2_t, A1_t, A2_t, Y_t))
-    # TURN OFF THE DEBUG MODEL:
-    simcausal:::debug_off()
-    # GENERATE THE DAG WITH DEBUG MODE OFF
-    datgendist_DAG2b <- set.DAG(c(L2_0,L1_0, A1_0, A2_0, Y_0, L2_t, A1_t, A2_t, Y_t))
-
-    # Show parents for particular node names (based on parsed DAG expressions)
-    parents(datgendist_DAG2b, c("L2_5", "A1_5", "Y_5"))
-    simODAG_2b <- simobs(datgendist_DAG2b, n=n, rndseed = 123)
-    # head(simODAG_2b)
-
-    #-------------------------------------------------------------
-    # long DAG 2: Defining interventions using time-format and node constructor
-    #-------------------------------------------------------------
-    theta <- 0
-    A1_t0_newaction_theta0 <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= .(theta),1,0))
-    A1_t_newaction_theta0 <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= .(theta),1,0)))
-    theta <- 1
-    A1_t0_newaction_theta1 <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= .(theta),1,0))
-    A1_t_newaction_theta1 <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>=.(theta),1,0)))
-    newactions_DAG2b <-  list(A1_th0 = c(A1_t0_newaction_theta0, A1_t_newaction_theta0), A1_th1 = c(A1_t0_newaction_theta1, A1_t_newaction_theta1))
-    
-    action_1_DAG_2b <- simcausal:::setAction(datgendist_DAG2b, newactions_DAG2b[[1]])
-    action_2_DAG_2b <- simcausal:::setAction(datgendist_DAG2b, newactions_DAG2b[[2]])
-    actions_DAG_2b <- list(A1_th0=action_1_DAG_2b, A1_th1=action_2_DAG_2b)
-    # length(actions_DAG_2b)
-    t_full_dag2b <- system.time(fulldf_DAG_2b <- simfull(actions_DAG_2b, n=n, rndseed = 123))
-    # t_full_dag2b <- system.time(fulldf_DAG_2b <- simfull(actions_DAG_2b, n=1000000, rndseed = 123))
-    # rm(list="fulldf_DAG_2b")
-    # > t_full_dag2b
-    #    user  system elapsed 
-    # 163.084  13.645 177.174 
-    # timing after replacing sum and mean with rowSums and rowMeans
-    # > t_full_dag2b
-    # user  system elapsed 
-    # 84.185   3.150  87.365 
-    #--------------------------------------------------------
-    # long DAG 2: Calculate the true parameter and plot survival
-    #--------------------------------------------------------
-    # test for one intervention (one node and vector of nodes)
-    outnodes <- list(gen_name="Y", t=11)
-    # two ways to calculate the true psi_0, by specifying full data or by specifying actions DAG
-    (psi_fuldfb <- getTrueParam(outnodes=outnodes, param="A1_th0", df_full=fulldf_DAG_2b))
-    (psi_fuldfb <- getTrueParam(outnodes=outnodes, param="A1_th0", actions_DAG=actions_DAG_2b))
-    
-
-    t_int <- 0:16
-    outnodes <- list(gen_name="Y", t=t_int)
-    (psi_fuldf_th1b <- 1-getTrueParam(outnodes=outnodes, param="A1_th1", df_full=fulldf_DAG_2b))  # survival for regimen theta=1
-    (psi_fuldf_th0b <- 1-getTrueParam(outnodes=outnodes, param="A1_th0", df_full=fulldf_DAG_2b))  # survival for regimen theta=0
-    surv_resb <- list(d_theta1 = psi_fuldf_th1b, d_theta0 = psi_fuldf_th0b)
-    # pdf(file.path("../simDAG2_fullsurv_b.pdf"), width=5,height=7)
-    # plotSurvEst(surv=surv_resb, xindx=t_int+1, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
-    # dev.off()
-
-    # test for contrasts - 2 interventions (one node and vector of nodes)
-    outnodes <- list(gen_name="Y", t=t_int)
-    (psi_RDsb <- getTrueParam(outnodes=outnodes, param="A1_th1-A1_th0", df_full=fulldf_DAG_2b))
-    psi_RDs_DAG2b <<- psi_RDsb
-    # Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7 
-    # 0.000000  0.005328  0.014377  0.025153  0.035778  0.044602  0.050341  0.053849 
-    # Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
-    # 0.055009  0.054711  0.053982  0.052659  0.051264  0.049703  0.048757  0.047022 
-    # Diff_Y_16 
-    # 0.045849 
-    # check both specifications for DAG2 (manual and formula in t) produce the same results
-    checkTrue(all(psi_RDs_DAG2a==psi_RDs_DAG2b))
-
-    # test for ratios  - 2 interventions(one node and vector of nodes)
-    outnodes <- list(gen_name="Y", t=t_int)
-    (psi_fuldfb <- getTrueParam(outnodes=outnodes, param="A1_th1/A1_th0", df_full=fulldf_DAG_2b))
-    (psi_fuldf2b <- getTrueParam(outnodes=outnodes, param="A1_th0/A1_th1", df_full=fulldf_DAG_2b))
-}
-
 

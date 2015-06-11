@@ -15,7 +15,7 @@ sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 
 \item{wide}{A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format}
 
-\item{LTCF}{The name of the right-censoring / failure event indicator variable for the Last Time-point Carried Forward imputation. By default, when LTCF is left unspecified, all variables that follow after any end of follow-up (EFU) event are set to missing (NA). The end of follow-up event occurs when a binary node declared with EFU=TRUE is observed to be equal to 1, indicating a failing or right-censoring event. To forward impute the values of the time-varying nodes after the occurrence of the EFU event, set the LTCF argument to a name of the EFU node representing this event. This implies that for each observation, missing value of a time-varying variable (that is node declared with t argument) will be replaced by the last observed value of that variable, if the missingness is a result of the EFU event of the node LTCF.}
+\item{LTCF}{If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event.}
 
 \item{rndseed}{Seed for the random number generator.}
 }
@@ -23,6 +23,52 @@ sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.
 }
 \description{
-This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
+This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s. See the vignette for examples and detailed description.
+}
+\section{Forward Imputation}{
+
+By default, when LTCF is left unspecified, all variables that follow after any end of follow-up (EFU) event are set to missing (NA).
+The end of follow-up event occurs when a binary node of type \code{EFU=TRUE} is equal to 1, indicating a failing or right-censoring event.
+To forward impute the values of the time-varying nodes after the occurrence of the \code{EFU} event, set the LTCF argument to a name of the EFU node representing this event.
+For additional details and examples see the vignette and the \code{doLTCF} function documentation, \code{\link{doLTCF}}.
+}
+\examples{
+t_end <- 16
+lDAG <- DAG.empty()
+lDAG <- lDAG + 
+	node(name = "L2", t = 0, distr = "rconst", const = 0) + 
+	node(name = "A1", t = 0, distr = "rconst", const = 0) + 
+	node(name = "L2", t = 1:t_end, distr = "rbern", 
+ 	prob = ifelse(A1[t - 1]  ==  1, 0.1, 
+ 			ifelse(L2[t-1] == 1, 0.9, 
+ 			  min(1,0.1 + t/.(t_end))))) + 
+	node(name = "A1", t = 1:t_end, distr = "rbern", 
+ 	prob = ifelse(A1[t - 1]  ==  1, 1, 
+ 			 ifelse(L2[0] == 0, 0.3, 
+			  ifelse(L2[0] == 0, 0.1, 
+			   ifelse(L2[0] == 1, 0.7, 0.5))))) + 
+	node(name = "Y", t = 1:t_end, distr = "rbern", 
+ 	prob = plogis(-6.5 + 4 * L2[t] + 0.05 * sum(I(L2[0:t] == rep(0,(t + 1))))), 
+ 	EFU = TRUE)
+lDAG <- set.DAG(lDAG)
+#---------------------------------------------------------------------------------------
+# EXAMPLE 1. No forward imputation.
+#---------------------------------------------------------------------------------------
+Odat.wide <- sim(DAG = lDAG, n = 1000, rndseed = 123)
+Odat.wide[c(21,47), 1:18]
+Odat.wideLTCF <- sim(DAG = lDAG, n = 1000, LTCF = "Y", rndseed = 123)
+Odat.wideLTCF[c(21,47), 1:18]
+#---------------------------------------------------------------------------------------
+# EXAMPLE 2. With forward imputation.
+#---------------------------------------------------------------------------------------
+Odat.wideLTCF2 <- doLTCF(data = Odat.wide, LTCF = "Y")
+Odat.wideLTCF2[c(21,47), 1:18]
+all.equal(Odat.wideLTCF, Odat.wideLTCF2)
+}
+\seealso{
+\code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+
+Other simulation.functions: \code{\link{simfull}};
+  \code{\link{simobs}}
 }
 

@@ -456,7 +456,7 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
 		vec_EFUP <- sapply(N(DAG)[outnode_nms], is.EFUP)
 		if (any(vec_EFUP)&(!is.LTCF(data[[1]], outcome))) {
 			message("...some outcome nodes have EFU=TRUE, applying Last Time Point Carry Forward function: doLTCF()...")
-			data <- lapply(data, doLTCF, outcome=outcome)
+			data <- lapply(data, doLTCF, LTCF=outcome)
 		}
 		res <- eval.E(DAG=DAG, df_full=data, outnodes=outnodes, outnode_nms=outnode_nms, params.E=params.E, attrs=attrs)
 	} else if (!is.null(params.MSM)) {
