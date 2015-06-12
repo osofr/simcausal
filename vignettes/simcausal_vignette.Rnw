@@ -2064,7 +2064,7 @@ model above. To evaluate the target parameters $\alpha_{j}$ above, for $j=0,...,
 $17$ static interventions of interest as follows:
 
 <<message=FALSE, results='hide', cache=cache_opt>>=
-  Xts <- sim(Dstat, actions = names(A(Dstat)), n = 10000, rndseed = 123)
+  Xts <- sim(Dstat, actions = names(A(Dstat)), n = 1000, rndseed = 123)
 @
 
 Second, we define the target parameters and estimate them using the full data just simulated as follows:
