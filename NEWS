@@ -8,4 +8,4 @@ simcausal 0.1.9
 
 * Development version update. 
 
-* Added vignette; the node.depr function is no longer supported; updated the documentation for doLTCF, sim, simobs and simfull functions; changed examples for node and set.DAG; added .onAttach message; added simcausalNEWS function;
+* Added vignette; the node.depr function is no longer supported; updated the documentation for ?simcausal, doLTCF, sim, simobs and simfull, add.action, add.nodes functions; changed examples for node and set.DAG; added .onAttach message;

@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{simfull}
 \alias{simfull}
-\title{Simulate Full Data (Using Action DAG(s))}
+\title{Simulate Full Data (From Action DAG(s))}
 \usage{
 simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 }
@@ -24,7 +24,7 @@ A named list, each item is a \code{data.frame} corresponding to an action specif
 This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
 }
 \seealso{
-\code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+\code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
 Other simulation.functions: \code{\link{simobs}};
   \code{\link{sim}}

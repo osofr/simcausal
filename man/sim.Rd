@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.r
 \name{sim}
 \alias{sim}
-\title{Simulate Full or Observed Data from \code{DAG} Object}
+\title{Simulate Observed or Full Data from \code{DAG} Object}
 \usage{
 sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 }
@@ -30,7 +30,7 @@ This function simulates full data based on a list of intervention DAGs, returnin
 By default, when LTCF is left unspecified, all variables that follow after any end of follow-up (EFU) event are set to missing (NA).
 The end of follow-up event occurs when a binary node of type \code{EFU=TRUE} is equal to 1, indicating a failing or right-censoring event.
 To forward impute the values of the time-varying nodes after the occurrence of the \code{EFU} event, set the LTCF argument to a name of the EFU node representing this event.
-For additional details and examples see the vignette and the \code{doLTCF} function documentation, \code{\link{doLTCF}}.
+For additional details and examples see the vignette and \code{\link{doLTCF}} function.
 }
 \examples{
 t_end <- 16
@@ -66,7 +66,7 @@ Odat.wideLTCF2[c(21,47), 1:18]
 all.equal(Odat.wideLTCF, Odat.wideLTCF2)
 }
 \seealso{
-\code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+\code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
 Other simulation.functions: \code{\link{simfull}};
   \code{\link{simobs}}

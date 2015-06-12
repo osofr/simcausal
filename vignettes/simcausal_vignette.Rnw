@@ -483,7 +483,7 @@ specification of multiple nodes is particularly relevant for providing
 a shorthand syntax for defining a time-varying covariate, i.e., for defining
 repeated measurements over time of the same subject-matter attribute, as
 shown in the example in Section~\ref{node2}.
-\item [{\code{add.node} or \code{D + node}}] provide two equivalent ways of
+\item [{\code{add.nodes} or \code{D + node}}] provide two equivalent ways of
 growing the structural equation model by adding new nodes and their conditional
 distributions. Informally, these routines are intended to be used to sequentially
 populate a \code{DAG} object with all the structural equations that make
@@ -543,7 +543,7 @@ as a \emph{time-varying node} and we will refer to each node of such a
 collection as a measurement at a specific time point.\\
 
 Each node is usually added to a growing \code{DAG} object by using either
-the \code{add.node} function or equivalently the \code{'+'} function,
+the \code{add.nodes} function or equivalently the \code{'+'} function,
 as shown in the example in Sections~\ref{node1} and \ref{node2}. Each
 new node added to a \code{DAG} object must be uniquely identified by
 its name or the combination of a name and a value for the time variable
@@ -551,7 +551,7 @@ argument \code{t}.\\
 
 The user may explicitly specify the temporal ordering of each node using
 the \code{order} argument of the \code{node()} function. However, if
-this argument is omitted, the \code{add.node} function assigns the temporal
+this argument is omitted, the \code{add.nodes} function assigns the temporal
 ordering to a node by using the actual order in which this node was added
 to the \code{DAG} object and, if applicable, the value of the time variable
 that indexes this node (earlier added nodes receive a lower order value,
@@ -1224,7 +1224,7 @@ below, the simulation of observations of the node \code{W3} first involves autom
 \code{power2(W1)} and \code{power2(W2)} in the node formulas \code{mean} and \code{sd} with the \code{apply} function
 calls \code{apply(W1, 1, power2)} and \code{apply(W2, 1, power2)}, respectively:
 
-<<message=FALSE,cache=cache_opt>>=
+<<message=FALSE, cache=cache_opt>>=
   power2 <- function(arg) arg^2
 
   D <- DAG.empty()
@@ -1246,7 +1246,7 @@ data simulation.\\
 The performance gain from vectorization is demonstrated with the \code{power2} function in the example below. We first
 examine the simulation time when \code{power2} is not added to the list of recognized vectorized functions as follows:
 
-<<message=FALSE,cache=cache_opt>>=
+<<message=FALSE, cache=cache_opt>>=
   D1 <- set.DAG(D)
   (tnonvec <- system.time(sim1nonvec <- simobs(D1, n = 1000000, rndseed = 123)))
 @
@@ -1325,6 +1325,8 @@ function:
 <<message=FALSE>>=
   (t2nonvec <- system.time(sim2nonvec <- simobs(D2nonvec, n = 100000, rndseed = 123)))
   (t2vec <- system.time(sim2vec <- simobs(D2vec, n = 100000, rndseed = 123)))
+  all(unlist(lapply(seq(ncol(sim2nonvec)), 
+              function(coli) all.equal(sim2nonvec[, coli], sim2vec[, coli]))))
 @
 
 We note that the above data simulation is approximately \Sexpr{round(t2nonvec['elapsed']/t2vec['elapsed'],0)} times
@@ -1663,7 +1665,7 @@ list of two named \code{data.frame} objects, where each \code{data.frame} object
 the same post-intervention distribution defined by one particular action only.
 
 <<message=FALSE, cache=cache_opt>>=
-  Xdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 100000, rndseed = 123)
+  Xdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 10000, rndseed = 123)
   nrow(Xdyn[["A1_th0"]])
   nrow(Xdyn[["A1_th1"]])
   names(Xdyn)
@@ -1721,7 +1723,7 @@ As with observed data, the default behavior of the \code{sim} function can be ch
 instead structured in long format:
 
 <<message=FALSE, cache=cache_opt>>=
-  lXdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 100000, wide = FALSE, rndseed = 123)
+  lXdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 10000, wide = FALSE, rndseed = 123)
   head(lXdyn[["A1_th0"]], 5)
 @
 
@@ -1845,7 +1847,7 @@ the working MSM of interest is a model for survival probabilities. The argument 
 that the working model is a logistic model. Second, we evaluate the coefficients of the working model:
 
 <<message=FALSE, cache=cache_opt>>=
-  MSMres <- eval.target(Ddyn, n = 100000, rndseed = 123)
+  MSMres <- eval.target(Ddyn, n = 10000, rndseed = 123)
   MSMres$coef
 @
 
@@ -2163,8 +2165,7 @@ Section~\ref{node2} to match the data generating distribution described in proto
   lDAG <- set.DAG(D)
   Ddyn <- lDAG
 @
-% SINCE THE ACTIONS HAVE BEEN DEFINED PREVIOUSLY, DON'T NEED TO SHOW THE CODE BELOW:
-% Below code defines two dynamic interventions, $d_1$ and $d_2$, as done previously in \ref{actions2}:
+
 <<message=FALSE, echo=FALSE>>=
   anodes <- node("A1", t = (0:t.end), distr = "rbern", 
                   prob = {if (t == 0) {ifelse(L2[0] >= theta, 1, 0)} else
@@ -2178,13 +2179,23 @@ The target causal parameter $\psi_{0}$ in this replication study is defined as t
 risks of failure at $t_{0}=11$ under the two dynamic regimes $d_{0}$ and $d_{1}$ introduced in Section~\ref{dynact},
 i.e., $\psi_{0}=P(Y_{d_{1}}(t_{0}+1)=1)-P(Y_{d_{0}}(t_{0}+1)=1)$:\\
 
-<<message=FALSE, cache=cache_opt>>=
-  `%+%` <- function(a, b) paste0(a, b)
+<<message=FALSE, eval=TRUE>>=
   t0 <- 12
   Ddyn <- set.targetE(Ddyn, outcome = "Y", t = (1:t0), param = "A1_th1-A1_th0")
-  resNP <- eval.target(Ddyn, n = 150000, rndseed = 123)$res
-  # resNP <- eval.target(Ddyn, n = 1000000, rndseed = 123)$res
-  (psi0.NP <- as.vector(resNP["Diff_Y_"%+%t0]))
+
+  getNP.truetarget <- function() {
+    resNP <- eval.target(Ddyn, n = 150000, rndseed = 123)$res
+    return(as.vector(resNP[paste0("Diff_Y_", t0)]))
+  }
+  
+  f1name <- "vignette_dat/repstudy1_psi0.t0.NP.Rdata"
+  if (file.exists(f1name)) {
+    load(f1name)
+  } else {
+    psi0.t0.NP <- getNP.truetarget()
+    save(list = "psi0.t0.NP", file = f1name)
+  }
+  psi0.t0.NP
 @
 
 The above estimate of the true value of $\psi_{0}$ closely matches the value reported in Figure 10 of
@@ -2200,25 +2211,34 @@ $\psi_{0}$ can then be derived from the coefficients of this MSM as follows:
 
 Evaluation of the target parameter $\psi_{0}$ can thus be implemented through fitting of a saturated MSM as shown below:
 
-<<message=FALSE, eval=TRUE, cache=cache_opt>>=
+<<message=FALSE, eval=TRUE>>=
   MSM_RD_t <- function(resMSM, t) {
     invlogit <- function(x) 1 / (1 + exp(-x))
-    Riskth0 <- invlogit(resMSM["(Intercept)"] + resMSM["as.factor(t)"%+%t])
-    Riskth1 <- invlogit(resMSM["(Intercept)"] + resMSM["as.factor(t)"%+%t] +
-                            resMSM["theta"] + resMSM["theta:as.factor(t)"%+%t])
+    Riskth0 <- invlogit(resMSM["(Intercept)"] + resMSM[paste0("as.factor(t)",t)])
+    Riskth1 <- invlogit(resMSM["(Intercept)"] + resMSM[paste0("as.factor(t)",t)] +
+                            resMSM["theta"] + resMSM[paste0("theta:as.factor(t)",t)])
     return(as.vector(Riskth1-Riskth0))
   }
 
   msm.form <- "Y ~ theta + as.factor(t) + as.factor(t):theta "
   Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = (1:t0), formula = msm.form, 
-                          family = "binomial", hazard = FALSE)
-  resMSM <- eval.target(Ddyn, n = 150000, rndseed = 123)$coef
-  # resMSM <- eval.target(Ddyn, n = 1000000, rndseed = 123)$coef
-  psi0.MSM <- MSM_RD_t(resMSM = resMSM, t = t0)
-  all.equal(psi0.NP, psi0.MSM)
-@
-<<message=FALSE, echo=FALSE, eval=FALSE>>=
-  save(list = "psi0.MSM", file = "vignette_dat/repstudy1_psi0.MSM.Rdata")
+                        family = "binomial", hazard = FALSE)
+
+  getMSM.truetarget <- function() {
+    resMSM <- eval.target(Ddyn, n = 150000, rndseed = 123)$coef
+    return(as.vector(MSM_RD_t(resMSM = resMSM, t = t0)))
+  }
+  
+  f2name <- "vignette_dat/repstudy1_psi0.t0.MSM.Rdata"
+  if (file.exists(f2name)) {
+    load(f2name)
+  } else {
+    psi0.t0.MSM <- getMSM.truetarget()
+    save(list = "psi0.t0.MSM", file = f2name)
+  }
+
+  psi0.t0.MSM
+  all.equal(psi0.t0.NP, psi0.t0.MSM)
 @
 
 To evaluate the bias and relative efficiency of TMLE and IPW estimation of the risk difference $\psi_{0}$ with observed
@@ -2340,7 +2360,7 @@ the IPW estimation performance in this simulation study should not be expected t
 @
 <<message=FALSE, echo=FALSE>>=
   library(Hmisc)
-  load(file = "vignette_dat/repstudy1_psi0.MSM.Rdata")
+  load(file = "vignette_dat/repstudy1_psi0.t0.MSM.Rdata")
   load(file = "vignette_dat/sim50K.stratQg.notrunc.g.Rdata")
   iptw_sims <- sim50K.stratQg.notrunc.g[,"iptwRD"]
   tmle_sims <- sim50K.stratQg.notrunc.g[,"tmleRD"]
@@ -2348,7 +2368,7 @@ the IPW estimation performance in this simulation study should not be expected t
     resrow <- function(sims, estname) {
       data.frame(estname, 
                   sprintf("%.3f",mean(sims)), # round(mean(sims),3),
-                  sprintf("%.4f",mean(sims)-psi0.MSM), # round(((mean(sims)-psi0.MSM)/psi0.MSM)*100,3),
+                  sprintf("%.4f",mean(sims)-psi0.t0.MSM), # round(((mean(sims)-psi0.t0.MSM)/psi0.t0.MSM)*100,3),
                   sprintf("%.4f",sd(sims)), # round(sd(sims),4)
                   stringsAsFactors=FALSE
                   )
@@ -2486,20 +2506,25 @@ $(0,0)$, $(1,0)$, $(0,1)$, and $(1,1)$.
 Fourth, we evaluate the true values of these MSM coefficients using the \code{eval.target} function and note that our
 results closely match the true value of the MSM coefficients reported in Table II of \citet{lefebvre2008}:
 
-<<message=FALSE, results='hide', eval=FALSE>>=
-  trueMSM.sc1 <- NULL; reptrue <- 50
-  for (i in (1:reptrue)) {
-    res.sc1.i <- eval.target(Dact.sc1, n = 500000)$coef
-    trueMSM.sc1 <- rbind(trueMSM.sc1, res.sc1.i)
+<<message=FALSE, eval=TRUE>>=
+  repstudy2.sc1.truetarget <- function() {
+    trueMSMreps.sc1 <- NULL
+    reptrue <- 50
+    for (i in (1:reptrue)) {
+      res.sc1.i <- eval.target(Dact.sc1, n = 500000)$coef
+      trueMSMreps.sc1 <- rbind(trueMSMreps.sc1, res.sc1.i)
+    }
+    return(trueMSMreps.sc1)
   }
 
-  save(list = "trueMSM.sc1", file = "vignette_dat/trueMSM.sc1.Rdata")
-  (trueMSM.sc1 <- apply(trueMSM.sc1, 2, mean))
-@
-<<message=FALSE,echo=FALSE>>=
-  load(file = "vignette_dat/trueMSM.sc1.Rdata")
-  trueMSM.sc1 <- apply(trueMSM.sc1, 2, mean)
-  trueMSM.sc1
+  f1name <- "vignette_dat/trueMSMreps.sc1.Rdata"
+  if (file.exists(f1name)) {
+    load(f1name)
+  } else {
+    trueMSMreps.sc1 <- repstudy2.sc3.truetarget()
+    save(list = "trueMSMreps.sc1", file = f1name)
+  }
+  (trueMSM.sc1 <- apply(trueMSMreps.sc1, 2, mean))
 @
 
 Note that the true values of the MSM coefficients above were obtained from the averages of coefficient estimates
@@ -2694,27 +2719,30 @@ Similar to Scenario 1, we then define the same four actions on the new \code{DAG
 the causal target parameter of interest. We note that our results match the true value of the MSM coefficients reported
 in Table IV of \citet{lefebvre2008}:
 
-<<message=FALSE, warning=FALSE, results='hide'>>=
+<<message=FALSE, eval=TRUE>>=
   Dact.sc3 <- defAct(DAGO.sc3)
-@
-<<message=FALSE, warning=FALSE, results='hide', eval=FALSE>>=
   msm.form <- "Y ~ S(abar[0]) + S(abar[1])"
   Dact.sc3 <- set.targetMSM(Dact.sc3, outcome = "Y", t = 1, 
                             form = msm.form, family = "gaussian")
 
-  trueMSM.sc3 <- NULL; reptrue <- 50
-  for (i in (1:reptrue)) {
-    res.sc3.i <- eval.target(Dact.sc3, n = 500000)$coef
-    trueMSM.sc3 <- rbind(trueMSM.sc3, res.sc3.i)
+  repstudy2.sc3.truetarget <- function() {
+    trueMSMreps.sc3 <- NULL
+    reptrue <- 50
+    for (i in (1:reptrue)) {
+      res.sc3.i <- eval.target(Dact.sc3, n = 500000)$coef
+      trueMSMreps.sc3 <- rbind(trueMSMreps.sc3, res.sc3.i)
+    }
+    return(trueMSMreps.sc3)
   }
 
-  save(list = "trueMSM.sc3", file = "vignette_dat/trueMSM.sc3.Rdata")
-  (trueMSM.sc3 <- apply(trueMSM.sc3,2,mean))
-@
-<<message=FALSE, echo=FALSE>>=
-  load(file = "vignette_dat/trueMSM.sc3.Rdata")
-  trueMSM.sc3 <- apply(trueMSM.sc3, 2, mean)
-  trueMSM.sc3
+  f2name <- "vignette_dat/trueMSMreps.sc3.Rdata"
+  if (file.exists(f2name)) {
+    load(f2name)
+  } else {
+    trueMSMreps.sc3 <- repstudy2.sc3.truetarget()
+    save(list = "trueMSMreps.sc3", file = f2name)
+  }
+  (trueMSM.sc3 <- apply(trueMSMreps.sc3, 2, mean))
 @
 
 Finally, using the \proglang{R} code provided in the appendix, we replicate in Table~\ref{tab4Lefebvre} the IPW

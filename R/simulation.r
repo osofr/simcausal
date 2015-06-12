@@ -397,14 +397,14 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 #' @param rndseed Seed for the random number generator.
 #' @return A data.frame where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
 #' @family simulation functions
-#' @seealso \code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+#' @seealso \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @export
 simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL) {
 	if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
 	simFromDAG(DAG=DAG, Nsamp=n, wide=wide, LTCF=LTCF, rndseed=rndseed)
 }
 
-#' Simulate Full Data (Using Action DAG(s))
+#' Simulate Full Data (From Action DAG(s))
 #'
 #' This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s.
 #' @param actions Actions specifying the counterfactual DAG. This argument must be either an object of class DAG.action or a list of DAG.action objects.
@@ -414,7 +414,7 @@ simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL) {
 #' @param rndseed Seed for the random number generator.
 #' @return A named list, each item is a \code{data.frame} corresponding to an action specified by the actions argument, action names are used for naming these list items.
 #' @family simulation functions
-#' @seealso \code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+#' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @export
 simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 	if (!is.null(rndseed)) {
@@ -454,14 +454,14 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 	return(fulldf.list)
 }
 
-#' Simulate Full or Observed Data from \code{DAG} Object
+#' Simulate Observed or Full Data from \code{DAG} Object
 #'
 #' This function simulates full data based on a list of intervention DAGs, returning a list of \code{data.frame}s. See the vignette for examples and detailed description.
 #' @section Forward Imputation:
 #' By default, when LTCF is left unspecified, all variables that follow after any end of follow-up (EFU) event are set to missing (NA). 
 #' The end of follow-up event occurs when a binary node of type \code{EFU=TRUE} is equal to 1, indicating a failing or right-censoring event. 
 #' To forward impute the values of the time-varying nodes after the occurrence of the \code{EFU} event, set the LTCF argument to a name of the EFU node representing this event. 
-#' For additional details and examples see the vignette and the \code{doLTCF} function documentation, \code{\link{doLTCF}}.
+#' For additional details and examples see the vignette and \code{\link{doLTCF}} function.
 #' @param DAG A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated if actions argument is omitted.
 #' @param actions Character vector of action names which will be extracted from the DAG object. Alternatively, this can be a list of action DAGs selected with \code{A(DAG)} function, in which case the argument \code{DAG} is unused. When this argument is missing, the default is to samlpe observed data from the \code{DAG} object.
 #' @param n Number of observations to sample.
@@ -470,7 +470,7 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 #' @param rndseed Seed for the random number generator.
 #' @return If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.
 #' @family simulation functions
-#' @seealso \code{\link{doLTCF}} for forward imputing the missing values in already simulating data.
+#' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @example tests/RUnit/sim.impute.examples12.R
 #' @export
 sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
@@ -573,6 +573,7 @@ doLTCF <- function(data, LTCF) {
 #'
 #' @param df_wide A \code{data.frame} in wide format
 #' @return A \code{data.frame} object in long format
+#' @seealso \code{\link{DF.to.longDT}} - a faster version of \code{DF.to.long} that produces a \code{data.table} object as an output.
 #' @family data manipulation functions
 #' @export
 DF.to.long <- function(df_wide) {
