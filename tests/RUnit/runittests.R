@@ -15,19 +15,18 @@ if(FALSE) {
   # CHECK AND BUILD PACKAGE:
   # setwd(".."); setwd(".."); getwd()
   # devtools::check() # runs check with devtools
-  devtools::build() # build package tarball
+
+  # devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
+  devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
+  # devtools::build() # build package tarball
   setwd("..")
-  system("R CMD check --as-cran simcausal_0.1.9.tar.gz") # check R package tar ball prior to CRAN submission
-  # system("R CMD check simcausal_0.1.9.tar.gz") # check R package tar ball
-  # devtools::build_win() # build package on CRAN servers (windows os?)
+  system("R CMD check --as-cran simcausal_0.2.0.tar.gz") # check R package tar ball prior to CRAN submission
       ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
       ## system("R CMD build simcausal --no-build-vignettes")
-      ## system("R CMD build simcausal")
-  
+      ## system("R CMD build simcausal")  
   # devtools::use_travis() # SET UP TRAVIS CONFIG FILE
-
   # INSTALLING FROM SOURCE:
-  # install.packages("./simcausal_0.1.9.tar.gz", repos = NULL, type="source", dependencies=TRUE)
+  # install.packages("./simcausal_0.2.0.tar.gz", repos = NULL, type="source", dependencies=TRUE)
   # library(simcausal)
   # simcausal:::addvectorfcn("poisson")
   # simcausal:::debug_set() # SET TO DEBUG MODE
