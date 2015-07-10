@@ -63,9 +63,9 @@ bquote2 <- function (x, where = parent.frame()) {
 #' @export
 # Constructor for node objects, uses standard R distribution functions, 
 # added optional attributes that are saved with the node (such as custom distribution functions, etc)
-node <- function(name, t, distr, EFU, order, ..., params=list()) {
+node <- function(name, t, distr, EFU, order, ..., params = list()) {
   env <- parent.frame()
-  if (grepl("_", name, fixed = TRUE)) stop("...node names with underscore characters '_' are not allowed...")
+  if (grepl("_", name, fixed = TRUE)) stop("node names with underscore character '_' are not allowed")
   # collect all distribution parameters with delayed evaluation (must be named)
   dist_params <- eval(substitute(alist(...)))
   if (length(dist_params)>0) {
@@ -82,7 +82,7 @@ node <- function(name, t, distr, EFU, order, ..., params=list()) {
   }
   if (missing(EFU)) EFU <- NULL
 
-  node_dist_params <- list(distr=distr, dist_params=dist_params)
+  node_dist_params <- list(distr = distr, dist_params = dist_params)
 
   # check the distribution function exists
   if (!exists(distr)) {

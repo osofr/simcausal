@@ -74,8 +74,8 @@ parse.MSMform <- function(msm.form, t_vec, term_map_tab_old=NULL) {
 		}
     } else { # no S() terms detected, no changes
     	MSMtermsD <- NULL
-    	term_maptab <- NULL 
-    } 
+    	term_maptab <- NULL
+    }
     return(list(term_form=term_form, MSMtermsDAG=MSMtermsD, term_maptab=term_maptab))
 }
 
@@ -391,6 +391,8 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
 #' @return For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}), 
 #'MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}), 
 #'and the long format full data that was used for fitting this MSM \code{"df_long"}.
+#' 
+#' @importFrom assertthat assert_that is.count
 #' @export
 eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
 	gen_full_dat <- function(actions, wide = TRUE, LTCF = FALSE) { # generate full data when its not provided as an argument
@@ -412,12 +414,15 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
 	if (!is.DAGlocked(DAG)) stop("call set.DAG() and +action before attempting to evaluate target parameters on DAG")
 	if (missing(n) & missing(data)) stop("sample size n or data must be supplied")
 	if (!missing(data)) {
-		if (!is.list(data)) stop("data must be a list")
-		if (!all(sapply(data, is.data.frame))) stop("data must be a list of action-specific data.frames")
+		if (!is.list(data)) stop("data must be a list of full data (action) data.frames")
+		if (!all(sapply(data, is.data.frame))) stop("data must be a list of full data (action) data.frames")
 		n_all <- unique(sapply(data, nrow))
-		# if (length(n_all)>1) stop("all data.frames in data must have the same number of rows")
+		# if (length(n_all)>1) warning("number of rows for different data.frames in data is not unique")
 		if (!missing(n)) warning("argument n is not used, number of rows in data determines the evaluation sample size for each action")
 		n <- n_all[1]
+	}
+	if (!missing(n)) {
+		assertthat::assert_that(is.count(n))
 	}
 	if (is.null(attr(DAG, "target"))) stop("need to specify the target parameter by running set.targetMSM() or set.targetE() for DAG object")
 

@@ -12,7 +12,7 @@ opts$debug <- FALSE
 #' Print current user-defined vectorized function names.
 #' @return A vector of vectorized function names
 #' @export
-vecfun.print <- function() { 
+vecfun.print <- function() {
   new <- opts$vecfun
   if (length(new)>1) new <- paste0(new, collapse=",")
   print("current list of user-defined vectorized functions: "%+%new)
@@ -23,7 +23,7 @@ vecfun.print <- function() {
 #' Print all vectorized function names (build-in and user-defined).
 #' @return A vector of build-in and user-defined vectorized function names
 #' @export
-vecfun.all.print <- function() { 
+vecfun.all.print <- function() {
   new <- opts$vecfun
   if (length(new)>1) new <- paste0(new, collapse=",")
   print("build-in vectorized functions:"); print(c(vector_ops_fcns, vector_math_fcns))
@@ -72,7 +72,7 @@ vecfun.remove <- function(vecfun_names) { # Remove vectorized functions to globa
 #' Reset a listing of user-defined vectorized functions.
 #' @return An old vector of user-defined vectorized function names
 #' @export
-vecfun.reset <- function() { 
+vecfun.reset <- function() {
   old <- opts$vecfun
   opts$vecfun <- NULL
   invisible(old)
@@ -200,7 +200,7 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @export
 plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_attrs=list(), edge_attrs=list(), excludeattrs, customvlabs) {
       if (!requireNamespace("igraph", quietly = TRUE)) {
-        stop("igraph package needed for this function to work. Please install it.",
+        stop("igraph package is required for this function to work. Please install igraph.",
           call. = FALSE)
       }
       set.seed(12345)
@@ -406,6 +406,13 @@ check_expanded <- function(inputDAG) {
 #' @example tests/RUnit/set.DAG.R
 #' @export
 set.DAG <- function(DAG, vecfun) {
+
+  # ************
+  # Adding parent env. for future evaluation of node formulas. 
+  # Will be saved as a DAG attribute and then passed to form parser for evaluation as: eval(form, envir = df, enclos = env)
+  env <- parent.frame() 
+  # ************
+
   rndseed <- NULL
 	# set of allowed named arguments
 	node_args_all <- c("name", "t", "distr", "dist_params", "EFU", "order")
@@ -485,6 +492,7 @@ set.DAG <- function(DAG, vecfun) {
   }
 	attr(inputDAG, "parents") <- attr(obs.df, "parents")
   attr(inputDAG, "locked") <- TRUE
+  attr(inputDAG, "parent.env") <- env # Adding parent env. for future evaluation of node formulas. 
 	return(inputDAG)
 }
 

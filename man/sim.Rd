@@ -9,7 +9,7 @@ sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 \arguments{
 \item{DAG}{A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated if actions argument is omitted.}
 
-\item{actions}{Character vector of action names which will be extracted from the DAG object. Alternatively, this can be a list of action DAGs selected with \code{A(DAG)} function, in which case the argument \code{DAG} is unused. When this argument is missing, the default is to samlpe observed data from the \code{DAG} object.}
+\item{actions}{Character vector of action names which will be extracted from the DAG object. Alternatively, this can be a list of action DAGs selected with \code{A(DAG)} function, in which case the argument \code{DAG} is unused. When \code{actions} is omitted, the function returns simulated observed data (see \code{simobs}).}
 
 \item{n}{Number of observations to sample.}
 

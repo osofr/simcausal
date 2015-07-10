@@ -68,7 +68,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 		set.seed(rndseed)
 	}
 	if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
-
+	# NO LONGER SUPPORTED:
 	categorical_for = function(probs) { # takes a matrix of probability vectors, each in its own row
 		probs_cum <- matrix(nrow=nrow(probs), ncol=ncol(probs))
 		probs_cum[,1] <- probs[,1]
@@ -80,7 +80,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 	}
 	sampleNodeDistr <- function(newNodeParams, distr, EFUP.prev, cur.node, expr_str) {
 		N_notNA_samp <- sum(!EFUP.prev)
-		# 'below is deprecated - remove:
+		# NO LONGER SUPPORTED - remove:
 		if (distr=="const") {
 			len_const <- length(newNodeParams$const_val)
 
@@ -90,7 +90,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 			} else {
 				newVar <- newNodeParams$const_val
 			}
-		# 'below is deprecated - remove:
+		# NO LONGER SUPPORTED - remove:
 		} else if (distr=="unif"){
 			a_low <- newNodeParams$a
 			b_hi <- newNodeParams$b
@@ -104,7 +104,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 			newVar <- rep.int(NA_real_, Nsamp)
 			# N_notNA_samp <- sum(!is.na(a_low))
 			newVar[!EFUP.prev] <- runif(n=N_notNA_samp, min=a_low[!EFUP.prev], max=b_hi[!EFUP.prev])
-		# 'below is deprecated - remove:			
+		# NO LONGER SUPPORTED - remove:	
 		} else if (distr=="Bern") {
 			# old version (creates "NA generated" warning) # newVar <- rbinom(n=Nsamp, size=1, prob=newNodeParams$Binom_prob)
 			Bprobs <- newNodeParams$Binom_prob
@@ -114,7 +114,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 			newVar <- rep.int(NA_integer_, Nsamp)
 			# N_notNA_samp <- sum(!is.na(Bprobs))
 			newVar[!EFUP.prev] <- rbinom(n=N_notNA_samp, size=1, prob=Bprobs[!EFUP.prev])
-		# 'below is deprecated - remove:			
+		# NO LONGER SUPPORTED - remove:
 		} else if (distr=="cat"){
 			# THIS STAGE CAN BE DONE DURING PRE-DISTRIBUTION STAGE
 			# define last category probability as 1-sum(probs)
@@ -148,7 +148,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 			# dprint("probs_mtx"); dprint(head(probs_mtx))
 			newVar <- categorical_for(probs_mtx)
 			newVar <- as.factor(newVar)
-		# 'below is deprecated - remove:			
+		# NO LONGER SUPPORTED - remove:
 		} else if (distr=="norm"){
 			Nmeans <- newNodeParams$Norm_mean
 			SDs <- newNodeParams$Norm_sd
@@ -161,7 +161,8 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 			newVar <- rep.int(NA_real_, Nsamp)
 			# N_notNA_samp <- sum(!is.na(Nmeans))
 			newVar[!EFUP.prev] <- rnorm(n=N_notNA_samp, mean=Nmeans[!EFUP.prev], sd = SDs[!EFUP.prev])
-		} else { # RUN ARBITRARY DISTR FUNCTION
+		# FOR SAMPLING FROM ARBITRARY NODE DISTR FUN:
+		} else { 
 			standardize_param <- function(distparam) {
 				check_len <- function(param) {
 					len <- length(param)
@@ -260,35 +261,42 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 		# }
 
 		#------------------------------------------------------------------------
-		# CHECKS NODE DISTRIBUTIONS & EVALUATE NODE DISTRIBUTION PARAMS BASED ON NODE FORMULAS
+		# CHECKS NODE DISTRIBUTIONS & EVALUATE NODE DISTRIBUTION PARAMS PROVIDED IN NODE FORMULA(S)
+		# ****************************
+		# xxxx TO DO xxxx: For "enclos = " use the user envir saved in attr(DAG, "parent.env")
+		# with() statement is currently not serving any purpose since eval_nodeform() is finding the environment with ANCHOR_VARS_OBSDF
+		# pass the data (obs.df, prev.data) instead as an arg to eval_nodeform() or make R6 object that holds data and has $eval_nodeform method
+		# for eval use envir = c(df + node_func + ...) and enclose = user.env
+		# ANCHOR_VARS_OBSDF will no longer be needed
+		# ****************************
 		#------------------------------------------------------------------------
 		# if !is.null(prev.data) then evalute the formula in the envir of prev.data ONLY!
 		newNodeParams <- with(if (!is.null(prev.data)) prev.data else obs.df, {
 			# ANCHOR_VARS_OBSDF <- TRUE
 			ANCHOR_VARS_OBSDF <- list()
 			# local_vec_funs <- getlocalfuns(DAG)
-			# 'below is deprecated - remove:			
+			# NO LONGER SUPPORTED - remove:
 			if (cur.node$distr=="const") {
 				eval_expr_res <- eval_nodeform(as.character(cur.node$mean), cur.node)
 				list(const_val=as.numeric(eval_expr_res$evaled_expr), par.names=eval_expr_res$par.nodes)
-			# 'below is deprecated - remove:			
+			# NO LONGER SUPPORTED - remove:
 			} else if (cur.node$distr=="unif") {
 				# print(as.character(cur.node$unifmin)); print(as.character(cur.node$unifmax))
 				eval_expr_res1 <- eval_nodeform(as.character(cur.node$unifmin), cur.node)
 				eval_expr_res2 <- eval_nodeform(as.character(cur.node$unifmax), cur.node)
 				# dprint("uniform bounds [a,b]"); dprint(head(eval_expr_res1$evaled_expr)); dprint(head(eval_expr_res2$evaled_expr))
 				list(a=eval_expr_res1$evaled_expr, b=eval_expr_res2$evaled_expr, par.names=eval_expr_res1$par.nodes)
-			# 'below is deprecated - remove:			
+			# NO LONGER SUPPORTED - remove:
 			} else if (cur.node$distr=="Bern") {
 				eval_expr_res <- eval_nodeform(as.character(cur.node$prob), cur.node)
 				# dprint("Binom prob"); dprint(head(eval_expr_res))
 				list(Binom_prob=eval_expr_res$evaled_expr, par.names=eval_expr_res$par.nodes)
-			# 'below is deprecated - remove:			
+			# NO LONGER SUPPORTED - remove:
 			} else if (cur.node$distr=="cat"){
 				eval_expr_res <- eval_nodeform(as.character(cur.node$probs), cur.node)
 				# dprint("Cat Prob"); dprint(head(eval_expr_res))
 				list(Cat_prob=eval_expr_res$evaled_expr, par.names=eval_expr_res$par.nodes)
-			# 'below is deprecated - remove:			
+			# NO LONGER SUPPORTED - remove:
 			} else if (cur.node$distr=="norm"){
 				eval_expr_res1 <- eval_nodeform(as.character(cur.node$mean), cur.node)
 				eval_expr_res2 <- eval_nodeform(as.character(cur.node$sd), cur.node)
@@ -296,17 +304,15 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 				# dprint("Norm sd"); dprint(head(sqrt(eval_expr_res2)))
 				list(Norm_mean=eval_expr_res1$evaled_expr, Norm_sd=eval_expr_res2$evaled_expr, par.names=eval_expr_res1$par.nodes)
 			# ADDED FOR ARBITRARY DISTRIBUTION FUNCTIONS, THIS IS THE ONLY VERSION THAT NEEDS TO BE KEPT
-			# NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH N
+			# NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH n
 			} else {
 				eval_expr_res <- lapply(cur.node$dist_params, function(expr) eval_nodeform(as.character(expr), cur.node))
-
 				# if (gnodename=="A1") {
 				# 	dprint("cur.node t:"); dprint(cur.node$t)
 				# 	dprint("expr:"); dprint(lapply(cur.node$dist_params, function(expr) as.character(expr)))
 				# 	dprint("eval_expr_res:"); dprint(eval_expr_res)
 				# 	dprint("dist_params:"); dprint(lapply(eval_expr_res, '[[' ,"evaled_expr"))
 				# }
-				
 				# combine parents from all list items into one vector:
 				par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
 				dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
@@ -463,7 +469,7 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed=NULL) {
 #' To forward impute the values of the time-varying nodes after the occurrence of the \code{EFU} event, set the LTCF argument to a name of the EFU node representing this event. 
 #' For additional details and examples see the vignette and \code{\link{doLTCF}} function.
 #' @param DAG A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated if actions argument is omitted.
-#' @param actions Character vector of action names which will be extracted from the DAG object. Alternatively, this can be a list of action DAGs selected with \code{A(DAG)} function, in which case the argument \code{DAG} is unused. When this argument is missing, the default is to samlpe observed data from the \code{DAG} object.
+#' @param actions Character vector of action names which will be extracted from the DAG object. Alternatively, this can be a list of action DAGs selected with \code{A(DAG)} function, in which case the argument \code{DAG} is unused. When \code{actions} is omitted, the function returns simulated observed data (see \code{simobs}).
 #' @param n Number of observations to sample.
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. 

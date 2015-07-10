@@ -1,6 +1,6 @@
 Package: simcausal
 Type: Package
-Version: 0.2.0
+Version: 0.2.1
 Title: Simulating Longitudinal Data with Causal Inference Applications
 Date: 2015-06-11
 Authors@R: c(
@@ -22,6 +22,7 @@ Depends:
     R (>= 3.2.0)
 Imports:
     data.table,
+    assertthat,
     reshape2
 Suggests:
     ltmle,
@@ -32,4 +33,3 @@ Suggests:
     Hmisc
 VignetteBuilder: knitr
 License: GPL-2
-Packaged: 2015-01-26 21:44:49 UTC; olegsofrygin

@@ -96,8 +96,7 @@ nodeform_parsers <- function(node_form_call) {
 	# * TO ADD: if call tree starts with '{' need to process each argument as a separate call and return a list of calls instead
 	modify_call <- function (x, where = parent.frame()) {
 		if (is.atomic(x) & length(x)>1) {
-			# reparsed_call <- parse(text=deparse(x, width.cutoff=500, nlines=1))[[1]]
-			x <- parse(text=deparse(x, width.cutoff=500, nlines=1))[[1]]
+			x <- parse(text = deparse(x, width.cutoff = 500))[[1]]
 		  	modify_call(x, where = where)	# continue parsing recursively, turning result back into call
 		}
 		if (is.atomic(x) || is.name(x)) {
@@ -125,15 +124,16 @@ nodeform_parsers <- function(node_form_call) {
 		  			nargs <- length(x)-1
 		  			if (nargs > 1) { # IF NON-VECTORIZED func has more than one argument, combine all args into one with cbind_mod
 						# dprint("several args: "%+%x[[1]])
-			  			newargs <- "cbind_mod("%+%deparse(x[[2]], width.cutoff=500, nlines=1)
-			  			for (i in (3:length(x))) newargs <- newargs%+%","%+%deparse(x[[i]], width.cutoff=500, nlines=1)
+			  			newargs <- "cbind_mod("%+%deparse(x[[2]], width.cutoff=500)
+			  			for (i in (3:length(x))) newargs <- newargs%+%","%+%deparse(x[[i]], width.cutoff=500)
 			  			for (i in (length(x)):3) x[[i]] <- NULL
 			  			newargs <- newargs%+%")"
 			  			newexp <- parse(text=newargs)[[1]]
 			  			x[[2]] <- newexp
 		  			}
-		  			reparsed_chr <- "vecapply("%+%deparse(x[[2]], width.cutoff=500, nlines=1)%+%", 1, "%+%deparse(x[[1]], width.cutoff=500, nlines=1)%+%")"
+		  			reparsed_chr <- "vecapply("%+%deparse(x[[2]], width.cutoff=500) %+% ", 1, " %+% deparse(x[[1]], width.cutoff=500) %+% ")"
 			  		reparsed_call <- parse(text=reparsed_chr)[[1]]
+			  		print(x)
 			  		x[[1]] <- reparsed_call
 			  		x[[2]] <- NULL
 			  		modify_call(x[[1]], where = where)	# continue parsing recursively, turning result back into call
@@ -185,19 +185,29 @@ eval_nodeform <- function(expr_str, cur.node, env=parent.frame()) {
 		# function takes the name of the TD var and index vector => creates a vector of time-varying column names in df
 		# returns matrix TD_var[indx]
 		# ***NOTE: current '[' cannot evalute subsetting that is based on values of other covariates such as A1C[ifelse(BMI<5, 1, 2)]
-		`[` = function(var,indx, env=parent.frame()) {
+		`[` = function(var, indx, env = parent.frame()) {
+
+			# Capturing the TV variable name (as.name):
+				# var <- substitute(var)
+				# if (is.name(var)) {var.chr <- as.character(var)} else {stop("var in var[indx] must be a name")}
+
 			if (identical(class(indx),"logical")) indx <- which(indx)
-			# dprint("Using specialized [ func")
-			t <- get("t", envir =env); # dprint("t: "%+%t)
+			t <- get("t", envir = env); # dprint("t: "%+%t)
 			if (is.null(t)) stop("references references Var[t] are not allowed when t is undefined")
 			if (max(indx)>t) stop(paste0(var, "[",max(indx),"] cannot be referenced in node formulas at t = ", t))	# check indx<= t
+			
 			TDvars <- var%+%"_"%+%indx
-			# check the variables paste0(var, "_", indx) accessible from current environment
+			# TDvars <- var.chr%+%"_"%+%indx
+
+			# check the variables paste0(var, "_", indx) exist in simulated data.frame environment:
+			# NEED ANOTHER METHOD FOR CHECKING TDvar existance...
+			# e.g., try(eval(TDvar)), then is.vector() and length == n?
+			# another approach is to modify node_func to include ANCHOR_ALLVARNMS_LIST that contains a list of character names of all vars...
 			anchor_evn <- where("ANCHOR_VARS_OBSDF", env)
 			check_exist <- sapply(TDvars, function(TDvar) exists(TDvar, where = anchor_evn, inherits = FALSE))
-			anchor_evn$ANCHOR_VARS_OBSDF <- append(anchor_evn$ANCHOR_VARS_OBSDF, list(TDvars))
-			if (!all(check_exist)) stop("undefined time-dependent variable(s): "%+%TDvars[which(!check_exist)])
+			# anchor_evn$ANCHOR_VARS_OBSDF <- append(anchor_evn$ANCHOR_VARS_OBSDF, list(TDvars)) # only needed for debugging
 
+			if (!all(check_exist)) stop("undefined time-dependent variable(s): "%+%TDvars[which(!check_exist)])
 
 			# dprint("TDvars in '[': "); dprint(TDvars)
 			# dprint("exprs text in '[': "); 
@@ -209,7 +219,7 @@ eval_nodeform <- function(expr_str, cur.node, env=parent.frame()) {
 		vecapply = function(X, idx, func) {	# custom wrapper for apply that turns a vector X into one column matrix
 			if (is.vector(X)) dim(X) <- c(length(X), 1)	# returns TRUE only if the object is a vector with no attributes apart from names
 			# if (is.atomic(x) || is.list(x)) dim(X) <- c(length(X), 1)	# alternative way to test for vectors
-		    x <- parse(text=deparse(func))[[1]]
+		    x <- parse(text = deparse(func))[[1]]
 		    nargs <- length(x[[2]])
 		    if (nargs>1) {
 		    	funline <- deparse(func)[1]
@@ -274,6 +284,9 @@ eval_nodeform <- function(expr_str, cur.node, env=parent.frame()) {
 		if (!(Vname%in%ls(anchor_evn))) stop(paste0("formula at node ", cur.node$name, " cannot be evaluated; node ", Vname," is undefined"))
 	}
 
+	# ********************************
+	# Change to enclose = user.env and envir = c(simdf, node_func)
+	# ********************************
 	if (is.call(modified_call) && identical(try(modified_call[[1]]), quote(`{`))) { # check for '{' as first function, if so, remove first func, turn call into a list of calls and do lapply on eval
 		# print("call and { brace passed...")
 		modified_call_nocurl <- modified_call[-1]

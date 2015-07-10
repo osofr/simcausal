@@ -4,9 +4,9 @@ if(FALSE) {
   library("RUnit")
   library("roxygen2")
   library("devtools")
-  # setwd(".."); setwd(".."); getwd()
+  setwd(".."); setwd(".."); getwd()
   document()
-  setwd("..")
+  setwd("..");
   install("simcausal", build_vignettes=FALSE) # INSTALL W/ devtools:
 
   # system("echo $PATH") # see the current path env var
@@ -18,6 +18,7 @@ if(FALSE) {
 
   # devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
   devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
+  # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
   setwd("..")
   system("R CMD check --as-cran simcausal_0.2.0.tar.gz") # check R package tar ball prior to CRAN submission
@@ -88,9 +89,52 @@ sample_checks <- function() {   # doesn't run, this is just to show what test fu
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
+
+test.longparse <- function() {
+  library(simcausal)
+  # Fixing the bug in modify_call() for long expressions with deparse arg set to output 1 line of text
+  # Error in parse(text = deparse(x, width.cutoff = 500, nlines = 1)) : 
+
+  # expr <- rep(1/55, 55)
+  # parse(text = deparse(expr, width.cutoff = 500))[[1]]
+  # x <- parse(text = deparse(x, width.cutoff = 500))[[1]]
+
+  D <- DAG.empty()
+  D2 <- D + node('group',
+                 distr = 'rcategor.int',
+                 probs = rep(1/55, 55))
+  D2 <- set.DAG(D2)
+  datD2 <- sim(D2, n = 100, rndseed = 123)
+
+
+  D3 <- D + node('group',
+                 distr = 'rcategor.int',
+                 probs = rep(1/1933, 1933))
+  D3 <- set.DAG(D3)
+  datD3 <- sim(D3, n = 100, rndseed = 123)
+  datD3
+
+}
+
 test.bugfixes <- function() {
+
     #-------------------------------------------------------------
-    # BUG (TO DO): 
+    # BUG (TO DO):
+    # Should be able to handle character strings for node formulas (doesn't process them at all currently)
+    # Add to node: if (is.character(x)) {x} else {deparse(x)}
+      # D <- DAG.empty()
+      # D <- D+ node("L2",distr="rbern",prob=0.05) +
+      #         node("L2",t=0:16,distr="rbern",prob=0.05) +
+      #         node("L1",t=0,distr="rbern",prob=ifelse(L2[0]==1,0.5,0.1)) +
+      #         node("A1",t=0,distr="rbern",prob="ifelse(L1[0]==1 & L2[0]==0,0.5,
+      #                                                          ifelse(L1[0]==0 & L2[0]==0,0.1,
+      #                                                            ifelse(L1[0]==1 & L2[0]==1,0.9,0.5)))") +
+      #         node("A2",t=0,distr="rbern",prob=0,order=4,EFU=TRUE)
+      # D <- set.DAG(D)
+    #-------------------------------------------------------------
+
+    #-------------------------------------------------------------
+    # BUG (TO DO): SEE NEW PARSER FOR TMLENET. Capture user envir and pass it as enclos = ..
       # # If node name coincides with internal function name (e.g., "A"), it wont be picked up as a parent inside the node formula
       # # 1) TO fix this need to test for parenthood INSIDE the simulatd data.frame environment
       # # or 2) Take ALL formula atoms (+, -, *, etc) and select only those that match to existing node names
@@ -185,7 +229,6 @@ test.bugfixes <- function() {
               node("L2",t=0:16,distr="rbern",prob=0.05) +
               node("L1",t=0:16,distr="rbern",prob=ifelse(L2[0]==1,0.5,0.1))
       D <- set.DAG(D)
-    #-------------------------------------------------------------
 
     #-------------------------------------------------------------
     # BUG (FIXED): 

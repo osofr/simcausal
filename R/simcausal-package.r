@@ -58,6 +58,9 @@
 #'
 NULL
 
+# #' @import assertthat
+# NULL
+
 # \item {\code{node}} - defines a node in the structural equation model and
 # its conditional distribution, i.e., the outcome of one equation in the
 # structural equation model and the formula that links the outcome value
