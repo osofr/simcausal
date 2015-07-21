@@ -114,8 +114,34 @@ test.longparse <- function() {
   datD3 <- sim(D3, n = 100, rndseed = 123)
   datD3
 
+  # testing that rep with rcategor.int returns an error (rep functionality not implemented yet):
+  D.error <- D + node('A',
+                 distr = 'rconst',
+                 const = 1/3)
+  D.error <- D.error + node('group',
+                  distr = 'rcategor.int',
+                  probs = rep(A, 3))
+  checkException(set.DAG(D.error))
+
+  # using c instead of rep with rcategor.int works as cbind(A,A,A):
+  D.noerror <- D + node('A',
+                 distr = 'rconst',
+                 const = 1/3)
+  D.noerror <- D.noerror + node('group',
+                  distr = 'rcategor.int',
+                  probs = c(A, A, A))
+  D.noerror <- set.DAG(D.noerror)
+  sim(D.noerror, n = 100)
 }
 
+
+test.distr <- function() {
+  distr.list()
+  rdistr.template(n = 100, arg1 = 0.5, arg2 = 0.3)
+  rdistr.template(n = 100, arg1 = rep(0.5, 100), arg2 = 0.3)
+  checkException(rdistr.template(n = 100, arg1 = rep(0.5, 100), arg2 = rep(0.3, 50)))
+
+}
 test.bugfixes <- function() {
 
     #-------------------------------------------------------------
