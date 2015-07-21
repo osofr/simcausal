@@ -155,10 +155,11 @@ distr.list <- function() {
 #' @param ... Additional optional parameters
 #' @export
 rdistr.template <- function(n, arg1, arg2, ...) {
-	if (length(arg1) == 1) arg1 <- rep.int(arg1, n)
- 	if (length(arg2) == 1) arg2 <- rep.int(arg2, n)
+	if (length(arg1) == 1L) arg1 <- rep.int(arg1, n)
+ 	if (length(arg2) == 1L) arg2 <- rep.int(arg2, n)
 	if (length(arg1) != n || length(arg2) != n) stop("inputs arguments should all have the same length")
-	out <- numeric()
-	length(out) <- n
+	out <- as.numeric(arg1 + arg2)
+	stopifnot(length(out)==n)
+	# length(out) <- n
 	out
 }

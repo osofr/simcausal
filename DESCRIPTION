@@ -18,7 +18,7 @@ Description: A flexible tool for simulating complex longitudinal data using
     package vignette for more information, documentation and examples.
 URL: https://github.com/osofr/simcausal
 BugReports: https://github.com/osofr/simcausal/issues
-Depends: 
+Depends:
     R (>= 3.2.0)
 Imports:
     data.table,

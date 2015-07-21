@@ -672,7 +672,7 @@ DF.to.longDT <- function(df_wide) {
 	# old attributes saved
 	newattrs <- CopyAttributes(attrslist=attributes(df_wide), dataform="long") 	# save attributes from input wide format data
 	Nsamp <- nrow(df_wide)
-    all_ts <- get_allts(df_wide) # calculate actual time values used in the simulated data	
+    all_ts <- get_allts(df_wide) # calculate actual time values used in the simulated data
     attnames <- attr(df_wide, "attnames")
     node_nms <- attr(df_wide, "node_nms")
     node_nms_split <- strsplit(node_nms, "_")
@@ -709,7 +709,7 @@ DF.to.longDT <- function(df_wide) {
 			data.table::setkeyv(DT_l, c("ID", "t"))
 			# data.table::setkey(DT_l, ID, t)
 			if (which(lvars%in%var_nm)==1) {
-				DT_l_fin <- DT_l  
+				DT_l_fin <- DT_l
 			} else {
 				DT_l_fin[,var_nm:=DT_l[[var_nm]], with=FALSE]
 			}
