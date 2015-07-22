@@ -7,6 +7,8 @@ if(FALSE) {
   setwd(".."); setwd(".."); getwd()
   document()
   setwd("..");
+  load_all("../") # load all R files in /R and datasets in /data. Ignores NAMESPACE:
+  
   install("simcausal", build_vignettes=FALSE) # INSTALL W/ devtools:
 
   # system("echo $PATH") # see the current path env var

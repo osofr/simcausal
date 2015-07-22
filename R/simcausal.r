@@ -4,8 +4,8 @@
 `.` <- function(...) return(unlist(list(...)))	# defining function . to avoid warnings from the R check
 
 opts <- new.env(parent = emptyenv())
-opts$vecfun <- NULL
-opts$debug <- FALSE
+opts$vecfun <- NULL           # character vector of user-defined vectorized function names
+opts$debug <- FALSE           # debug mode, when TRUE print all calls to dprint()
 
 #' Print Names of Custom Vectorized Functions
 #'
@@ -408,9 +408,9 @@ check_expanded <- function(inputDAG) {
 set.DAG <- function(DAG, vecfun) {
 
   # ************
-  # Adding parent env. for future evaluation of node formulas. 
+  # Adding parent env. for future evaluation of node formulas.
   # Will be saved as a DAG attribute and then passed to form parser for evaluation as: eval(form, envir = df, enclos = env)
-  env <- parent.frame() 
+  user.env <- parent.frame()
   # ************
 
   rndseed <- NULL
@@ -485,14 +485,14 @@ set.DAG <- function(DAG, vecfun) {
   }
   #---------------------------------------------------------------------------------
   # Checking for correct DAG specification by simulating one observation
-  #---------------------------------------------------------------------------------  
+  #---------------------------------------------------------------------------------
   obs.df <- try(simobs(inputDAG, n=10, rndseed=rndseed))
   if(inherits(obs.df, "try-error")) {
     stop("\n...attempt to simulate data from DAG failed...")
   }
 	attr(inputDAG, "parents") <- attr(obs.df, "parents")
   attr(inputDAG, "locked") <- TRUE
-  attr(inputDAG, "parent.env") <- env # Adding parent env. for future evaluation of node formulas. 
+  attr(inputDAG, "user.env") <- user.env # Adding parent env. for future evaluation of node formulas.
 	return(inputDAG)
 }
 
