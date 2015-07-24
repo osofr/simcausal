@@ -253,7 +253,7 @@ plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_
   # x_layout <- 3*c(0:(length(par_nodes)-1))
 
   # Plot when no t is defined in the DAG:
-  if (is.null(DAG[[length(DAG)]]$t)) { 
+  if (is.null(DAG[[length(DAG)]]$t)) {
     arrow.width <- 0.6
     arrow.size <- 0.5
     vertsize <- 10

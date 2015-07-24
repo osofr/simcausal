@@ -230,7 +230,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env) {
 
 
 # ------------------------------------------------------------------------------------------
-# **** TO DO: MOVING THE ENTIRE THING TO R6 CLASS STRUCTURE:
+# **** MOVED THE ENTIRE THING TO R6 CLASS STRUCTURE:
 # ------------------------------------------------------------------------------------------
 # Function takes a string node formula, current node and current observed data environment
 # 1) processes expression into R call, replaces t to its current value
@@ -249,7 +249,7 @@ eval.nodeform.out <- function(expr.idx, self, data.df, cur.node) {
 
   if (is.character(expr_str) || is.numeric(expr_str)) {
     expr_call <- try(parse(text=expr_str)[[1]])   # parse expression into a call
-    print("expr_call"); print(expr_call)
+    # dprint("expr_call"); dprint(expr_call)    
     if(inherits(expr_call, "try-error")) {
       stop("error while evaluating node "%+% cur.node$name %+%" formula:\n "%+%parse(text=expr_str)%+%".\nCheck syntax specification.", call.=FALSE)
     }
@@ -263,9 +263,9 @@ eval.nodeform.out <- function(expr.idx, self, data.df, cur.node) {
   eval.sVar.params <- c(self$df.names(data.df), list(self = self), list(t = cur.node$t), list(misXreplace = misXreplace), list(netind_cl = self$netind_cl))
   data.env <- c(eval.sVar.params, self$node_fun, data.df)
 
-  # Replace t in the node formula expression with current t value; Replace Kmax its val (returns a call)
+  # Replace t in the node formula expression with current t value; Replace Kmax its val (returns a call):
   subst_call <- eval(substitute(substitute(e, list(t = eval(cur.node$t), Kmax = eval(self$Kmax))), list(e = expr_call)))
-  # traverse the node formula call, return TDvar & Var names (node parents) and modify subst_call to handle non-vectorized (summary functions)
+  # traverse the node formula call, return TDvar & Var names (node parents) and modify subst_call to handle non-vectorized (summary functions):
   parse_res <- nodeform_parsers(node_form_call = subst_call, data.env = data.env, user.env = self$user.env) 
 
   # ****************************************************************
@@ -534,15 +534,19 @@ Define_sVar <- R6Class("Define_sVar",
       return(mat.sVar)
     },
 
+    # TO DO: 
+    # THE resulting list in sVar.res_l results should have EXACTLY THE SAME ARGUMENT names AS cur.node$dist_params / self$exprs_list
+    # IF NOT THE ARGUMENT NAMES ARE LOST AND DIST FUNS WILL NO LONGER BE CALLED CORRECTLY
     eval.nodeforms = function(cur.node, data.df) {
       self$set.new.exprs(exprs_list = cur.node$dist_params)
       # self$exprs_list <- cur.node$dist_params
-      print("cur.node dist_params: "); print(cur.node$dist_params)
+      dprint("cur.node dist_params: "); dprint(cur.node$dist_params)
       dprint("self$exprs_list: "); dprint(self$exprs_list)
 
       self$Nsamp <- nrow(data.df)
       sVar.res_l <- lapply(seq_along(self$exprs_list), eval.nodeform.out, self = self, data.df = data.df, cur.node = cur.node)
-      
+      names(sVar.res_l) <- names(self$exprs_list)
+      # names(sVar.res_l) <- self$sVar.expr.names
       return(sVar.res_l)
     },
 

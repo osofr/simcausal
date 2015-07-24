@@ -197,8 +197,8 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     
     dprint("cur.node t:" %+% cur.node$t)
     dprint("original nodeform expr:"); dprint(lapply(cur.node$dist_params, function(expr) as.character(expr)))
-    print("full eval_expr_res:"); print(eval_expr_res)
-    print("eval_dist_params:"); print(eval_dist_params)
+    dprint("full eval_expr_res:"); dprint(eval_expr_res)
+    dprint("eval_dist_params:"); dprint(eval_dist_params)
     
 
     if (!is.null(newNodeParams$par.names)) {

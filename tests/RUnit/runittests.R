@@ -1153,13 +1153,16 @@ test.node <- function() {
     }
     # rbinom(n=3, size=1, prob=c(0.05,0.05,0.05))
     # BUG: somehow the distribution params are passed to rbinom not as named args
-    D <- DAG.empty()
-    D <- D + node("W1", distr="rbinom", params=list(prob=0.05, size=1))
-    D <- D + node("W2", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
-    D <- D + node("W3", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
+    # D <- DAG.empty()
+    # D <- D + node("W1", distr="rbinom", params=list(prob=0.05, size=1))
+    # D <- D + node("W2", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
+    # D <- D + node("W3", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
     # D <- D + node("W1", distr="rbinom.wrap", params=list(prob=0.05, size=1))
     # D <- D + node("W2", distr="rbinom.wrap", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
     # D <- D + node("W3", distr="rbinom.wrap", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
+    D <- D + node("W1", distr="rbinom", params=list(prob=0.05, size=1))
+    D <- D + node("W2", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
+    D <- D + node("W3", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
     D1b <- set.DAG(D)
     sim1b <- simobs(D1b, n=200, rndseed=1)
 
@@ -1250,322 +1253,323 @@ test.node <- function() {
 }
 
 test.experimental_parsingMSMs <- function() {
-    #-------------------------------------------------------------
-    # Parsing MSM formulas for S() and then evaluating those in the environment of the simulated data
-    #-------------------------------------------------------------
-    t_end <- 16
-    D <- DAG.empty()
-    D <- D + node("L2", t=0,        distr="rbern", prob=0.05, order=1)
-    D <- D + node("L1", t=0,        distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
-    D <- D + node("A1", t=0,        distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
-    D <- D + node("A2", t=0,        distr="rbern", prob=0, order=4, EFU=TRUE)
-    D <- D + node("Y",  t=0,        distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
-    D <- D + node("L2", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
-    D <- D + node("A1", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
-    D <- D + node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), order=8+4*(0:(t_end-1)), EFU=TRUE) # informative censoring
-    D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
-    lDAG3 <- set.DAG(D)
-    #-------------------------------------------------------------
-    # Adding dynamic actions (indexed by a real-valued parameter)
-    #-------------------------------------------------------------
-    # act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-    act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-    act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
-    act_NoCens <- node("A2",t=0:t_end, distr="rbern", prob=0)
-    actionnodes <- c(act_t0_theta, act_tp_theta, act_NoCens)
-    D <- lDAG3 + action("A1_th0", nodes=actionnodes, theta=0)
-    D <- D + action("A1_th1", nodes=actionnodes, theta=1)
+  #-------------------------------------------------------------
+  # Parsing MSM formulas for S() and then evaluating those in the environment of the simulated data
+  #-------------------------------------------------------------
+  t_end <- 16
+  D <- DAG.empty()
+  D <- D + node("L2", t=0,        distr="rbern", prob=0.05, order=1)
+  D <- D + node("L1", t=0,        distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
+  D <- D + node("A1", t=0,        distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
+  D <- D + node("A2", t=0,        distr="rbern", prob=0, order=4, EFU=TRUE)
+  D <- D + node("Y",  t=0,        distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
+  D <- D + node("L2", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
+  D <- D + node("A1", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
+  D <- D + node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), order=8+4*(0:(t_end-1)), EFU=TRUE) # informative censoring
+  D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
+  lDAG3 <- set.DAG(D)
+  #-------------------------------------------------------------
+  # Adding dynamic actions (indexed by a real-valued parameter)
+  #-------------------------------------------------------------
+  # act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
+  act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
+  act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
+  act_NoCens <- node("A2",t=0:t_end, distr="rbern", prob=0)
+  actionnodes <- c(act_t0_theta, act_tp_theta, act_NoCens)
+  D <- lDAG3 + action("A1_th0", nodes=actionnodes, theta=0)
+  D <- D + action("A1_th1", nodes=actionnodes, theta=1)
 
-    #-------------------------------------------------------------
-    # Target parameter: modelling survival with MSM
-    #-------------------------------------------------------------
-    # FUTURE IMPLEMENTATIONS: evaluate correctly without need to wrap summary terms inside S(.)
-    # FUTURE IMPLEMENTATIONS: add checks that do not allow time-var covars inside MSM, only exposures and baseline covars
+  #-------------------------------------------------------------
+  # Target parameter: modelling survival with MSM
+  #-------------------------------------------------------------
+  # FUTURE IMPLEMENTATIONS: evaluate correctly without need to wrap summary terms inside S(.)
+  # FUTURE IMPLEMENTATIONS: add checks that do not allow time-var covars inside MSM, only exposures and baseline covars
 
-    # identify all S() functions and call parser only for those functions
-    # parser algorithm:
-        # use environment of the full data.frames in wide format 
-        # full data: apply to each actions-specific data.frame separately or rbind all datasets and then evalute
-        # parse insde the I functions for S() references, save the S() calls and replace those with future vector names, XMSMterm.k
+  # identify all S() functions and call parser only for those functions
+  # parser algorithm:
+      # use environment of the full data.frames in wide format 
+      # full data: apply to each actions-specific data.frame separately or rbind all datasets and then evalute
+      # parse insde the I functions for S() references, save the S() calls and replace those with future vector names, XMSMterm.k
 
-        # create DAG nodes over XMSMterm.k_t over k and t, with formulas from corresponding S() call
-        # evaluate these nodes just like in the simulation, looping over nodes and t (t's from the outcome only), using environment of the full data
+      # create DAG nodes over XMSMterm.k_t over k and t, with formulas from corresponding S() call
+      # evaluate these nodes just like in the simulation, looping over nodes and t (t's from the outcome only), using environment of the full data
 
-        # convert either the entire dataset to long format or just the vectors XMSMterm.k_t and add those to existing long format
-        # replace each I(.) arg or S() in MSM formula with XMSMterm.k vector name
-        # run glm (or create design mat and run glm.fit) with new MSM formula and new long format data
+      # convert either the entire dataset to long format or just the vectors XMSMterm.k_t and add those to existing long format
+      # replace each I(.) arg or S() in MSM formula with XMSMterm.k vector name
+      # run glm (or create design mat and run glm.fit) with new MSM formula and new long format data
 
-    msm.form_1 <- "Y ~ theta + t + I(t^2) + I(theta*t) + I(t*theta) + L1 + S(A1[max(0,t-1)]) + I(t*S(mean(A1[0:t]))*S(A1[max(0,t-1)])) + S(mean(A1[0:t])) + S(sum(A1[0:t])) + S(A1[max(0,t-2)])"
-    msm.form_2 <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)])"
-    msm.form_3 <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)]) + S(A1[max(0,t-1)])"
-    msm.form_3_error <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)]) + S(L1[t]) + S(A1[max(0,t-1)])"
+  msm.form_1 <- "Y ~ theta + t + I(t^2) + I(theta*t) + I(t*theta) + L1 + S(A1[max(0,t-1)]) + I(t*S(mean(A1[0:t]))*S(A1[max(0,t-1)])) + S(mean(A1[0:t])) + S(sum(A1[0:t])) + S(A1[max(0,t-2)])"
+  msm.form_2 <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)])"
+  msm.form_3 <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)]) + S(A1[max(0,t-1)])"
+  msm.form_3_error <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)]) + S(L1[t]) + S(A1[max(0,t-1)])"
 
-    t_vec <- c(0:16)
-    parse_form <- simcausal:::parse.MSMform(msm.form=msm.form_1, t_vec=t_vec) # parsing the msm formula
-    parse_form$term_maptab
-    
-    # parsing new msm formula based on the old map table
-    parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_2, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
-    parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
-    # gives a gentle error when calling with S()  expressions that are not in the provided map
-    checkException(
+  t_vec <- c(0:16)
+  parse_form <- simcausal:::parse.MSMform(msm.form=msm.form_1, t_vec=t_vec) # parsing the msm formula
+  attributes(parse_form$MSMtermsDAG)$user.env <- attributes(D)$user.env
+  parse_form$term_maptab
+  
+  # parsing new msm formula based on the old map table
+  parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_2, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
+  parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
+  # gives a gentle error when calling with S()  expressions that are not in the provided map
+  checkException(
     parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3_error, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
-    )
+  )
 
 # First model Y_t by adding a summary measure covariate that is defined as the mean of exposure A1 from time 0 to t
 
-    # CHECKING THAT MSM WORKS WITH SUMMARY MEASURES AS IT SHOULD     
-    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=FALSE)
-    MSMres <- eval.target(DAG=D, n=100, rndseed = 123)
-    # MSMres <- eval.target(D, n=1000, rndseed = 123)
-    MSMres$coef
-    # > MSMres$coef
-    #                                    (Intercept)                                          theta 
-    #                                    -7.23896472                                     2.08336522 
-    #                                              t                                         I(t^2) 
-    #                                     0.65019268                                    -0.00568024 
-    #                                   I(theta * t)                                   I(t * theta) 
-    #                                    -0.15037431                                             NA 
-    #                                           L1_0                           S(A1[max(0, t - 1)]) 
-    #                                     1.07705097                                    -0.34495920 
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
-    #                                    -0.25705223                                     4.31423689 
-    #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
-    #                                    -0.12629404                                    -0.88559796 
-    # >
-    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=FALSE)    
-    X_dat <- simfull(A(D), n=100, LTCF="Y", rndseed = 123)
-    X_dat_sim <- sim(actions=A(D), n=100, LTCF="Y", rndseed = 123)
-    X_dat_sim_names <- sim(DAG=D, actions=c("A1_th0", "A1_th1"), n=100, LTCF="Y", rndseed = 123)
-    checkIdentical(X_dat, X_dat_sim)
-    checkIdentical(X_dat, X_dat_sim_names)
+  # CHECKING THAT MSM WORKS WITH SUMMARY MEASURES AS IT SHOULD     
+  D <- set.targetMSM(D, outcome = "Y", t = 0:16, form = msm.form_1, family = "binomial", hazard = FALSE)
+  MSMres <- eval.target(DAG = D, n = 100, rndseed = 123)
+  # MSMres <- eval.target(D, n=1000, rndseed = 123)
+  MSMres$coef
+  # > MSMres$coef
+  #                                    (Intercept)                                          theta 
+  #                                    -7.23896472                                     2.08336522 
+  #                                              t                                         I(t^2) 
+  #                                     0.65019268                                    -0.00568024 
+  #                                   I(theta * t)                                   I(t * theta) 
+  #                                    -0.15037431                                             NA 
+  #                                           L1_0                           S(A1[max(0, t - 1)]) 
+  #                                     1.07705097                                    -0.34495920 
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
+  #                                    -0.25705223                                     4.31423689 
+  #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
+  #                                    -0.12629404                                    -0.88559796 
+  # >
+  D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=FALSE)    
+  X_dat <- simfull(A(D), n=100, LTCF="Y", rndseed = 123)
+  X_dat_sim <- sim(actions=A(D), n=100, LTCF="Y", rndseed = 123)
+  X_dat_sim_names <- sim(DAG=D, actions=c("A1_th0", "A1_th1"), n=100, LTCF="Y", rndseed = 123)
+  checkIdentical(X_dat, X_dat_sim)
+  checkIdentical(X_dat, X_dat_sim_names)
 
-    # X_dat <- simfull(A(D), n=1000, LTCF="Y", rndseed = 123)
-    MSMres <- eval.target(DAG=D, data=X_dat)
-    MSMres$coef
-    # > MSMres$coef
-    #                                    (Intercept)                                          theta 
-    #                                    -7.23896472                                     2.08336522 
-    #                                              t                                         I(t^2) 
-    #                                     0.65019268                                    -0.00568024 
-    #                                   I(theta * t)                                   I(t * theta) 
-    #                                    -0.15037431                                             NA 
-    #                                           L1_0                           S(A1[max(0, t - 1)]) 
-    #                                     1.07705097                                    -0.34495920 
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
-    #                                    -0.25705223                                     4.31423689 
-    #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
-    #                                    -0.12629404                                    -0.88559796 
+  # X_dat <- simfull(A(D), n=1000, LTCF="Y", rndseed = 123)
+  MSMres <- eval.target(DAG=D, data=X_dat)
+  MSMres$coef
+  # > MSMres$coef
+  #                                    (Intercept)                                          theta 
+  #                                    -7.23896472                                     2.08336522 
+  #                                              t                                         I(t^2) 
+  #                                     0.65019268                                    -0.00568024 
+  #                                   I(theta * t)                                   I(t * theta) 
+  #                                    -0.15037431                                             NA 
+  #                                           L1_0                           S(A1[max(0, t - 1)]) 
+  #                                     1.07705097                                    -0.34495920 
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
+  #                                    -0.25705223                                     4.31423689 
+  #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
+  #                                    -0.12629404                                    -0.88559796 
 
-    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=TRUE)
-    MSMres <- eval.target(D, n=100, rndseed = 123)
-    # MSMres <- eval.target(D, n=1000, rndseed = 123)
-    MSMres$coef
-    # > MSMres$coef
-    #                                    (Intercept)                                          theta 
-    #                                   -7.576469141                                    1.260924469 
-    #                                              t                                         I(t^2) 
-    #                                    0.225648338                                    0.007474925 
-    #                                   I(theta * t)                                   I(t * theta) 
-    #                                   -0.116863804                                             NA 
-    #                                           L1_0                           S(A1[max(0, t - 1)]) 
-    #                                    0.812038900                                    0.157648309 
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
-    #                                   -3.779440388                                   -0.135280944 
-    #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
-    #                                    3.492317077                                   -0.528899983 
-    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=TRUE)
-    X_dat <- simfull(A(D), n=100, rndseed = 123)
-    X_dat_sim <- sim(actions=A(D), n=100, rndseed = 123)
-    checkIdentical(X_dat, X_dat_sim)
+  D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=TRUE)
+  MSMres <- eval.target(D, n=100, rndseed = 123)
+  # MSMres <- eval.target(D, n=1000, rndseed = 123)
+  MSMres$coef
+  # > MSMres$coef
+  #                                    (Intercept)                                          theta 
+  #                                   -7.576469141                                    1.260924469 
+  #                                              t                                         I(t^2) 
+  #                                    0.225648338                                    0.007474925 
+  #                                   I(theta * t)                                   I(t * theta) 
+  #                                   -0.116863804                                             NA 
+  #                                           L1_0                           S(A1[max(0, t - 1)]) 
+  #                                    0.812038900                                    0.157648309 
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
+  #                                   -3.779440388                                   -0.135280944 
+  #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
+  #                                    3.492317077                                   -0.528899983 
+  D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form_1, family="binomial", hazard=TRUE)
+  X_dat <- simfull(A(D), n=100, rndseed = 123)
+  X_dat_sim <- sim(actions=A(D), n=100, rndseed = 123)
+  checkIdentical(X_dat, X_dat_sim)
 
-    # X_dat <- simfull(A(D), n=1000, rndseed = 123)
-    MSMres <- eval.target(D, data=X_dat)
-    MSMres$coef    
-    # > MSMres$coef
-    #                                    (Intercept)                                          theta 
-    #                                   -7.576469141                                    1.260924469 
-    #                                              t                                         I(t^2) 
-    #                                    0.225648338                                    0.007474925 
-    #                                   I(theta * t)                                   I(t * theta) 
-    #                                   -0.116863804                                             NA 
-    #                                           L1_0                           S(A1[max(0, t - 1)]) 
-    #                                    0.812038900                                    0.157648309 
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
-    #                                   -3.779440388                                   -0.135280944 
-    #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
-    #                                    3.492317077                                   -0.528899983 
+  # X_dat <- simfull(A(D), n=1000, rndseed = 123)
+  MSMres <- eval.target(D, data=X_dat)
+  MSMres$coef    
+  # > MSMres$coef
+  #                                    (Intercept)                                          theta 
+  #                                   -7.576469141                                    1.260924469 
+  #                                              t                                         I(t^2) 
+  #                                    0.225648338                                    0.007474925 
+  #                                   I(theta * t)                                   I(t * theta) 
+  #                                   -0.116863804                                             NA 
+  #                                           L1_0                           S(A1[max(0, t - 1)]) 
+  #                                    0.812038900                                    0.157648309 
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
+  #                                   -3.779440388                                   -0.135280944 
+  #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
+  #                                    3.492317077                                   -0.528899983 
 
-    # checking subsetting by t
-    D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_1, family="binomial", hazard=TRUE)
-    X_dat <- simfull(A(D), n=100, rndseed = 123)
-    X_dat_sim <- sim(actions=A(D), n=100, rndseed = 123)
-    checkIdentical(X_dat, X_dat_sim)
+  # checking subsetting by t
+  D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_1, family="binomial", hazard=TRUE)
+  X_dat <- simfull(A(D), n=100, rndseed = 123)
+  X_dat_sim <- sim(actions=A(D), n=100, rndseed = 123)
+  checkIdentical(X_dat, X_dat_sim)
 
-    # X_dat <- simfull(A(D), n=1000, rndseed = 123)
-    MSMres <- eval.target(D, data=X_dat)
-    MSMres$msm
-    # Coefficients:
-    #                                    (Intercept)                                           theta  
-    #                                     -7.7719930                                       1.7599218  
-    #                                              t                                          I(t^2)  
-    #                                      0.0001168                                       0.0474057  
-    #                                   I(theta * t)                                    I(t * theta)  
-    #                                     -0.3396136                                              NA  
-    #                                           L1_0                            S(A1[max(0, t - 1)])  
-    #                                      1.1871732                                       1.4077656  
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                                S(mean(A1[0:t]))  
-    #                                     -5.0037075                                      -2.4130134  
-    #                                S(sum(A1[0:t]))                            S(A1[max(0, t - 2)])  
-    #                                      4.7542418                                      -0.6728950  
+  # X_dat <- simfull(A(D), n=1000, rndseed = 123)
+  MSMres <- eval.target(D, data=X_dat)
+  MSMres$msm
+  # Coefficients:
+  #                                    (Intercept)                                           theta  
+  #                                     -7.7719930                                       1.7599218  
+  #                                              t                                          I(t^2)  
+  #                                      0.0001168                                       0.0474057  
+  #                                   I(theta * t)                                    I(t * theta)  
+  #                                     -0.3396136                                              NA  
+  #                                           L1_0                            S(A1[max(0, t - 1)])  
+  #                                      1.1871732                                       1.4077656  
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                                S(mean(A1[0:t]))  
+  #                                     -5.0037075                                      -2.4130134  
+  #                                S(sum(A1[0:t]))                            S(A1[max(0, t - 2)])  
+  #                                      4.7542418                                      -0.6728950  
 
-    #*************
-    # checking that can run new MSM with old long data, with warnings
-    save_df_long <- MSMres$df_long
-    D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_2, family="binomial", hazard=TRUE)
+  #*************
+  # checking that can run new MSM with old long data, with warnings
+  save_df_long <- MSMres$df_long
+  D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_2, family="binomial", hazard=TRUE)
+  MSMres_new <- eval.target(D, data=save_df_long)
+  MSMres_new$msm
+       # (Intercept)                 theta                     t          I(theta * t)  S(A1[max(0, t - 2)])  
+       #    -4.15861              -0.25397              -0.01627               0.21365              -0.47936  
+  D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_3, family="binomial", hazard=TRUE)
+  MSMres_new <- eval.target(D, data=save_df_long)
+  MSMres_new$msm
+       # (Intercept)                 theta                     t          I(theta * t)  S(A1[max(0, t - 2)])  S(A1[max(0, t - 1)])  
+       #    -4.03712              -0.37568              -0.01627               0.24282              -0.02954              -0.57131  
+  # gives gentle error
+  D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_3_error, family="binomial", hazard=TRUE)
+  checkException(
     MSMres_new <- eval.target(D, data=save_df_long)
-    MSMres_new$msm
-         # (Intercept)                 theta                     t          I(theta * t)  S(A1[max(0, t - 2)])  
-         #    -4.15861              -0.25397              -0.01627               0.21365              -0.47936  
-    D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_3, family="binomial", hazard=TRUE)
-    MSMres_new <- eval.target(D, data=save_df_long)
-    MSMres_new$msm
-         # (Intercept)                 theta                     t          I(theta * t)  S(A1[max(0, t - 2)])  S(A1[max(0, t - 1)])  
-         #    -4.03712              -0.37568              -0.01627               0.24282              -0.02954              -0.57131  
-    # gives gentle error
-    D <- set.targetMSM(D, outcome="Y", t=0:5, form=msm.form_3_error, family="binomial", hazard=TRUE)
-    checkException(
-      MSMres_new <- eval.target(D, data=save_df_long)
-    )
+  )
 
-    #-------------------------------------------------------------
-    # Direct implementation of MSM code with summary measures
-    #-------------------------------------------------------------
-    # sample full data (by action)
-    X_dat <- simfull(A(D), n=100, rndseed = 123)
-    # X_dat <- simfull(A(D), n=200000, rndseed = 123)
-    # X_dat <- simfull(A(D), n=20000, LTCF="Y", rndseed = 123)
+  #-------------------------------------------------------------
+  # Direct implementation of MSM code with summary measures
+  #-------------------------------------------------------------
+  # sample full data (by action)
+  X_dat <- simfull(A(D), n=100, rndseed = 123)
+  # X_dat <- simfull(A(D), n=200000, rndseed = 123)
+  # X_dat <- simfull(A(D), n=20000, LTCF="Y", rndseed = 123)
 
-    nrow(X_dat[[1]])    
+  nrow(X_dat[[1]])    
 
-    # ***** evaluated summary measures for FULL data
-    # *****
-    SMSM_Xdat <- lapply(X_dat, function(prevdat) simcausal:::simFromDAG(DAG=parse_form$MSMtermsDAG, Nsamp=nrow(prevdat), prev.data=prevdat))
-    # attributes(SMSM_Xdat[[1]])
-    head(SMSM_Xdat[[1]]); nrow(SMSM_Xdat[[1]])
+  # ***** evaluated summary measures for FULL data
+  # *****
+  SMSM_Xdat <- lapply(X_dat, function(prevdat) simcausal:::simFromDAG(DAG=parse_form$MSMtermsDAG, Nsamp=nrow(prevdat), prev.data=prevdat))
+  # attributes(SMSM_Xdat[[1]])
+  head(SMSM_Xdat[[1]]); nrow(SMSM_Xdat[[1]])
 
-    XMSM_terms <- as.character(parse_form$term_maptab[,"XMSMterms"])
-    X_dat_MSMsum <- lapply(seq(length(X_dat)), function(i_act) {
-                                                old_attr <- simcausal:::CopyAttributes(attributes(X_dat[[i_act]]))
-                                                MSM_attr <- simcausal:::CopyAttributes(attributes(SMSM_Xdat[[i_act]]))
-                                                MSM_sum_nodes <- attr(SMSM_Xdat[[i_act]], "node_nms") # get new node names from MSM summary data
-                                                old_attr$node_nms <- c(old_attr$node_nms, MSM_attr$node_nms)
-                                                old_attr$attnames <- c(old_attr$attnames, XMSM_terms)
-                                                sel_cols <- !(names(SMSM_Xdat[[i_act]])%in%("ID"))
-                                                dat <- cbind(X_dat[[i_act]], SMSM_Xdat[[i_act]][,sel_cols])
-                                                attributes(dat) <- c(attributes(dat), old_attr)
-                                                attr(dat, "target")$params.MSM.parse <- parse_form
-                                                dat
-                                                })
-    X_dat_MSMsum_lDT <- lapply(X_dat_MSMsum, DF.to.longDT)
-    # ---
-    df_combine_DT <- data.table::rbindlist(X_dat_MSMsum_lDT, fill=TRUE)
-    head(df_combine_DT,100)
+  XMSM_terms <- as.character(parse_form$term_maptab[,"XMSMterms"])
+  X_dat_MSMsum <- lapply(seq(length(X_dat)), function(i_act) {
+                                              old_attr <- simcausal:::CopyAttributes(attributes(X_dat[[i_act]]))
+                                              MSM_attr <- simcausal:::CopyAttributes(attributes(SMSM_Xdat[[i_act]]))
+                                              MSM_sum_nodes <- attr(SMSM_Xdat[[i_act]], "node_nms") # get new node names from MSM summary data
+                                              old_attr$node_nms <- c(old_attr$node_nms, MSM_attr$node_nms)
+                                              old_attr$attnames <- c(old_attr$attnames, XMSM_terms)
+                                              sel_cols <- !(names(SMSM_Xdat[[i_act]])%in%("ID"))
+                                              dat <- cbind(X_dat[[i_act]], SMSM_Xdat[[i_act]][,sel_cols])
+                                              attributes(dat) <- c(attributes(dat), old_attr)
+                                              attr(dat, "target")$params.MSM.parse <- parse_form
+                                              dat
+                                              })
+  X_dat_MSMsum_lDT <- lapply(X_dat_MSMsum, DF.to.longDT)
+  # ---
+  df_combine_DT <- data.table::rbindlist(X_dat_MSMsum_lDT, fill=TRUE)
+  head(df_combine_DT,100)
 
-    # *****
-    # --- glm fit ----
-    # for 100K per action
-    glmt <-  system.time(msmfit <- glm(parse_form$term_form, family=binomial, data=df_combine_DT))
-    glmt
-     #   user  system elapsed 
-     # 47.677   6.393  56.688 
-    # for 200K per action
-    #    user  system elapsed 
-    # 109.989  29.182 168.299     
-    # msmfit$coeff
-    # predict_glm <- predict(msmfit)
-    # head(predict_glm)
-    # ---
-    # *****
+  # *****
+  # --- glm fit ----
+  # for 100K per action
+  glmt <-  system.time(msmfit <- glm(parse_form$term_form, family=binomial, data=df_combine_DT))
+  glmt
+   #   user  system elapsed 
+   # 47.677   6.393  56.688 
+  # for 200K per action
+  #    user  system elapsed 
+  # 109.989  29.182 168.299     
+  # msmfit$coeff
+  # predict_glm <- predict(msmfit)
+  # head(predict_glm)
+  # ---
+  # *****
 
-    # *****
-    # --- speedglm fit ----
-    # --- w/ default BLAS ----
-    # for 100K per action
-    # library(speedglm)
-    # glmt <-  system.time(speedmsmfit <- speedglm(formula=parse_form$term_form, data=df_combine_DT, family = binomial()))
-    # ---
-    # *****
-    # glmt
-    # for 100K per action
-    #   user  system elapsed 
-    # 9.861   2.732  12.565
-    # for 200K per action 
-    #   user  system elapsed 
-    # 23.310   8.457  38.413 
-    # speedmsmfit$coeff
+  # *****
+  # --- speedglm fit ----
+  # --- w/ default BLAS ----
+  # for 100K per action
+  # library(speedglm)
+  # glmt <-  system.time(speedmsmfit <- speedglm(formula=parse_form$term_form, data=df_combine_DT, family = binomial()))
+  # ---
+  # *****
+  # glmt
+  # for 100K per action
+  #   user  system elapsed 
+  # 9.861   2.732  12.565
+  # for 200K per action 
+  #   user  system elapsed 
+  # 23.310   8.457  38.413 
+  # speedmsmfit$coeff
 
-    # hazard:
-    # X_dat <- simfull(A(D), n=1000, rndseed = 123)
-    # > msmfit$coeff
-    #                                    (Intercept)                                          theta 
-    #                                   -7.576469141                                    1.260924469 
-    #                                              t                                         I(t^2) 
-    #                                    0.225648338                                    0.007474925 
-    #                                   I(theta * t)                                   I(t * theta) 
-    #                                   -0.116863804                                             NA 
-    #                                           L1_0                           S(A1[max(0, t - 1)]) 
-    #                                    0.812038900                                    0.157648309 
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
-    #                                   -3.779440388                                   -0.135280944 
-    #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
-    #                                    3.492317077                                   -0.528899983 
+  # hazard:
+  # X_dat <- simfull(A(D), n=1000, rndseed = 123)
+  # > msmfit$coeff
+  #                                    (Intercept)                                          theta 
+  #                                   -7.576469141                                    1.260924469 
+  #                                              t                                         I(t^2) 
+  #                                    0.225648338                                    0.007474925 
+  #                                   I(theta * t)                                   I(t * theta) 
+  #                                   -0.116863804                                             NA 
+  #                                           L1_0                           S(A1[max(0, t - 1)]) 
+  #                                    0.812038900                                    0.157648309 
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
+  #                                   -3.779440388                                   -0.135280944 
+  #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
+  #                                    3.492317077                                   -0.528899983 
 
-    # survival:
-    # with X_dat <- simfull(A(D), n=1000, LTCF="Y", rndseed = 123)
-    # > msmfit$coeff
-    #                                    (Intercept)                                          theta 
-    #                                    -7.23896472                                     2.08336522 
-    #                                              t                                         I(t^2) 
-    #                                     0.65019268                                    -0.00568024 
-    #                                   I(theta * t)                                   I(t * theta) 
-    #                                    -0.15037431                                             NA 
-    #                                           L1_0                           S(A1[max(0, t - 1)]) 
-    #                                     1.07705097                                    -0.34495920 
-    # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
-    #                                    -0.25705223                                     4.31423689 
-    #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
-    #                                    -0.12629404                                    -0.88559796 
+  # survival:
+  # with X_dat <- simfull(A(D), n=1000, LTCF="Y", rndseed = 123)
+  # > msmfit$coeff
+  #                                    (Intercept)                                          theta 
+  #                                    -7.23896472                                     2.08336522 
+  #                                              t                                         I(t^2) 
+  #                                     0.65019268                                    -0.00568024 
+  #                                   I(theta * t)                                   I(t * theta) 
+  #                                    -0.15037431                                             NA 
+  #                                           L1_0                           S(A1[max(0, t - 1)]) 
+  #                                     1.07705097                                    -0.34495920 
+  # I(t * S(mean(A1[0:t])) * S(A1[max(0, t - 1)]))                               S(mean(A1[0:t])) 
+  #                                    -0.25705223                                     4.31423689 
+  #                                S(sum(A1[0:t]))                           S(A1[max(0, t - 2)]) 
+  #                                    -0.12629404                                    -0.88559796 
 
-    X_dat_l <- simfull(A(D), n=100, wide=FALSE, rndseed = 123)
-    # X_dat_l <- simfull(A(D), n=1000, wide=FALSE, rndseed = 123)
-    # X_dat_l <- simfull(A(D), n=1000, wide=FALSE, LTCF="Y")
-    X_dat_lDF <- lapply(X_dat, DF.to.long)
-    X_dat_lDT <- lapply(X_dat, DF.to.longDT)
+  X_dat_l <- simfull(A(D), n=100, wide=FALSE, rndseed = 123)
+  # X_dat_l <- simfull(A(D), n=1000, wide=FALSE, rndseed = 123)
+  # X_dat_l <- simfull(A(D), n=1000, wide=FALSE, LTCF="Y")
+  X_dat_lDF <- lapply(X_dat, DF.to.long)
+  X_dat_lDT <- lapply(X_dat, DF.to.longDT)
 
-    nrow(X_dat_l[[1]]); nrow(X_dat_lDF[[1]]); nrow(X_dat_lDT[[1]])
-    nrow(X_dat_l[[2]]); nrow(X_dat_lDF[[2]]); nrow(X_dat_lDT[[2]])
+  nrow(X_dat_l[[1]]); nrow(X_dat_lDF[[1]]); nrow(X_dat_lDT[[1]])
+  nrow(X_dat_l[[2]]); nrow(X_dat_lDF[[2]]); nrow(X_dat_lDT[[2]])
 
-    head(X_dat_l[[1]]); head(X_dat_l[[2]])
-    head(X_dat_lDF[[1]]); head(X_dat_lDF[[2]])
-    head(X_dat_lDT[[1]]); head(X_dat_lDT[[2]])
+  head(X_dat_l[[1]]); head(X_dat_l[[2]])
+  head(X_dat_lDF[[1]]); head(X_dat_lDF[[2]])
+  head(X_dat_lDT[[1]]); head(X_dat_lDT[[2]])
 
 
-    checkIdentical(X_dat_l[[1]]$ID, X_dat_MSMsum_lDT[[1]]$ID)
-    checkIdentical(X_dat_l[[1]]$L1_0, X_dat_MSMsum_lDT[[1]]$L1_0)
-    checkIdentical(X_dat_l[[1]]$t, X_dat_MSMsum_lDT[[1]]$t)
-    checkIdentical(X_dat_l[[1]]$L2, X_dat_MSMsum_lDT[[1]]$L2)
-    checkIdentical(X_dat_l[[1]]$A1, X_dat_MSMsum_lDT[[1]]$A1)
-    checkIdentical(X_dat_l[[1]]$A2, X_dat_MSMsum_lDT[[1]]$A2)
-    checkIdentical(X_dat_l[[1]]$Y, X_dat_MSMsum_lDT[[1]]$Y)
+  checkIdentical(X_dat_l[[1]]$ID, X_dat_MSMsum_lDT[[1]]$ID)
+  checkIdentical(X_dat_l[[1]]$L1_0, X_dat_MSMsum_lDT[[1]]$L1_0)
+  checkIdentical(X_dat_l[[1]]$t, X_dat_MSMsum_lDT[[1]]$t)
+  checkIdentical(X_dat_l[[1]]$L2, X_dat_MSMsum_lDT[[1]]$L2)
+  checkIdentical(X_dat_l[[1]]$A1, X_dat_MSMsum_lDT[[1]]$A1)
+  checkIdentical(X_dat_l[[1]]$A2, X_dat_MSMsum_lDT[[1]]$A2)
+  checkIdentical(X_dat_l[[1]]$Y, X_dat_MSMsum_lDT[[1]]$Y)
 
-    checkIdentical(X_dat_l[[2]]$ID, X_dat_MSMsum_lDT[[2]]$ID)
-    checkIdentical(X_dat_l[[2]]$L1_0, X_dat_MSMsum_lDT[[2]]$L1_0)
-    checkIdentical(X_dat_l[[2]]$t, X_dat_MSMsum_lDT[[2]]$t)
-    checkIdentical(X_dat_l[[2]]$L2, X_dat_MSMsum_lDT[[2]]$L2)
-    checkIdentical(X_dat_l[[2]]$A1, X_dat_MSMsum_lDT[[2]]$A1)
-    checkIdentical(X_dat_l[[2]]$A2, X_dat_MSMsum_lDT[[2]]$A2)
-    checkIdentical(X_dat_l[[2]]$Y, X_dat_MSMsum_lDT[[2]]$Y)
+  checkIdentical(X_dat_l[[2]]$ID, X_dat_MSMsum_lDT[[2]]$ID)
+  checkIdentical(X_dat_l[[2]]$L1_0, X_dat_MSMsum_lDT[[2]]$L1_0)
+  checkIdentical(X_dat_l[[2]]$t, X_dat_MSMsum_lDT[[2]]$t)
+  checkIdentical(X_dat_l[[2]]$L2, X_dat_MSMsum_lDT[[2]]$L2)
+  checkIdentical(X_dat_l[[2]]$A1, X_dat_MSMsum_lDT[[2]]$A1)
+  checkIdentical(X_dat_l[[2]]$A2, X_dat_MSMsum_lDT[[2]]$A2)
+  checkIdentical(X_dat_l[[2]]$Y, X_dat_MSMsum_lDT[[2]]$Y)
 }
 
 test.tswitch_2MSMs <- function() {
