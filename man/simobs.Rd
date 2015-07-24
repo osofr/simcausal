@@ -18,7 +18,7 @@ simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 \item{rndseed}{Seed for the random number generator.}
 }
 \value{
-A data.frame where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
+A \code{data.frame} where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
 }
 \description{
 This function simulates observed data from a DAG object.

@@ -121,9 +121,9 @@ add.action <- function(DAG, name, nodes, ..., attr=list()) {
   if (missing(nodes)) stop("please specify action node(s)")
   curr.names <- names(attr(DAG, "actions"))
   if (name %in% curr.names) {	# modify currently existing DAG
-  	attr(DAG, "actions")[[name]] <- setAction(actname=name, inputDAG=attr(DAG, "actions")[[name]], actnodes=nodes, attr=attrs)
+  	attr(DAG, "actions")[[name]] <- setAction(actname = name, inputDAG = attr(DAG, "actions")[[name]], actnodes = nodes, attr = attrs)
   } else { # create a new action
-    new.action <- list(setAction(actname=name, inputDAG=DAG, actnodes=nodes, attr=attrs))
+    new.action <- list(setAction(actname = name, inputDAG = DAG, actnodes = nodes, attr = attrs))
   	names(new.action) <- name
   	attr(DAG, "actions") <- c(attr(DAG, "actions"), new.action)
   }

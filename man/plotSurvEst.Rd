@@ -5,22 +5,24 @@
 \title{(EXPERIMENTAL) Plot Discrete Survival Function(s)}
 \usage{
 plotSurvEst(surv = list(), xindx = NULL, ylab = "", xlab = "t",
-  ylim = c(0, 1), ...)
+  ylim = c(0, 1), legend.xyloc = "topright", ...)
 }
 \arguments{
 \item{surv}{A list of vectors, each containing action-specific discrete survival probabilities over time.}
 
 \item{xindx}{A vector of indices for subsetting the survival vectors in \code{surv}, if omitted all survival probabilities in each \code{surv[[i]]} are plotted.}
 
-\item{ylab}{An optional title for y axis, passed to \code{plot}.}
+\item{ylab}{An optional title for y axis, passed to \code{\link{plot}}.}
 
-\item{xlab}{An optional title for x axis, passed to \code{plot}.}
+\item{xlab}{An optional title for x axis, passed to \code{\link{plot}}.}
 
-\item{ylim}{Optional y limits for the plot, passed to \code{plot}.}
+\item{ylim}{Optional y limits for the plot, passed to \code{\link{\link{plot}}}.}
 
-\item{...}{Additional arguments passed to \code{plot}.}
+\item{legend.xyloc}{Optional x and y co-ordinates to be used to position the legend. Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{\link{graphics::xy.coords}}.}
+
+\item{...}{Additional arguments passed to \code{\link{plot}}.}
 }
 \description{
-Plot discrete survival curves from a list of discrete survival probabilities by calling \code{plot} with \code{type='b'}.
+Plot discrete survival curves from a list of discrete survival probabilities by calling \code{\link{plot}} with \code{type='b'}.
 }
 

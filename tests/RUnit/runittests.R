@@ -4,20 +4,22 @@ if(FALSE) {
   library("RUnit")
   library("roxygen2")
   library("devtools")
+  # library(R6)
   setwd(".."); setwd(".."); getwd()
   document()
+  load_all("./") # load all R files in /R and datasets in /data. Ignores NAMESPACE:
+  # simcausal:::debug_set() # SET TO DEBUG MODE
+
   setwd("..");
-  load_all("../") # load all R files in /R and datasets in /data. Ignores NAMESPACE:
-  
   install("simcausal", build_vignettes=FALSE) # INSTALL W/ devtools:
 
   # system("echo $PATH") # see the current path env var
   # system("R CMD Rd2pdf simcausal")  # just create the pdf manual from help files
 
   # CHECK AND BUILD PACKAGE:
-  # setwd(".."); setwd(".."); getwd()
-  # devtools::check() # runs check with devtools
-
+  getwd()
+  # setwd("./simcausal"); setwd(".."); getwd()
+  devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs check with devtools
   # devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
   devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
@@ -92,6 +94,629 @@ as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
 
+# DAG2 (from tech specs): defining actions with a new constructor and passing attributes
+test.set.DAG_DAG2b_newactions <- function() {
+    library(simcausal)
+
+
+    #-------------------------------------------------------------
+    # EXAMPLE 1: lets start with a simple example of a (W,A,Y) DAG
+    #-------------------------------------------------------------
+    # Allowing user.env scalar vars to be used in node formulas:
+    rconst <- 0.02
+    D <- DAG.empty()
+    D <- D+ node("W1", distr = "rbern", prob = plogis(-0.5)) + 
+            node("W2", distr = "rbern", prob = plogis(-0.5 + 0.5*W1)) + 
+            node("W3", distr = "rbern", prob = plogis(-0.5 + 0.7*W1 + 0.3*W2)) + 
+            node("A",  distr = "rbern", prob = plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3)) + 
+            node("Y",  distr = "rbern", prob = plogis(-0.1 + rconst + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3), EFU=TRUE)
+    D_WAY <- set.DAG(D)
+
+
+    # Allowing user.env vectors to be used in node formulas and be indexed by t:
+    rconst <- c(0.02, 0.05)
+    D <- DAG.empty()
+    D <- D+ node("W1", t=0:1, distr = "rbern", prob = plogis(-0.5)) + 
+            node("W2", t=0:1, distr = "rbern", prob = plogis(-0.5 + 0.5*W1[t])) + 
+            node("W3", t=0:1, distr = "rbern", prob = plogis(-0.5 + 0.7*W1[t] + 0.3*W2[t])) + 
+            node("A",  t=0:1, distr = "rbern", prob = plogis(-0.5 - 0.3*W1[t] - 0.3*W2[t] - 0.2*W3[t])) + 
+            # node("Y",  t=0:1, distr = "rbern", prob = plogis(-0.1 + 1.2*A[t] + 0.3*W1[t] + 0.3*W2[t] + 0.2*W3[t]), EFU=TRUE)
+            # THIS WORKS, BUT ITS UNCLEAR WHAT IS BEING USED FOR rconst. 
+            # **************** THIS SHOULD RETURN AN ERROR ********************
+            node("Y",  t=0:1, distr = "rbern", prob = plogis(-0.1 + rconst + 1.2*A[0] + 0.3*W1[0] + 0.3*W2[0] + 0.2*W3[0]), EFU=TRUE)
+            # THIS OBVIOUSLY FAILES, AS IT SHOULD:
+            # Error in rconst[0L] : undefined time-dependent variable(s): rconst_0
+            # node("Y",  t=0:1, distr = "rbern", prob = plogis(-0.1 + rconst[t] + 1.2*A[0] + 0.3*W1[0] + 0.3*W2[0] + 0.2*W3[0]), EFU=TRUE)
+    D_WAY <- set.DAG(D)
+    sim(D_WAY, n=50)
+
+    #-------------------------------------------------------------
+    # EXAMPLE 1: lets start with a simple example of a (W,A,Y) DAG
+    #-------------------------------------------------------------
+    # new interface:
+    D <- DAG.empty()
+    D <- D+ node("W1", distr = "rbern", prob = plogis(-0.5), order = 1) + 
+            node("W2", distr = "rbern", prob = plogis(-0.5 + 0.5*W1), order = 2) + 
+            node("W3", distr = "rbern", prob = plogis(-0.5 + 0.7*W1 + 0.3*W2), order = 3) + 
+            node("A",  distr = "rbern", prob = plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3), order = 4) + 
+            node("Y",  distr = "rbern", prob = plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3), order = 5, EFU = TRUE)
+    D_WAY <- set.DAG(D)
+
+    #-------------------------------------------------------------
+    # Plot this DAG
+    #-------------------------------------------------------------
+    plotDAG(D_WAY)
+
+    # simulate observed data data from this DAG
+    O_dat_WAY <- simobs(D_WAY, n=500, rndseed = 123)
+    O_dat_WAY_sim <- sim(D_WAY, n=500, rndseed = 123)
+    head(O_dat_WAY, 10)
+    head(O_dat_WAY_sim, 10)
+    all.equal(O_dat_WAY, O_dat_WAY_sim)
+
+    #-------------------------------------------------------------
+    # Defining interventions (actions)
+    #-------------------------------------------------------------
+    # lets define an action setting treatment to 1
+    A1 <- node("A",distr="rbern", prob=1)
+    D_WAY <- D_WAY + action("A1", nodes=A1)
+
+    # lets define another action setting treatment to 0
+    A0 <- node("A",distr="rbern", prob=0)
+    D_WAY <- D_WAY + action("A0", nodes=A0)
+
+    # selecting actions - its just an intervened DAG
+    class(A(D_WAY))
+    class(A(D_WAY)[["A1"]])
+    class(A(D_WAY)[["A0"]])
+
+    #-------------------------------------------------------------
+    # Simulating the counterfactual (full) data
+    #-------------------------------------------------------------
+    # Simulate full data for all available actions (A(D))
+    X_dat1 <- simfull(A(D_WAY), n=500, rndseed = 123)
+    head(X_dat1[[1]]); head(X_dat1[[2]])
+
+    X_dat1_sim1 <- sim(DAG=D_WAY, actions=c("A1","A0"), n=500, rndseed = 123)
+    X_dat1_sim2 <- sim(DAG=D_WAY, actions=A(D_WAY), n=500, rndseed = 123)
+    head(X_dat1_sim1[[1]]); head(X_dat1_sim1[[2]])
+    head(X_dat1_sim2[[1]]); head(X_dat1_sim2[[2]])
+
+    # Simulate full data for some actions
+    X_datA1 <- simfull(A(D_WAY)["A1"], n=500, rndseed = 123)
+    X_datA1_sim <- sim(DAG=D_WAY, actions="A1", n=500, rndseed = 123)
+    checkIdentical(X_datA1, X_datA1_sim)
+
+    head(X_datA1[[1]]); 
+
+    #-------------------------------------------------------------
+    # Calculating the target parameter: counterfactual expectations
+    #-------------------------------------------------------------
+    # Counterfactual mean survival at time-point
+    D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1")
+    eval.target(D_WAY, data=X_dat1)     # using previously simulated full data
+    eval.target(D_WAY, n=500, rndseed = 123)  # simulate full data first then evaluate param
+
+    # Contrasts
+    D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1-A0")
+    eval.target(D_WAY, data=X_dat1)
+    eval.target(D_WAY, n=500, rndseed = 123)
+
+    # Ratios
+    D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
+    eval.target(D_WAY, data=X_dat1)
+    eval.target(D_WAY, n=500, rndseed = 123)
+
+    #-------------------------------------------------------------
+    # categorical node tests 1, 2 & 3
+    #-------------------------------------------------------------    
+    D_cat <- DAG.empty()
+    D_cat <- D_cat + node("W1", distr="rbern", prob=plogis(-0.5), order=1)
+    D_cat <- D_cat + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2)
+    D_cat <- D_cat + node("W3", distr="rbern", prob=plogis(-0.5 + 0.7*W1 + 0.3*W2), order=3)
+    D_cat <- D_cat + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3), order=4)
+
+    D_cat_1 <- D_cat + node("Y", distr="rcategor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*W3); plogis(-0.5 + 0.7*W1)}, order=5)
+    D_cat_2 <- D_cat + node("Y", distr="rcategor", probs={0.3;0.4}, order=5)
+    D_cat_3 <- D_cat + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
+
+    D_cat_1 <- set.DAG(D_cat_1)
+    D_cat_2 <- set.DAG(D_cat_2)
+    D_cat_3 <- set.DAG(D_cat_3)
+ 
+    A1 <- node("Anode",distr="rbern", prob=1)
+    D_cat_1 <- D_cat_1 + action("A1", nodes=A1)
+    # lets define another action setting treatment to 0
+    A0 <- node("Anode",distr="rbern", prob=0)
+    D_cat_1 <- D_cat_1 + action("A0", nodes=A0)
+
+    O_dat_cat <- simobs(D_cat_1, n=500, rndseed = 123)    
+    O_dat_cat_sim <- sim(DAG=D_cat_1, n=500, rndseed = 123)
+    checkIdentical(O_dat_cat, O_dat_cat_sim)
+
+    X_cat <- simfull(A(D_cat_1), n=500, rndseed = 123)
+    X_cat_sim1 <- sim(DAG=D_cat_1, actions=c("A1", "A0"), n=500, rndseed = 123)
+    X_cat_sim2 <- sim(actions=A(D_cat_1), n=500, rndseed = 123)
+    checkIdentical(X_cat, X_cat_sim1)
+    checkIdentical(X_cat, X_cat_sim2)
+
+    X_cat_sim1 <- sim(DAG=D_cat_1, actions=c("A1", "A0"), n=500, rndseed = 123)
+
+    checkException(sim(DAG=D_cat_1, actions=c("A4"), n=500, rndseed = 123))
+    #-------------------------------------------------------------
+    # uniform node tests 1, 2 & 3
+    #-------------------------------------------------------------    
+    D_unif <- DAG.empty()
+    D_unif <- D_unif + node("W1", distr="rbern", prob=plogis(-0.5), order=1)
+    D_unif <- D_unif + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2)
+    D_unif <- D_unif + node("W3", distr="runif", min=plogis(-0.5 + 0.7*W1 + 0.3*W2), max=10, order=3)
+    D_unif <- D_unif + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*sin(W3)), order=4)
+
+    D_cat_1 <- D_unif + node("Y", distr="rcategor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*cos(W3)); plogis(-0.5 + 0.7*W1)}, order=5)
+    D_cat_2 <- D_unif + node("Y", distr="rcategor", probs={0.3;0.4}, order=5)
+    D_cat_3 <- D_unif + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
+
+    D_unif <- set.DAG(D_unif)
+    D_cat_1 <- set.DAG(D_cat_1)
+    D_cat_2 <- set.DAG(D_cat_2)
+    D_cat_3 <- set.DAG(D_cat_3)
+ 
+    A1 <- node("Anode",distr="rbern", prob=1)
+    D_cat_1 <- D_cat_1 + action("A1", nodes=A1)
+    # lets define another action setting treatment to 0
+    A0 <- node("Anode",distr="rbern", prob=0)
+    D_cat_1 <- D_cat_1 + action("A0", nodes=A0)
+
+    O_dat_cat <- simobs(D_cat_1, n=500, rndseed = 123)
+    O_dat_cat_sim <- sim(D_cat_1, n=500, rndseed = 123)
+    checkIdentical(O_dat_cat, O_dat_cat_sim)
+
+    X_cat <- simfull(A(D_cat_1), n=500, rndseed = 123)
+    X_cat_sim1 <- sim(DAG=D_cat_1, actions=c("A1","A0"), n=500, rndseed = 123)
+    X_cat_sim2 <- sim(actions=A(D_cat_1), n=500, rndseed = 123)
+    checkIdentical(X_cat, X_cat_sim1)
+    checkIdentical(X_cat, X_cat_sim2)
+
+    #-------------------------------------------------------------
+    # EXAMPLE 2: longitudinal data
+    #-------------------------------------------------------------
+    library(simcausal)
+    # Define longitudinal DAG for the observed data
+
+    # t_end <- 16
+    # OLD FORMAT (STILL WORKS)
+    # L2_0 <- node("L2", t=0, distr="rbern", prob=0.05, order=1)
+    # L1_0 <- node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
+    # A1_0 <- node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
+    # A2_0 <- node("A2", t=0, distr="rbern", prob=1, order=4)
+    # Y_0 <-  node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
+    # L2_t <- node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
+    # A1_t <- node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
+    # A2_t <- node("A2", t=1:t_end, distr="rbern", prob=1, order=8+4*(0:(t_end-1)))
+    # Y_t <- node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
+    # lDAG2b <- set.DAG(c(L2_0,L1_0, A1_0, A2_0, Y_0, L2_t, A1_t, A2_t, Y_t))
+
+    # new interface:
+    t_end <- 16
+    D <- DAG.empty()
+    D <- D+ node("L2", t=0, distr="rbern", prob=0.05, order=1) +
+            node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2) +
+            node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3) +
+            node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE) +
+            node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE) + 
+            node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1))) + 
+            node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1))) + 
+            node("A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)), EFU=TRUE) + 
+            node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
+    lDAG2b <- set.DAG(D)
+
+    #-------------------------------------------------------------
+    # Plot the observed DAG
+    #-------------------------------------------------------------
+    # plotDAG(lDAG2b)
+
+    #-------------------------------------------------------------
+    # Adding dynamic actions (indexed by a real-valued parameter)
+    #-------------------------------------------------------------
+    # Define intervention nodes
+    act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
+    act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
+    actionnodes <- c(act_t0_theta, act_tp_theta)
+    D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
+    D <- D + action("A1_th1", nodes=actionnodes, theta=1)
+
+    # Can add more changes to the same intervention (action)
+    # .... need to do example for this....
+    # D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
+
+    # Can also fully or partially overwrite existing action
+    # D <- D + action("A1_th0", nodes=actionnodes, theta=1)
+    # D <- D + action("A1_th0", nodes=actionnodes, theta=0)
+
+    # Can select and subset actions using function A(D):
+    actions <- A(D) # will select all available actions
+    action_th0 <- A(D)["A1_th0"] # will select action indexed by theta=0
+
+    #-------------------------------------------------------------
+    # Adding actions (indexed by time-varying real valued vector)
+    #-------------------------------------------------------------
+    # Supppose now the intervention is indexed by some real-value that varies in time? Can we still define such an action? Yes
+    act_t0_theta_t <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta[t],1,0))
+    act_tp_theta_t <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta[t],1,0)))
+    actionnodes_t <- c(act_t0_theta_t, act_tp_theta_t)
+
+    # Define time-varying theta
+    # theta <- seq(0, 1, length.out=(t_end+1))
+    # Define action the same way
+    D <- lDAG2b + action("A1_th0", nodes=actionnodes_t, theta=rep(0,17))
+    # replace with D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=theta)
+    D <- D + action("A1_th1", nodes=actionnodes_t, theta=rep(1,17))
+    # replace with D <- D + action("A1_th1", nodes=actionnodes, theta=theta)
+
+    #-------------------------------------------------------------
+    # Plot the counterfactual (intervened) DAG (marking the intervention nodes with red)
+    #-------------------------------------------------------------
+    # plotDAG(A(D)[[1]])
+
+    #-------------------------------------------------------------
+    # Simulating data (observed and counterfactual (full))
+    #-------------------------------------------------------------
+    # Simulate observed data
+    O_dat <- simobs(D, n=500, rndseed = 123)
+    # O_dat <- simobs(D, n=10000, rndseed = 123)
+    # head(O_dat)
+    O_dat_long <- simobs(D, n=500, wide=FALSE, rndseed = 123) # observed long format:
+    # O_dat_long <- simobs(D, n=10000, wide=FALSE, rndseed = 123) # observed long format:
+    # head(O_dat_long, 50)
+
+    # Simulate full data for given actions (A(D))
+    X_dat <- simfull(A(D), n=500, rndseed = 123)
+    # X_dat <- simfull(A(D), n=10000, rndseed = 123)
+    X_dat_long <- simfull(A(D), n=500, wide=FALSE, rndseed = 123)  # full data in long format:
+    # X_dat_long <- simfull(A(D), n=10000, wide=FALSE, rndseed = 123)  # full data in long format:
+
+    X_dat_th0 <- simfull(A(D)["A1_th0"], n=500, rndseed = 123)
+    # X_dat_th0 <- simfull(A(D)["A1_th0"], n=10000, rndseed = 123)
+    head(X_dat_th0[[1]]); 
+    checkException(X_dat_th0[[2]])
+
+    #-------------------------------------------------------------
+    # Target parameter: counterfactual means
+    #-------------------------------------------------------------
+    X_dat_big <- simfull(A(D), n=500, rndseed = 123)
+    # X_dat_big <- simfull(A(D), n=1000000, rndseed = 123)
+    # EXAMPLE 1: Counterfactual mean survival at time-point
+    D <- set.targetE(D, outcome="Y", t=11, param="A1_th0")
+    eval.target(D, data=X_dat) # use full data
+    eval.target(D, n=500, rndseed = 123) # sample full data and then evaluate
+    eval.target(D, n=500, actions="A1_th0", rndseed = 123)
+    checkException(eval.target(D, n=500, actions="A1_th1", rndseed = 123))
+
+
+    # EXAMPLE 2: Vector of counterfactual mean survival over time
+    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1")
+    eval.target(D, data=X_dat)$res
+
+    D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th1")
+    eval.target(D, data=X_dat)$res
+
+    # Some survival plots
+    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1"); surv_th1 <- 1-eval.target(D, data=X_dat_big)$res
+    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th0"); surv_th0 <- 1-eval.target(D, data=X_dat_big)$res
+    # if (FALSE) {
+        plotSurvEst(surv=list(d_theta1 = surv_th1, d_theta0 = surv_th0), xindx=1:17, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
+    # }
+
+    # EXAMPLE 3: Contrasts
+    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
+    eval.target(D, data=X_dat)$res
+
+    # EXAMPLE 4: Ratios
+    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th0/A1_th1")
+    eval.target(D, data=X_dat)$res
+
+    #-------------------------------------------------------------
+    # Target parameter: modelling survival with MSM
+    #-------------------------------------------------------------
+    # Suppose we are interested in describing the counterfactual survival curve as a projection on the following working model:
+    msm.form <- "Y ~ theta + t + I(theta*t)"
+    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form, family="binomial", hazard=FALSE)
+    X_dat_long <- simfull(A(D), n=500, wide=FALSE, LTCF="Y", rndseed = 123) # simulate some long format full data
+    # head(X_dat_long)
+
+    # option one (supply simulated full data)
+    MSMres <- eval.target(D, data=X_dat_long)
+    MSMres$coef
+    # option two (have the function simulate full data itself)
+    MSMres <- eval.target(D, n=500, rndseed = 123)
+    MSMres$coef
+    # >     MSMres$coef
+    #  (Intercept)        theta            t I(theta * t) 
+    #  -3.71764659   0.71769800   0.15817903  -0.02957071 
+    MSMres <- eval.target(D, n=500, actions="A1_th1", rndseed = 123)
+    MSMres$coef
+     # (Intercept)        theta            t I(theta * t) 
+     #  -2.9222734           NA    0.1398531           NA 
+
+    # plotting survival
+    S_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
+    S_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
+    # if (FALSE) {
+        plotSurvEst(surv=list(MSM_theta1 = S_th1, MSM_theta0 = S_th0), xindx=1:17, ylab="MSM Survival, P(T>t)", ylim=c(0.75,1.0))
+    # }
+
+    #-------------------------------------------------------------
+    # Target parameter: modelling the descrete hazard with MSM
+    #-------------------------------------------------------------
+    msm.form <- "Y ~ theta + t + I(theta*t)"
+    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form, family="binomial", hazard=TRUE)
+    X_dat_long <- simfull(A(D), n=500, wide=FALSE, rndseed = 123) # simulate some long format full data
+
+    # option one (supply simulated full data)
+    MSMres <- eval.target(D, data=X_dat_long)
+    MSMres$coef
+    # option two (have the function simulate full data itself)
+    MSMres <- eval.target(D, n=500, rndseed = 123)
+    MSMres$coef
+    # >     MSMres$coef
+    #  (Intercept)        theta            t I(theta * t) 
+    #  -4.65091943   0.64768542   0.05180731  -0.04835746 
+
+    # plotting the hazard
+    h_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
+    h_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
+    # if (FALSE) {
+        plotSurvEst(surv=list(MSM_theta1 = h_th1, MSM_theta0 = h_th0), xindx=1:17, ylab="1 - MSM predicted hazard, P(T>t)", ylim=c(0.95,1.0))
+    # }
+    # Converting hazard to survival
+    Surv_h_th0 <- cumprod(h_th0)
+    Surv_h_th1 <- cumprod(h_th1)
+    # if (FALSE) {
+        plotSurvEst(surv=list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0), xindx=1:17, ylab="P(T>t) from hazard", ylim=c(0.75,1.0))
+    # }
+    #-------------------------------------------------------------
+    # Estimation with lTMLE package: node means
+    #-------------------------------------------------------------
+    # O_dat <- simobs(D, n=100, rndseed = 123)
+
+    # # Suppose we want to now evalute some estimator of the node mean target parameter, based on the simulated observed data
+    # # D <- set.targetE(D, outcome="Y", t=0:10, param="A1_th1")
+    # # D <- set.targetE(D, outcome="Y", t=10, param="A1_th1")
+
+    # D <- set.targetE(D, outcome="Y", t=10, param="A1_th0")
+    # ltmle_res <- est.targetE(D, O_dat, Aname="A1", Cname="A2", Lnames="L2")
+    # ltmle_res$tmleres
+    # names(ltmle_res)
+ 
+    #-------------------------------------------------------------
+    # Estimation with lTMLE package: MSMs
+    #-------------------------------------------------------------
+    O_dat <- simobs(D, n=100, rndseed = 123)
+    # Suppose we want to now evalute some estimator of the MSM target parameter, based on the simulated observed data
+    # msm.form <- "Y ~ theta + t + I(theta*t)"
+    # D <- set.targetMSM(D, outcome="Y", t=0:10, form=msm.form, family="binomial", hazard=FALSE)
+    # ltmleMSMres <- est.targetMSM(D, O_dat, Aname="A1", Cname="A2", Lnames="L2")
+    # ltmleMSMres$tmleres
+
+    # names(ltmleMSMres)
+    # names(ltmleMSMres$lTMLEobj)
+
+    # ltmleMSMres$lTMLEobj$msm
+    # library(ltmle)
+    # predict(ltmleMSMres$lTMLEobj$msm)
+
+    #   # $tmleres
+    #   # Estimator:  tmle 
+    #   #              Estimate Std. Error  CI 2.5% CI 97.5%  p-value    
+    #   # (Intercept)  -6.84907    0.65397 -8.13083   -5.567  < 2e-16 ***
+    #   # theta         2.25943    1.30523 -0.29876    4.818   0.0834 .  
+    #   # t             0.53219    0.02885  0.47564    0.589  < 2e-16 ***
+    #   # I(theta * t) -0.46401    0.10573 -0.67123   -0.257 1.14e-05 ***
+    #   # ---
+    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    #   # $iptwres
+    #   # Estimator:  iptw 
+    #   #              Estimate Std. Error  CI 2.5% CI 97.5% p-value    
+    #   # (Intercept)  -6.85401    0.65114 -8.13023   -5.578  <2e-16 ***
+    #   # theta         2.43581    1.20471  0.07462    4.797  0.0432 *  
+    #   # t             0.53197    0.02848  0.47616    0.588  <2e-16 ***
+    #   # I(theta * t) -0.50410    0.05090 -0.60386   -0.404  <2e-16 ***
+    #   # ---
+    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    #-------------------------------------------------------------
+    # Checking ltmleMSM is consistent (close enough to true MSM coefficients for large enough samples) for t=0:10
+    #-------------------------------------------------------------
+    # msm.form <- "Y ~ theta + t + I(theta*t)"
+    # D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form, family="binomial", hazard=FALSE)
+    # MSMres <- eval.target(D, n=50000, rndseed = 123)
+    # MSMres$coef
+    #  # (Intercept)        theta            t I(theta * t) 
+    #  # -3.52595796   0.54415675   0.15189648  -0.01645792 
+    # O_dat <- simobs(D, n=20000, rndseed = 123)
+    # est.targetMSM(D, O_dat, Aname="A1", Cname="A2", Lnames="L2", package="ltmle")
+    #   #N=20K
+    #   # $tmleres
+    #   # Estimator:  tmle 
+    #   #               Estimate Std. Error   CI 2.5% CI 97.5% p-value    
+    #   # (Intercept)  -3.534608   0.078500 -3.688466   -3.381 < 2e-16 ***
+    #   # theta         0.491233   0.105749  0.283970    0.698 3.4e-06 ***
+    #   # t             0.152215   0.004809  0.142789    0.162 < 2e-16 ***
+    #   # I(theta * t) -0.012098   0.006648 -0.025129    0.001  0.0688 .  
+    #   # ---
+    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    #   # $iptwres
+    #   # Estimator:  iptw 
+    #   #               Estimate Std. Error   CI 2.5% CI 97.5%  p-value    
+    #   # (Intercept)  -3.534774   0.078719 -3.689061   -3.380  < 2e-16 ***
+    #   # theta         0.489920   0.106853  0.280492    0.699 4.54e-06 ***
+    #   # t             0.152208   0.004812  0.142777    0.162  < 2e-16 ***
+    #   # I(theta * t) -0.012251   0.006681 -0.025345    0.001   0.0667 .  
+    #   # ---
+    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    # msm.form <- "Y ~ theta + t + I(theta*t)"
+    # D <- set.targetMSM(D, outcome="Y", t=0:10, form=msm.form, family="binomial", hazard=FALSE)
+    # MSMres <- eval.target(D, n=50000, rndseed = 123)
+    # MSMres$coef
+    #   #   (Intercept)         theta             t  I(theta * t) 
+    #   # -3.8872087068  0.4723120847  0.2148340943 -0.0002968336
+    # O_dat <- simobs(D, n=20000, rndseed = 123)
+    # est.targetMSM(D, O_dat, Aname="A1", Cname="A2", Lnames="L2", package="ltmle")
+    #   #N=20K
+    #   # $tmleres
+    #   # Estimator:  tmle 
+    #   #               Estimate Std. Error   CI 2.5% CI 97.5%  p-value    
+    #   # (Intercept)  -3.908667   0.091928 -4.088841   -3.728  < 2e-16 ***
+    #   # theta         0.426927   0.118161  0.195336    0.659 0.000303 ***
+    #   # t             0.217377   0.008721  0.200285    0.234  < 2e-16 ***
+    #   # I(theta * t)  0.002016   0.011732 -0.020978    0.025 0.863557    
+    #   # ---
+    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    #   # $iptwres
+    #   # Estimator:  iptw 
+    #   #                Estimate Std. Error    CI 2.5% CI 97.5%  p-value    
+    #   # (Intercept)  -3.9087712  0.0922606 -4.0895986   -3.728  < 2e-16 ***
+    #   # theta         0.4310184  0.1191841  0.1974218    0.665 0.000299 ***
+    #   # t             0.2173596  0.0087321  0.2002449    0.234  < 2e-16 ***
+    #   # I(theta * t)  0.0009354  0.0117738 -0.0221409    0.024 0.936678    
+    #   # ---
+    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    #----------------------------------------------------
+    # CHECKING NP TARGET STILL MATCHES:
+    #----------------------------------------------------
+    # t_end <- 16
+    # D <- DAG.empty()
+    # D <- D + node("L2", t=0, distr="rbern", prob=0.05, order=1)
+    # D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
+    # D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
+    # D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
+    # D <- D + node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
+    # D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
+    # D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
+    # D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)), EFU=TRUE)
+    # D <- D + node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
+    # lDAG2b <- set.DAG(D)
+    # act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
+    # act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
+    # actionnodes <- c(act_t0_theta, act_tp_theta)
+    # D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
+    # D <- D + action("A1_th1", nodes=actionnodes, theta=1)
+
+    # D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
+    # timeNPsurv <- system.time(psi_RDsb <- eval.target(D, n=1000000, rndseed = 123))
+     #   user  system elapsed 
+     # 66.845  12.031  79.217
+    # psi_RDsb
+    # $res
+    #  Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7  Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
+    #  0.000000  0.005233  0.014005  0.024868  0.035301  0.043906  0.049829  0.053323  0.054445  0.054489  0.053700  0.052621  0.051190  0.049857  0.048366  0.046831 
+    # Diff_Y_16 
+    #  0.045756 
+    # $call
+    # set.targetE(DAG = D, outcome = "Y", t = 0:16, param = "A1_th1-A1_th0")
+
+    # OLD RDs (NOT EXACTLY MATCHING BECAUSE THE SAMPLING SCHEME CHANGED)
+    # Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7 
+    # 0.000000  0.005328  0.014377  0.025153  0.035778  0.044602  0.050341  0.053849 
+    # Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
+    # 0.055009  0.054711  0.053982  0.052659  0.051264  0.049703  0.048757  0.047022 
+    # Diff_Y_16 
+    # 0.045849 
+
+    #----------------------------------------------------
+    # CHECKING NP TARGET STILL MATCHES with node & rbern:
+    #----------------------------------------------------
+    # t_end <- 16
+    # D <- DAG.empty()
+    # D <- D + node("L2", t=0, distr="rbern", prob=0.05, order=1)
+    # D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
+    # D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
+    # D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
+    # D <- D + node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
+    # D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
+    # D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
+    # D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)), EFU=TRUE)
+    # D <- D + node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
+    # lDAG2b <- set.DAG(D)
+    # act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
+    # act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
+    # actionnodes <- c(act_t0_theta, act_tp_theta)
+    # D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
+    # D <- D + action("A1_th1", nodes=actionnodes, theta=1)
+
+    # D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
+    # timeNPsurv <- system.time(psi_RDsb2 <- eval.target(D, n=1000000, rndseed = 123))
+    # timeNPsurv
+     #   user  system elapsed 
+     # 61.668  13.720  74.974 
+    # psi_RDsb2
+    # $res
+    #  Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7  Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
+    #  0.000000  0.005233  0.014005  0.024868  0.035301  0.043906  0.049829  0.053323  0.054445  0.054489  0.053700  0.052621  0.051190  0.049857  0.048366  0.046831 
+    # Diff_Y_16 
+    #  0.045756 
+    # $call
+    # set.targetE(DAG = D, outcome = "Y", t = 0:16, param = "A1_th1-A1_th0")
+
+    #-------------------------------------------------------------
+    # add.action: altarnative way of adding actions to DAG object (uses underlying setAction)
+    #-------------------------------------------------------------
+    # APPROACH 1: saving intervention in a DAG as "action" with constant attribute theta
+    t_end <- 16
+    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta,1,0))
+    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta,1,0)))
+    actionnodes <- c(act_t0_theta, act_tp_theta)
+
+    D <- add.action(DAG=lDAG2b, name="A1_th0", nodes=actionnodes, theta=0)
+    D <- add.action(DAG=D, name="A1_th1", nodes=actionnodes, theta=1)
+    # D <- add.action(DAG=D, actname="A1_th0", nodes=actionnodes, theta=1)  # making sure attributes can be modified and actions overwritten:
+    t_full_dag2b <- system.time(fulldf_DAG_2b <- simfull(attributes(D)$actions, n=100, rndseed = 123))
+
+    # APPROACH 2: saving intervention in a DAG as "action" with time-varying attribute theta[t]
+    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta[t],1,0))
+    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta[t],1,0)))
+    actionnodes <- c(act_t0_theta, act_tp_theta)
+
+    D <- add.action(DAG=lDAG2b, name="A1_th0", nodes=actionnodes, theta=rep(0, (t_end+1)))
+    D <- add.action(DAG=D, name="A1_th1", nodes=actionnodes, theta=rep(1, (t_end+1)))
+    # D <- add.action(DAG=D, actname="A1_th0", nodes=actionnodes, theta=rep(1, (t_end+1))) # check that existing action can be always overwritten/added to
+    t_full_dag2b <- system.time(fulldf_DAG_2b <- simfull(attributes(D)$actions, n=100, rndseed = 123))
+
+    #-------------------------------------------------------------
+    # setAction test (this constructor is now hidden)
+    #-------------------------------------------------------------
+    # APPROACH 1: saving regimen as a separeate obj / a function of constant attribute (theta)
+    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta,1,0))
+    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta,1,0)))
+    actionnodes <- c(act_t0_theta, act_tp_theta)
+    
+    # action_1_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=0))
+    action_1_DAG_2b <- simcausal:::setAction(actname="A1_th0", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=0))
+    # action_2_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=1))
+    action_2_DAG_2b <- simcausal:::setAction(actname="A1_th1", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=1))
+
+    actions_DAG_2b <- list(A1_th0=action_1_DAG_2b, A1_th1=action_2_DAG_2b)
+
+    # APPROACH 2: saving regimen as a separeate obj / a function of time varying attribute (theta)
+    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta[0],1,0))
+    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta[t],1,0)))
+    actionnodes <- c(act_t0_theta, act_tp_theta)
+
+    # action_1_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=rep(0, (t_end+1))))
+    action_1_DAG_2b <- simcausal:::setAction(actname="A1_th0", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=rep(0, (t_end+1))))
+    # action_2_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=rep(1, (t_end+1))))
+    action_2_DAG_2b <- simcausal:::setAction(actname="A1_th1", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=rep(1, (t_end+1))))
+    
+    actions_DAG_2b <- list(A1_th0=action_1_DAG_2b, A1_th1=action_2_DAG_2b)
+}
+
+
+
 test.longparse <- function() {
   library(simcausal)
   # Fixing the bug in modify_call() for long expressions with deparse arg set to output 1 line of text
@@ -145,7 +770,6 @@ test.distr <- function() {
 
 }
 test.bugfixes <- function() {
-
     #-------------------------------------------------------------
     # BUG (TO DO):
     # Should be able to handle character strings for node formulas (doesn't process them at all currently)
@@ -237,6 +861,21 @@ test.bugfixes <- function() {
     # --------------------------------------------------------------------------------
 
     library(simcausal)
+
+    #-------------------------------------------------------------
+    # BUG FIX: variable from the user-env (rconst) that was not evaluable inside the DAG (const node)
+    #-------------------------------------------------------------
+    rconst <- 0.5
+    D <- DAG.empty()
+    D <- D+ node("const", distr = "rbern", prob = rconst) + 
+            node("W1", distr = "rbern", prob = plogis(-0.5)) + 
+            node("W2", distr = "rbern", prob = plogis(-0.5 + 0.5*W1)) + 
+            node("W3", distr = "rbern", prob = plogis(-0.5 + 0.7*W1 + 0.3*W2)) + 
+            node("A", distr = "rbern", prob = plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3)) + 
+            node("Y", distr = "rbern", prob = plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3), EFU=TRUE)
+    D_WAY <- set.DAG(D)
+    sim(D_WAY, n=100)
+
     #-------------------------------------------------------------
     # BUG (FIXED): 
       # adding time-varying node with the same name as a non time-varying (baseline) doesn't overwrite the older, 
@@ -502,12 +1141,28 @@ test.node <- function() {
     D1a <- set.DAG(D)
     sim1a <- simobs(D1a, n=200, rndseed=1)
     # equivalently passing distribution parameters as a "params" list argument:
+
+
+    rbinom.wrap <- function(n, prob, size) {
+      print("n:"); print(class(n)); print(n)
+      print("size: "); print(class(size)); print(size)
+      print("prob: "); print(class(prob)); print(prob)
+      res <- rbinom(n = n, size = size, prob = prob)
+      print("res"); print(res)
+      res
+    }
+    # rbinom(n=3, size=1, prob=c(0.05,0.05,0.05))
+    # BUG: somehow the distribution params are passed to rbinom not as named args
     D <- DAG.empty()
     D <- D + node("W1", distr="rbinom", params=list(prob=0.05, size=1))
     D <- D + node("W2", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
     D <- D + node("W3", distr="rbinom", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
+    # D <- D + node("W1", distr="rbinom.wrap", params=list(prob=0.05, size=1))
+    # D <- D + node("W2", distr="rbinom.wrap", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
+    # D <- D + node("W3", distr="rbinom.wrap", params=list(prob="ifelse(W1==1,0.5,0.1)", size=1))
     D1b <- set.DAG(D)
     sim1b <- simobs(D1b, n=200, rndseed=1)
+
     checkIdentical(as.matrix(sim1a), as.matrix(sim1b))
     # equivalently using a bernoulli rbern() wrapper function
     # rbern <- function(n, prob) {
@@ -1225,591 +1880,6 @@ test.tswitch_2MSMs <- function() {
 
 }
 
-# DAG2 (from tech specs): defining actions with a new constructor and passing attributes
-test.set.DAG_DAG2b_newactions <- function() {
-    library(simcausal)
-    #-------------------------------------------------------------
-    # categorical node tests 1, 2 & 3
-    #-------------------------------------------------------------    
-    D_cat <- DAG.empty()
-    D_cat <- D_cat + node("W1", distr="rbern", prob=plogis(-0.5), order=1)
-    D_cat <- D_cat + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2)
-    D_cat <- D_cat + node("W3", distr="rbern", prob=plogis(-0.5 + 0.7*W1 + 0.3*W2), order=3)
-    D_cat <- D_cat + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3), order=4)
-
-    D_cat_1 <- D_cat + node("Y", distr="rcategor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*W3); plogis(-0.5 + 0.7*W1)}, order=5)
-    D_cat_2 <- D_cat + node("Y", distr="rcategor", probs={0.3;0.4}, order=5)
-    D_cat_3 <- D_cat + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
-
-    D_cat_1 <- set.DAG(D_cat_1)
-    D_cat_2 <- set.DAG(D_cat_2)
-    D_cat_3 <- set.DAG(D_cat_3)
- 
-    A1 <- node("Anode",distr="rbern", prob=1)
-    D_cat_1 <- D_cat_1 + action("A1", nodes=A1)
-    # lets define another action setting treatment to 0
-    A0 <- node("Anode",distr="rbern", prob=0)
-    D_cat_1 <- D_cat_1 + action("A0", nodes=A0)
-
-    O_dat_cat <- simobs(D_cat_1, n=500, rndseed = 123)    
-    O_dat_cat_sim <- sim(DAG=D_cat_1, n=500, rndseed = 123)
-    checkIdentical(O_dat_cat, O_dat_cat_sim)
-
-    X_cat <- simfull(A(D_cat_1), n=500, rndseed = 123)
-    X_cat_sim1 <- sim(DAG=D_cat_1, actions=c("A1", "A0"), n=500, rndseed = 123)
-    X_cat_sim2 <- sim(actions=A(D_cat_1), n=500, rndseed = 123)
-    checkIdentical(X_cat, X_cat_sim1)
-    checkIdentical(X_cat, X_cat_sim2)
-
-    X_cat_sim1 <- sim(DAG=D_cat_1, actions=c("A1", "A0"), n=500, rndseed = 123)
-
-    checkException(sim(DAG=D_cat_1, actions=c("A4"), n=500, rndseed = 123))
-    #-------------------------------------------------------------
-    # uniform node tests 1, 2 & 3
-    #-------------------------------------------------------------    
-    D_unif <- DAG.empty()
-    D_unif <- D_unif + node("W1", distr="rbern", prob=plogis(-0.5), order=1)
-    D_unif <- D_unif + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2)
-    D_unif <- D_unif + node("W3", distr="runif", min=plogis(-0.5 + 0.7*W1 + 0.3*W2), max=10, order=3)
-    D_unif <- D_unif + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*sin(W3)), order=4)
-
-    D_cat_1 <- D_unif + node("Y", distr="rcategor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*cos(W3)); plogis(-0.5 + 0.7*W1)}, order=5)
-    D_cat_2 <- D_unif + node("Y", distr="rcategor", probs={0.3;0.4}, order=5)
-    D_cat_3 <- D_unif + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
-
-    D_unif <- set.DAG(D_unif)
-    D_cat_1 <- set.DAG(D_cat_1)
-    D_cat_2 <- set.DAG(D_cat_2)
-    D_cat_3 <- set.DAG(D_cat_3)
- 
-    A1 <- node("Anode",distr="rbern", prob=1)
-    D_cat_1 <- D_cat_1 + action("A1", nodes=A1)
-    # lets define another action setting treatment to 0
-    A0 <- node("Anode",distr="rbern", prob=0)
-    D_cat_1 <- D_cat_1 + action("A0", nodes=A0)
-
-    O_dat_cat <- simobs(D_cat_1, n=500, rndseed = 123)
-    O_dat_cat_sim <- sim(D_cat_1, n=500, rndseed = 123)
-    checkIdentical(O_dat_cat, O_dat_cat_sim)
-
-    X_cat <- simfull(A(D_cat_1), n=500, rndseed = 123)
-    X_cat_sim1 <- sim(DAG=D_cat_1, actions=c("A1","A0"), n=500, rndseed = 123)
-    X_cat_sim2 <- sim(actions=A(D_cat_1), n=500, rndseed = 123)
-    checkIdentical(X_cat, X_cat_sim1)
-    checkIdentical(X_cat, X_cat_sim2)
-    #-------------------------------------------------------------
-    # EXAMPLE 1: lets start with a simple example of a (W,A,Y) DAG
-    #-------------------------------------------------------------
-    # new interface:
-    D <- DAG.empty()
-    D <- D+ node("W1", distr="rbern", prob=plogis(-0.5), order=1) + 
-            node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1), order=2) + 
-            node("W3", distr="rbern", prob=plogis(-0.5 + 0.7*W1 + 0.3*W2), order=3) + 
-            node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3), order=4) + 
-            node("Y", distr="rbern", prob=plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*W3), order=5, EFU=TRUE)
-    D_WAY <- set.DAG(D)
-
-    #-------------------------------------------------------------
-    # Plot this DAG
-    #-------------------------------------------------------------
-    # plotDAG(D_WAY)
-
-    # simulate observed data data from this DAG
-    O_dat_WAY <- simobs(D_WAY, n=500, rndseed = 123)
-    O_dat_WAY_sim <- sim(D_WAY, n=500, rndseed = 123)
-    head(O_dat_WAY, 10)
-    head(O_dat_WAY_sim, 10)
-
-    #-------------------------------------------------------------
-    # Defining interventions (actions)
-    #-------------------------------------------------------------
-    # lets define an action setting treatment to 1
-    A1 <- node("Anode",distr="rbern", prob=1)
-    D_WAY <- D_WAY + action("A1", nodes=A1)
-
-    # lets define another action setting treatment to 0
-    A0 <- node("Anode",distr="rbern", prob=0)
-    D_WAY <- D_WAY + action("A0", nodes=A0)
-
-    # selecting actions - its just an intervened DAG
-    class(A(D_WAY))
-    class(A(D_WAY)[["A1"]])
-    class(A(D_WAY)[["A0"]])
-
-    #-------------------------------------------------------------
-    # Simulating the counterfactual (full) data
-    #-------------------------------------------------------------
-    # Simulate full data for all available actions (A(D))
-    X_dat1 <- simfull(A(D_WAY), n=500, rndseed = 123)
-    head(X_dat1[[1]]); head(X_dat1[[2]])
-
-    X_dat1_sim1 <- sim(DAG=D_WAY, actions=c("A1","A0"), n=500, rndseed = 123)
-    X_dat1_sim2 <- sim(DAG=D_WAY, actions=A(D_WAY), n=500, rndseed = 123)
-    head(X_dat1_sim1[[1]]); head(X_dat1_sim1[[2]])
-    head(X_dat1_sim2[[1]]); head(X_dat1_sim2[[2]])
-
-    # Simulate full data for some actions
-    X_datA1 <- simfull(A(D_WAY)["A1"], n=500, rndseed = 123)
-    X_datA1_sim <- sim(DAG=D_WAY, actions="A1", n=500, rndseed = 123)
-    checkIdentical(X_datA1, X_datA1_sim)
-
-    head(X_datA1[[1]]); 
-
-    #-------------------------------------------------------------
-    # Calculating the target parameter: counterfactual expectations
-    #-------------------------------------------------------------
-    # Counterfactual mean survival at time-point
-    D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1")
-    eval.target(D_WAY, data=X_dat1)     # using previously simulated full data
-    eval.target(D_WAY, n=500, rndseed = 123)  # simulate full data first then evaluate param
-
-    # Contrasts
-    D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1-A0")
-    eval.target(D_WAY, data=X_dat1)
-    eval.target(D_WAY, n=500, rndseed = 123)
-
-    # Ratios
-    D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
-    eval.target(D_WAY, data=X_dat1)
-    eval.target(D_WAY, n=500, rndseed = 123)
-
-    #-------------------------------------------------------------
-    # EXAMPLE 2: longitudinal data
-    #-------------------------------------------------------------
-    library(simcausal)
-    # Define longitudinal DAG for the observed data
-
-    # t_end <- 16
-    # OLD FORMAT (STILL WORKS)
-    # L2_0 <- node("L2", t=0, distr="rbern", prob=0.05, order=1)
-    # L1_0 <- node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
-    # A1_0 <- node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
-    # A2_0 <- node("A2", t=0, distr="rbern", prob=1, order=4)
-    # Y_0 <-  node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
-    # L2_t <- node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
-    # A1_t <- node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
-    # A2_t <- node("A2", t=1:t_end, distr="rbern", prob=1, order=8+4*(0:(t_end-1)))
-    # Y_t <- node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
-    # lDAG2b <- set.DAG(c(L2_0,L1_0, A1_0, A2_0, Y_0, L2_t, A1_t, A2_t, Y_t))
-
-    # new interface:
-    t_end <- 16
-    D <- DAG.empty()
-    D <- D+ node("L2", t=0, distr="rbern", prob=0.05, order=1) +
-            node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2) +
-            node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3) +
-            node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE) +
-            node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE) + 
-            node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1))) + 
-            node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1))) + 
-            node("A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)), EFU=TRUE) + 
-            node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
-    lDAG2b <- set.DAG(D)
-
-    #-------------------------------------------------------------
-    # Plot the observed DAG
-    #-------------------------------------------------------------
-    # plotDAG(lDAG2b)
-
-    #-------------------------------------------------------------
-    # Adding dynamic actions (indexed by a real-valued parameter)
-    #-------------------------------------------------------------
-    # Define intervention nodes
-    act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-    act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
-    actionnodes <- c(act_t0_theta, act_tp_theta)
-    D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
-    D <- D + action("A1_th1", nodes=actionnodes, theta=1)
-
-    # Can add more changes to the same intervention (action)
-    # .... need to do example for this....
-    # D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
-
-    # Can also fully or partially overwrite existing action
-    # D <- D + action("A1_th0", nodes=actionnodes, theta=1)
-    # D <- D + action("A1_th0", nodes=actionnodes, theta=0)
-
-    # Can select and subset actions using function A(D):
-    actions <- A(D) # will select all available actions
-    action_th0 <- A(D)["A1_th0"] # will select action indexed by theta=0
-
-    #-------------------------------------------------------------
-    # Adding actions (indexed by time-varying real valued vector)
-    #-------------------------------------------------------------
-    # Supppose now the intervention is indexed by some real-value that varies in time? Can we still define such an action? Yes
-    act_t0_theta_t <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta[t],1,0))
-    act_tp_theta_t <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta[t],1,0)))
-    actionnodes_t <- c(act_t0_theta_t, act_tp_theta_t)
-
-    # Define time-varying theta
-    # theta <- seq(0, 1, length.out=(t_end+1))
-    # Define action the same way
-    D <- lDAG2b + action("A1_th0", nodes=actionnodes_t, theta=rep(0,17))
-    # replace with D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=theta)
-    D <- D + action("A1_th1", nodes=actionnodes_t, theta=rep(1,17))
-    # replace with D <- D + action("A1_th1", nodes=actionnodes, theta=theta)
-
-    #-------------------------------------------------------------
-    # Plot the counterfactual (intervened) DAG (marking the intervention nodes with red)
-    #-------------------------------------------------------------
-    # plotDAG(A(D)[[1]])
-
-    #-------------------------------------------------------------
-    # Simulating data (observed and counterfactual (full))
-    #-------------------------------------------------------------
-    # Simulate observed data
-    O_dat <- simobs(D, n=500, rndseed = 123)
-    # O_dat <- simobs(D, n=10000, rndseed = 123)
-    # head(O_dat)
-    O_dat_long <- simobs(D, n=500, wide=FALSE, rndseed = 123) # observed long format:
-    # O_dat_long <- simobs(D, n=10000, wide=FALSE, rndseed = 123) # observed long format:
-    # head(O_dat_long, 50)
-
-    # Simulate full data for given actions (A(D))
-    X_dat <- simfull(A(D), n=500, rndseed = 123)
-    # X_dat <- simfull(A(D), n=10000, rndseed = 123)
-    X_dat_long <- simfull(A(D), n=500, wide=FALSE, rndseed = 123)  # full data in long format:
-    # X_dat_long <- simfull(A(D), n=10000, wide=FALSE, rndseed = 123)  # full data in long format:
-
-    X_dat_th0 <- simfull(A(D)["A1_th0"], n=500, rndseed = 123)
-    # X_dat_th0 <- simfull(A(D)["A1_th0"], n=10000, rndseed = 123)
-    head(X_dat_th0[[1]]); 
-    checkException(X_dat_th0[[2]])
-
-    #-------------------------------------------------------------
-    # Target parameter: counterfactual means
-    #-------------------------------------------------------------
-    X_dat_big <- simfull(A(D), n=500, rndseed = 123)
-    # X_dat_big <- simfull(A(D), n=1000000, rndseed = 123)
-    # EXAMPLE 1: Counterfactual mean survival at time-point
-    D <- set.targetE(D, outcome="Y", t=11, param="A1_th0")
-    eval.target(D, data=X_dat) # use full data
-    eval.target(D, n=500, rndseed = 123) # sample full data and then evaluate
-    eval.target(D, n=500, actions="A1_th0", rndseed = 123)
-    checkException(eval.target(D, n=500, actions="A1_th1", rndseed = 123))
-
-
-    # EXAMPLE 2: Vector of counterfactual mean survival over time
-    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1")
-    eval.target(D, data=X_dat)$res
-
-    D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th1")
-    eval.target(D, data=X_dat)$res
-
-    # Some survival plots
-    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1"); surv_th1 <- 1-eval.target(D, data=X_dat_big)$res
-    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th0"); surv_th0 <- 1-eval.target(D, data=X_dat_big)$res
-    # if (FALSE) {
-        plotSurvEst(surv=list(d_theta1 = surv_th1, d_theta0 = surv_th0), xindx=1:17, ylab="Counterfactual Survival, P(T>t)", ylim=c(0.75,1.0))
-    # }
-
-    # EXAMPLE 3: Contrasts
-    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
-    eval.target(D, data=X_dat)$res
-
-    # EXAMPLE 4: Ratios
-    D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th0/A1_th1")
-    eval.target(D, data=X_dat)$res
-
-    #-------------------------------------------------------------
-    # Target parameter: modelling survival with MSM
-    #-------------------------------------------------------------
-    # Suppose we are interested in describing the counterfactual survival curve as a projection on the following working model:
-    msm.form <- "Y ~ theta + t + I(theta*t)"
-    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form, family="binomial", hazard=FALSE)
-    X_dat_long <- simfull(A(D), n=500, wide=FALSE, LTCF="Y", rndseed = 123) # simulate some long format full data
-    # head(X_dat_long)
-
-    # option one (supply simulated full data)
-    MSMres <- eval.target(D, data=X_dat_long)
-    MSMres$coef
-    # option two (have the function simulate full data itself)
-    MSMres <- eval.target(D, n=500, rndseed = 123)
-    MSMres$coef
-    # >     MSMres$coef
-    #  (Intercept)        theta            t I(theta * t) 
-    #  -3.71764659   0.71769800   0.15817903  -0.02957071 
-    MSMres <- eval.target(D, n=500, actions="A1_th1", rndseed = 123)
-    MSMres$coef
-     # (Intercept)        theta            t I(theta * t) 
-     #  -2.9222734           NA    0.1398531           NA 
-
-    # plotting survival
-    S_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
-    S_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
-    # if (FALSE) {
-        plotSurvEst(surv=list(MSM_theta1 = S_th1, MSM_theta0 = S_th0), xindx=1:17, ylab="MSM Survival, P(T>t)", ylim=c(0.75,1.0))
-    # }
-
-    #-------------------------------------------------------------
-    # Target parameter: modelling the descrete hazard with MSM
-    #-------------------------------------------------------------
-    msm.form <- "Y ~ theta + t + I(theta*t)"
-    D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form, family="binomial", hazard=TRUE)
-    X_dat_long <- simfull(A(D), n=500, wide=FALSE, rndseed = 123) # simulate some long format full data
-
-    # option one (supply simulated full data)
-    MSMres <- eval.target(D, data=X_dat_long)
-    MSMres$coef
-    # option two (have the function simulate full data itself)
-    MSMres <- eval.target(D, n=500, rndseed = 123)
-    MSMres$coef
-    # >     MSMres$coef
-    #  (Intercept)        theta            t I(theta * t) 
-    #  -4.65091943   0.64768542   0.05180731  -0.04835746 
-
-    # plotting the hazard
-    h_th0 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(0,17), t=0:16), type="response")
-    h_th1 <- 1-predict(MSMres$m, newdata=data.frame(theta=rep(1,17), t=0:16), type="response")
-    # if (FALSE) {
-        plotSurvEst(surv=list(MSM_theta1 = h_th1, MSM_theta0 = h_th0), xindx=1:17, ylab="1 - MSM predicted hazard, P(T>t)", ylim=c(0.95,1.0))
-    # }
-    # Converting hazard to survival
-    Surv_h_th0 <- cumprod(h_th0)
-    Surv_h_th1 <- cumprod(h_th1)
-    # if (FALSE) {
-        plotSurvEst(surv=list(MSM_theta1 = Surv_h_th1, MSM_theta0 = Surv_h_th0), xindx=1:17, ylab="P(T>t) from hazard", ylim=c(0.75,1.0))
-    # }
-    #-------------------------------------------------------------
-    # Estimation with lTMLE package: node means
-    #-------------------------------------------------------------
-    # O_dat <- simobs(D, n=100, rndseed = 123)
-
-    # # Suppose we want to now evalute some estimator of the node mean target parameter, based on the simulated observed data
-    # # D <- set.targetE(D, outcome="Y", t=0:10, param="A1_th1")
-    # # D <- set.targetE(D, outcome="Y", t=10, param="A1_th1")
-
-    # D <- set.targetE(D, outcome="Y", t=10, param="A1_th0")
-    # ltmle_res <- est.targetE(D, O_dat, Aname="A1", Cname="A2", Lnames="L2")
-    # ltmle_res$tmleres
-    # names(ltmle_res)
- 
-    #-------------------------------------------------------------
-    # Estimation with lTMLE package: MSMs
-    #-------------------------------------------------------------
-    O_dat <- simobs(D, n=100, rndseed = 123)
-    # Suppose we want to now evalute some estimator of the MSM target parameter, based on the simulated observed data
-    # msm.form <- "Y ~ theta + t + I(theta*t)"
-    # D <- set.targetMSM(D, outcome="Y", t=0:10, form=msm.form, family="binomial", hazard=FALSE)
-    # ltmleMSMres <- est.targetMSM(D, O_dat, Aname="A1", Cname="A2", Lnames="L2")
-    # ltmleMSMres$tmleres
-
-    # names(ltmleMSMres)
-    # names(ltmleMSMres$lTMLEobj)
-
-    # ltmleMSMres$lTMLEobj$msm
-    # library(ltmle)
-    # predict(ltmleMSMres$lTMLEobj$msm)
-
-    #   # $tmleres
-    #   # Estimator:  tmle 
-    #   #              Estimate Std. Error  CI 2.5% CI 97.5%  p-value    
-    #   # (Intercept)  -6.84907    0.65397 -8.13083   -5.567  < 2e-16 ***
-    #   # theta         2.25943    1.30523 -0.29876    4.818   0.0834 .  
-    #   # t             0.53219    0.02885  0.47564    0.589  < 2e-16 ***
-    #   # I(theta * t) -0.46401    0.10573 -0.67123   -0.257 1.14e-05 ***
-    #   # ---
-    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-    #   # $iptwres
-    #   # Estimator:  iptw 
-    #   #              Estimate Std. Error  CI 2.5% CI 97.5% p-value    
-    #   # (Intercept)  -6.85401    0.65114 -8.13023   -5.578  <2e-16 ***
-    #   # theta         2.43581    1.20471  0.07462    4.797  0.0432 *  
-    #   # t             0.53197    0.02848  0.47616    0.588  <2e-16 ***
-    #   # I(theta * t) -0.50410    0.05090 -0.60386   -0.404  <2e-16 ***
-    #   # ---
-    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-    #-------------------------------------------------------------
-    # Checking ltmleMSM is consistent (close enough to true MSM coefficients for large enough samples) for t=0:10
-    #-------------------------------------------------------------
-    # msm.form <- "Y ~ theta + t + I(theta*t)"
-    # D <- set.targetMSM(D, outcome="Y", t=0:16, form=msm.form, family="binomial", hazard=FALSE)
-    # MSMres <- eval.target(D, n=50000, rndseed = 123)
-    # MSMres$coef
-    #  # (Intercept)        theta            t I(theta * t) 
-    #  # -3.52595796   0.54415675   0.15189648  -0.01645792 
-    # O_dat <- simobs(D, n=20000, rndseed = 123)
-    # est.targetMSM(D, O_dat, Aname="A1", Cname="A2", Lnames="L2", package="ltmle")
-    #   #N=20K
-    #   # $tmleres
-    #   # Estimator:  tmle 
-    #   #               Estimate Std. Error   CI 2.5% CI 97.5% p-value    
-    #   # (Intercept)  -3.534608   0.078500 -3.688466   -3.381 < 2e-16 ***
-    #   # theta         0.491233   0.105749  0.283970    0.698 3.4e-06 ***
-    #   # t             0.152215   0.004809  0.142789    0.162 < 2e-16 ***
-    #   # I(theta * t) -0.012098   0.006648 -0.025129    0.001  0.0688 .  
-    #   # ---
-    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-    #   # $iptwres
-    #   # Estimator:  iptw 
-    #   #               Estimate Std. Error   CI 2.5% CI 97.5%  p-value    
-    #   # (Intercept)  -3.534774   0.078719 -3.689061   -3.380  < 2e-16 ***
-    #   # theta         0.489920   0.106853  0.280492    0.699 4.54e-06 ***
-    #   # t             0.152208   0.004812  0.142777    0.162  < 2e-16 ***
-    #   # I(theta * t) -0.012251   0.006681 -0.025345    0.001   0.0667 .  
-    #   # ---
-    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-    # msm.form <- "Y ~ theta + t + I(theta*t)"
-    # D <- set.targetMSM(D, outcome="Y", t=0:10, form=msm.form, family="binomial", hazard=FALSE)
-    # MSMres <- eval.target(D, n=50000, rndseed = 123)
-    # MSMres$coef
-    #   #   (Intercept)         theta             t  I(theta * t) 
-    #   # -3.8872087068  0.4723120847  0.2148340943 -0.0002968336
-    # O_dat <- simobs(D, n=20000, rndseed = 123)
-    # est.targetMSM(D, O_dat, Aname="A1", Cname="A2", Lnames="L2", package="ltmle")
-    #   #N=20K
-    #   # $tmleres
-    #   # Estimator:  tmle 
-    #   #               Estimate Std. Error   CI 2.5% CI 97.5%  p-value    
-    #   # (Intercept)  -3.908667   0.091928 -4.088841   -3.728  < 2e-16 ***
-    #   # theta         0.426927   0.118161  0.195336    0.659 0.000303 ***
-    #   # t             0.217377   0.008721  0.200285    0.234  < 2e-16 ***
-    #   # I(theta * t)  0.002016   0.011732 -0.020978    0.025 0.863557    
-    #   # ---
-    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-    #   # $iptwres
-    #   # Estimator:  iptw 
-    #   #                Estimate Std. Error    CI 2.5% CI 97.5%  p-value    
-    #   # (Intercept)  -3.9087712  0.0922606 -4.0895986   -3.728  < 2e-16 ***
-    #   # theta         0.4310184  0.1191841  0.1974218    0.665 0.000299 ***
-    #   # t             0.2173596  0.0087321  0.2002449    0.234  < 2e-16 ***
-    #   # I(theta * t)  0.0009354  0.0117738 -0.0221409    0.024 0.936678    
-    #   # ---
-    #   # Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-    #----------------------------------------------------
-    # CHECKING NP TARGET STILL MATCHES:
-    #----------------------------------------------------
-    # t_end <- 16
-    # D <- DAG.empty()
-    # D <- D + node("L2", t=0, distr="rbern", prob=0.05, order=1)
-    # D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
-    # D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
-    # D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
-    # D <- D + node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
-    # D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
-    # D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
-    # D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)), EFU=TRUE)
-    # D <- D + node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
-    # lDAG2b <- set.DAG(D)
-    # act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-    # act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
-    # actionnodes <- c(act_t0_theta, act_tp_theta)
-    # D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
-    # D <- D + action("A1_th1", nodes=actionnodes, theta=1)
-
-    # D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
-    # timeNPsurv <- system.time(psi_RDsb <- eval.target(D, n=1000000, rndseed = 123))
-     #   user  system elapsed 
-     # 66.845  12.031  79.217
-    # psi_RDsb
-    # $res
-    #  Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7  Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
-    #  0.000000  0.005233  0.014005  0.024868  0.035301  0.043906  0.049829  0.053323  0.054445  0.054489  0.053700  0.052621  0.051190  0.049857  0.048366  0.046831 
-    # Diff_Y_16 
-    #  0.045756 
-    # $call
-    # set.targetE(DAG = D, outcome = "Y", t = 0:16, param = "A1_th1-A1_th0")
-
-    # OLD RDs (NOT EXACTLY MATCHING BECAUSE THE SAMPLING SCHEME CHANGED)
-    # Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7 
-    # 0.000000  0.005328  0.014377  0.025153  0.035778  0.044602  0.050341  0.053849 
-    # Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
-    # 0.055009  0.054711  0.053982  0.052659  0.051264  0.049703  0.048757  0.047022 
-    # Diff_Y_16 
-    # 0.045849 
-
-    #----------------------------------------------------
-    # CHECKING NP TARGET STILL MATCHES with node & rbern:
-    #----------------------------------------------------
-    # t_end <- 16
-    # D <- DAG.empty()
-    # D <- D + node("L2", t=0, distr="rbern", prob=0.05, order=1)
-    # D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
-    # D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
-    # D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
-    # D <- D + node("Y",  t=0, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
-    # D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
-    # D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
-    # D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, order=8+4*(0:(t_end-1)), EFU=TRUE)
-    # D <- D + node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
-    # lDAG2b <- set.DAG(D)
-    # act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-    # act_tp_theta <- node("A1",t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
-    # actionnodes <- c(act_t0_theta, act_tp_theta)
-    # D <- lDAG2b + action("A1_th0", nodes=actionnodes, theta=0)
-    # D <- D + action("A1_th1", nodes=actionnodes, theta=1)
-
-    # D <- set.targetE(D, outcome="Y", t=0:16, param="A1_th1-A1_th0")
-    # timeNPsurv <- system.time(psi_RDsb2 <- eval.target(D, n=1000000, rndseed = 123))
-    # timeNPsurv
-     #   user  system elapsed 
-     # 61.668  13.720  74.974 
-    # psi_RDsb2
-    # $res
-    #  Diff_Y_0  Diff_Y_1  Diff_Y_2  Diff_Y_3  Diff_Y_4  Diff_Y_5  Diff_Y_6  Diff_Y_7  Diff_Y_8  Diff_Y_9 Diff_Y_10 Diff_Y_11 Diff_Y_12 Diff_Y_13 Diff_Y_14 Diff_Y_15 
-    #  0.000000  0.005233  0.014005  0.024868  0.035301  0.043906  0.049829  0.053323  0.054445  0.054489  0.053700  0.052621  0.051190  0.049857  0.048366  0.046831 
-    # Diff_Y_16 
-    #  0.045756 
-    # $call
-    # set.targetE(DAG = D, outcome = "Y", t = 0:16, param = "A1_th1-A1_th0")
-
-    #-------------------------------------------------------------
-    # add.action: altarnative way of adding actions to DAG object (uses underlying setAction)
-    #-------------------------------------------------------------
-    # APPROACH 1: saving intervention in a DAG as "action" with constant attribute theta
-    t_end <- 16
-    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta,1,0))
-    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta,1,0)))
-    actionnodes <- c(act_t0_theta, act_tp_theta)
-
-    D <- add.action(DAG=lDAG2b, name="A1_th0", nodes=actionnodes, theta=0)
-    D <- add.action(DAG=D, name="A1_th1", nodes=actionnodes, theta=1)
-    # D <- add.action(DAG=D, actname="A1_th0", nodes=actionnodes, theta=1)  # making sure attributes can be modified and actions overwritten:
-    t_full_dag2b <- system.time(fulldf_DAG_2b <- simfull(attributes(D)$actions, n=100, rndseed = 123))
-
-    # APPROACH 2: saving intervention in a DAG as "action" with time-varying attribute theta[t]
-    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta[t],1,0))
-    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta[t],1,0)))
-    actionnodes <- c(act_t0_theta, act_tp_theta)
-
-    D <- add.action(DAG=lDAG2b, name="A1_th0", nodes=actionnodes, theta=rep(0, (t_end+1)))
-    D <- add.action(DAG=D, name="A1_th1", nodes=actionnodes, theta=rep(1, (t_end+1)))
-    # D <- add.action(DAG=D, actname="A1_th0", nodes=actionnodes, theta=rep(1, (t_end+1))) # check that existing action can be always overwritten/added to
-    t_full_dag2b <- system.time(fulldf_DAG_2b <- simfull(attributes(D)$actions, n=100, rndseed = 123))
-
-    #-------------------------------------------------------------
-    # setAction test (this constructor is now hidden)
-    #-------------------------------------------------------------
-    # APPROACH 1: saving regimen as a separeate obj / a function of constant attribute (theta)
-    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta,1,0))
-    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta,1,0)))
-    actionnodes <- c(act_t0_theta, act_tp_theta)
-    
-    # action_1_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=0))
-    action_1_DAG_2b <- simcausal:::setAction(actname="A1_th0", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=0))
-    # action_2_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=1))
-    action_2_DAG_2b <- simcausal:::setAction(actname="A1_th1", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=1))
-
-    actions_DAG_2b <- list(A1_th0=action_1_DAG_2b, A1_th1=action_2_DAG_2b)
-
-    # APPROACH 2: saving regimen as a separeate obj / a function of time varying attribute (theta)
-    act_t0_theta <- node(name="A1",t=0, distr="rbern", prob=ifelse(L2[0]>= theta[0],1,0))
-    act_tp_theta <- node(name="A1",t=1:eval(t_end), distr="rbern", prob=ifelse(A1[t-1]==1,1,ifelse(L2[t]>= theta[t],1,0)))
-    actionnodes <- c(act_t0_theta, act_tp_theta)
-
-    # action_1_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=rep(0, (t_end+1))))
-    action_1_DAG_2b <- simcausal:::setAction(actname="A1_th0", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=rep(0, (t_end+1))))
-    # action_2_DAG_2b <- simcausal:::setAction(lDAG2b, actionnodes, attr=list(theta=rep(1, (t_end+1))))
-    action_2_DAG_2b <- simcausal:::setAction(actname="A1_th1", inputDAG=lDAG2b, actnodes=actionnodes, attr=list(theta=rep(1, (t_end+1))))
-    
-    actions_DAG_2b <- list(A1_th0=action_1_DAG_2b, A1_th1=action_2_DAG_2b)
-}
 
 test.set.DAG_DAG_informcens <- function() {
     library(simcausal)

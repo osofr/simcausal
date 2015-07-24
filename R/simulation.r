@@ -89,7 +89,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
         distparam <- check_len(distparam)
       } else if (is.matrix(distparam)) {
         if (nrow(distparam)==1) { # for mtx with 1 row -> repeat N_notNA_samp times:
-          distparam <- matrix(distparam, nrow=N_notNA_samp, ncol=ncol(distparam), byrow=TRUE)	
+          distparam <- matrix(distparam, nrow=N_notNA_samp, ncol=ncol(distparam), byrow=TRUE)
         } else if (nrow(distparam)==Nsamp) { # for mtx with Nsamp rows -> subset mtx[!EFUP.prev,]
           distparam <- distparam[!EFUP.prev,,drop=FALSE]
         } else {
@@ -146,15 +146,20 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   #---------------------------------------------------------------------------------
   # consider pre-allocating memory for newNodeParams and newVar
   #---------------------------------------------------------------------------------
-  newVar <- vector(length=Nsamp)
-  NodeParentsNms <- vector("list", length=length(DAG))	# list that will  have parents' names for each node
+  newVar <- vector(length = Nsamp)
+  NodeParentsNms <- vector("list", length = length(DAG))	# list that will  have parents' names for each node
   names(NodeParentsNms) <- sapply(DAG, '[[', "name")
   user.env <- attr(DAG, "user.env")
+  assert_that(!is.null(user.env))
+  # dprint("user.env: "); dprint(user.env); dprint(ls(user.env))
+
+  node_evaluator <- Define_sVar$new(user.env = user.env, netind_cl = NULL)
+
   t_pts <- NULL
   for (cur.node in DAG) {
     t <- cur.node$t # define variable for a current time point t
-    t_new <- !(t%in%t_pts) # set to TRUE when switch to new time point t occurs otherwise FALSE
-    t_pts <- c(t_pts,t)
+    t_new <- !(t %in% t_pts) # set to TRUE when switch to new time point t occurs otherwise FALSE
+    t_pts <- c(t_pts, t)
     t_pts <- as.integer(unique(t_pts)) # vector that keeps track of unique timepoints t
     gnodename <- as.character(unlist(strsplit(cur.node$name, "_"))[1])
     # dprint("current t: "%+%t%+%"; t new: "%+%t_new); dprint("current time points: ");  dprint(t_pts);
@@ -165,7 +170,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     # if (!is.null(t)) {	# check time points were specified by user
     # 	# When simulating in the environment of prev.data as a base (for MSM summary measures)
     # 	# need to check if the failure event has occurred at the previous timepoint when LTCF is not null
-    # 	if (!is.null(prev.data) & !is.null(LTCF) & (t > t_pts[1])) { 
+    # 	if (!is.null(prev.data) & !is.null(LTCF) & (t > t_pts[1])) {
     # 		LTCFname <- LTCF%+%"_"%+%(t-1)
     # 		LTCF.prev <- (prev.data[,LTCFname]%in%1)
     # 	}
@@ -173,49 +178,28 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 
     #------------------------------------------------------------------------
     # CHECKS NODE DISTRIBUTIONS & EVALUATE NODE DISTRIBUTION PARAMS PROVIDED IN NODE FORMULA(S)
-    # ****************************
+    #------------------------------------------------------------------------
+    #------------------------------------------------------------------------
+    # TO DO:
+	# Need to make sure that action attributes never get separate columns in df, since there are just constants
+	# The attributes should be added to the eval env as variables
+    # See if current expr naming strucutre in Define_sVar can be recycled for sampling from multivariate densities
+    # NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH n
+    #------------------------------------------------------------------------
 
     # ****************************
-    # Testing new evaluation of summary measures:
-    # ****************************
-    node_evaluator <- Define_sVar$new(expr_list = cur.node$dist_params, user.env = user.env, netind_cl = NULL)
     # testm.Var <- node_evaluator$get.mat.sVar(data.df = if (!is.null(prev.data)) prev.data else obs.df, netind_cl = NULL)
     # eval_expr_res <- lapply(cur.node$dist_params, function(expr) eval_nodeform(as.character(expr), cur.node))
-    eval_expr_res <- node_evaluator$eval_nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
+    eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
     par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
     eval_dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
     newNodeParams <- list(dist_params = eval_dist_params, par.names = par.names)
     
-    dprint("cur.node t:"); dprint(cur.node$t)
-    dprint("expr:"); dprint(lapply(cur.node$dist_params, function(expr) as.character(expr)))
-    dprint("eval_expr_res:"); dprint(eval_expr_res)
-    dprint("eval_dist_params:"); dprint(eval_dist_params)
-
-    # #------------------------------------------------------------------------
-    # # TO BE REMOVED AND REPLACED WITH ABOVE
-    # with() statement is currently not serving any purpose since eval_nodeform() is finding the environment with ANCHOR_VARS_OBSDF
-    # pass the data (obs.df, prev.data) instead as an arg to eval_nodeform() or make R6 object that holds data and has $eval_nodeform method
-    # ANCHOR_VARS_OBSDF will no longer be needed    
-    # # if !is.null(prev.data) then evalute the formula in the envir of prev.data ONLY!
-    # newNodeParams <- with(if (!is.null(prev.data)) prev.data else obs.df, {
-    #   # ANCHOR_VARS_OBSDF <- TRUE
-    #   ANCHOR_VARS_OBSDF <- list()
-    #   # local_vec_funs <- getlocalfuns(DAG)
-    #   # ADDED FOR ARBITRARY DISTRIBUTION FUNCTIONS, THIS IS THE ONLY VERSION THAT NEEDS TO BE KEPT
-    #   # NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH n
-    #   eval_expr_res <- lapply(cur.node$dist_params, function(expr) eval_nodeform(as.character(expr), cur.node))
-    #   # if (gnodename=="A1") {
-    #   # 	dprint("cur.node t:"); dprint(cur.node$t)
-    #   # 	dprint("expr:"); dprint(lapply(cur.node$dist_params, function(expr) as.character(expr)))
-    #   # 	dprint("eval_expr_res:"); dprint(eval_expr_res)
-    #   # 	dprint("dist_params:"); dprint(lapply(eval_expr_res, '[[' ,"evaled_expr"))
-    #   # }
-    #   # combine parents from all list items into one vector:
-    #   par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
-    #   dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
-    #   # dist_params <- lapply(eval_expr_res, function(expr) expr$evaled_expr)
-    #   list(dist_params=dist_params, par.names=par.names)
-    # })
+    dprint("cur.node t:" %+% cur.node$t)
+    dprint("original nodeform expr:"); dprint(lapply(cur.node$dist_params, function(expr) as.character(expr)))
+    print("full eval_expr_res:"); print(eval_expr_res)
+    print("eval_dist_params:"); print(eval_dist_params)
+    
 
     if (!is.null(newNodeParams$par.names)) {
       NodeParentsNms[[cur.node$name]] <- newNodeParams$par.names
@@ -225,7 +209,6 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     # SAMPLE NEW COVARIATE BASED ON DISTR PARAMS
     #------------------------------------------------------------------------
     newVar <- sampleNodeDistr(newNodeParams, cur.node$distr, EFUP.prev,  cur.node, cur.node$dist_params)
-
     # already performed inside sampleNodeDistr, so commented out:
     # newVar[EFUP.prev] <- NA
     # uncomment to assign 0 instead of NA for missing (after EOF=TRUE node evals to 1)

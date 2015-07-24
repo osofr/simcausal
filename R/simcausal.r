@@ -7,6 +7,10 @@ opts <- new.env(parent = emptyenv())
 opts$vecfun <- NULL           # character vector of user-defined vectorized function names
 opts$debug <- FALSE           # debug mode, when TRUE print all calls to dprint()
 
+gvars <- new.env(parent = emptyenv())
+gvars$misval <- NA_integer_ # the default missing value for observations
+gvars$misXreplace <- 0L     # the default replacement value for misval that appear in the design matrix
+
 #' Print Names of Custom Vectorized Functions
 #'
 #' Print current user-defined vectorized function names.
@@ -165,24 +169,27 @@ print.DAG.node <- function(x, ...) str(x)
 
 #' (EXPERIMENTAL) Plot Discrete Survival Function(s)
 #'
-#' Plot discrete survival curves from a list of discrete survival probabilities by calling \code{plot} with \code{type='b'}.
+#' Plot discrete survival curves from a list of discrete survival probabilities by calling \code{\link{plot}} with \code{type='b'}.
 #' @param surv A list of vectors, each containing action-specific discrete survival probabilities over time.
 #' @param xindx A vector of indices for subsetting the survival vectors in \code{surv}, if omitted all survival probabilities in each \code{surv[[i]]} are plotted.
-#' @param ylab An optional title for y axis, passed to \code{plot}.
-#' @param xlab An optional title for x axis, passed to \code{plot}.
-#' @param ylim Optional y limits for the plot, passed to \code{plot}.
-#' @param ... Additional arguments passed to \code{plot}.
+#' @param ylab An optional title for y axis, passed to \code{\link{plot}}.
+#' @param xlab An optional title for x axis, passed to \code{\link{plot}}.
+#' @param ylim Optional y limits for the plot, passed to \code{\link{\link{plot}}}.
+#' @param legend.xyloc Optional x and y co-ordinates to be used to position the legend. Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{\link{graphics::xy.coords}}.
+#' @param ... Additional arguments passed to \code{\link{plot}}.
 #' @export
-plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim = c(0.0, 1.0), ...) {
+plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim = c(0.0, 1.0), legend.xyloc = "topright", ...) {
   ptsize <- 0.7
   counter <- 0
   for(d.j in names(surv)){
     counter <- counter+1
     if (is.null(xindx)) xindx <- seq(surv[[d.j]])
-    plot(x=xindx, y=surv[[d.j]][xindx], col=counter, type='b', cex=ptsize, ylab=ylab, xlab=xlab, ylim=ylim)
+    plot(x=xindx, y=surv[[d.j]][xindx], col=counter, type='b', cex=ptsize, ylab=ylab, xlab=xlab, ylim=ylim, ...)
     par(new=TRUE)
   }
-  legend(12,0.96, legend=names(surv), col=c(1:length(names(surv))), cex=ptsize, pch=1)
+  # alternative (coord used by vignette): 
+  # legend.xyloc = list(x=12,y=0.96)
+  legend(legend.xyloc, legend=names(surv), col=c(1:length(names(surv))), cex=ptsize, pch=1)
 }
 
 #' Plot DAG
@@ -199,163 +206,163 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @param excludeattrs A character vector of attribute DAG nodes that shouldn't be plotted
 #' @export
 plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_attrs=list(), edge_attrs=list(), excludeattrs, customvlabs) {
-      if (!requireNamespace("igraph", quietly = TRUE)) {
-        stop("igraph package is required for this function to work. Please install igraph.",
-          call. = FALSE)
-      }
-      set.seed(12345)
-      DAG_orig <- DAG      
-      # Get a list of parent nodes
-      par_nodes <- attr(DAG, "parents")
-      # Get a list of attributes
-      # attrs <- attr(DAG, "attrs")
-      # print("par_nodes"); print(par_nodes)
+  if (!requireNamespace("igraph", quietly = TRUE)) {
+    stop("igraph package is required for this function to work. Please install igraph.",
+      call. = FALSE)
+  }
+  set.seed(12345)
+  DAG_orig <- DAG      
+  # Get a list of parent nodes
+  par_nodes <- attr(DAG, "parents")
+  # Get a list of attributes
+  # attrs <- attr(DAG, "attrs")
+  # print("par_nodes"); print(par_nodes)
 
-      # ID attribute DAG nodes (those with missing order) and have them plotted separately (so as not to mess up the grid)
-      ordervec <- sapply(DAG, '[[', "order")    
-      nullorder_idx <- which(sapply(ordervec, is.null))
-      if (length(nullorder_idx)>0) {
-        DAG <- DAG[-nullorder_idx]
-        class(DAG) <- "DAG"
+  # ID attribute DAG nodes (those with missing order) and have them plotted separately (so as not to mess up the grid)
+  ordervec <- sapply(DAG, '[[', "order")    
+  nullorder_idx <- which(sapply(ordervec, is.null))
+  if (length(nullorder_idx)>0) {
+    DAG <- DAG[-nullorder_idx]
+    class(DAG) <- "DAG"
 
-        par_nodes_nullorder <- par_nodes[nullorder_idx]
-        par_nodes <- par_nodes[-nullorder_idx]
-      }
+    par_nodes_nullorder <- par_nodes[nullorder_idx]
+    par_nodes <- par_nodes[-nullorder_idx]
+  }
 
-      # SUBSET A DAG by tmax
-      if (!is.null(tmax)) {
-        t_idx_all <- Nattr(DAG, "t") # a list of t values from current DAG (including NULLs)
-        idx_tmax <- which(t_idx_all%in%tmax)
-        if (length(idx_tmax)==0) {
-          warning("tmax argument could not be matched, using all available time points")
-        } else {
-         DAG <- DAG[1:max(idx_tmax)]
-         par_nodes <- par_nodes[1:max(idx_tmax)]
-         class(DAG) <- "DAG"
-        }
-      }
+  # SUBSET A DAG by tmax
+  if (!is.null(tmax)) {
+    t_idx_all <- Nattr(DAG, "t") # a list of t values from current DAG (including NULLs)
+    idx_tmax <- which(t_idx_all%in%tmax)
+    if (length(idx_tmax)==0) {
+      warning("tmax argument could not be matched, using all available time points")
+    } else {
+     DAG <- DAG[1:max(idx_tmax)]
+     par_nodes <- par_nodes[1:max(idx_tmax)]
+     class(DAG) <- "DAG"
+    }
+  }
 
-      # Define x-axis coordinates
-      x_layout <- c(0:(length(par_nodes)-1))
-      if (!missing(xjitter)) {
-        # x_layout <- x_layout + rnorm(length(x_layout))/5
-        x_layout <- x_layout + rnorm(n=length(x_layout), mean=0, sd=xjitter)
-      }
-      
-      # custom layout where x_axis is arranged by order ranking and y_axis is random only for a type of variable, but not by time
-      # x_layout <- 3*c(0:(length(par_nodes)-1))
+  # Define x-axis coordinates
+  x_layout <- c(0:(length(par_nodes)-1))
+  if (!missing(xjitter)) {
+    # x_layout <- x_layout + rnorm(length(x_layout))/5
+    x_layout <- x_layout + rnorm(n=length(x_layout), mean=0, sd=xjitter)
+  }
 
-      # Plot when no t is defined in the DAG:
-      if (is.null(DAG[[length(DAG)]]$t)) { 
-        arrow.width <- 0.6
-        arrow.size <- 0.5
-        vertsize <- 10
+  # custom layout where x_axis is arranged by order ranking and y_axis is random only for a type of variable, but not by time
+  # x_layout <- 3*c(0:(length(par_nodes)-1))
 
-      	tmax <- 0
-        num_bsl <- length(DAG)
-        num_tv <- 0
-        y_bsl <- rep(c(0,1), length.out = num_bsl) + rnorm(num_bsl)     # y placement for bsl nodes
-        y_layout <- y_bsl
+  # Plot when no t is defined in the DAG:
+  if (is.null(DAG[[length(DAG)]]$t)) { 
+    arrow.width <- 0.6
+    arrow.size <- 0.5
+    vertsize <- 10
 
-      # Plot when t nodes are present:
-      } else { 
-        arrow.width <- 0.3
-        arrow.size <- 0.2
-        vertsize <- 7
-        y_vec <- NULL # y coordinates for each DAG node
-        # get node t values in a DAG as a list (including NULLs)
-        t_idx_all <- Nattr(DAG, "t") # a list of t values from current DAG (including NULLs)
-        tunique <- unique(unlist(t_idx_all))
-        t_idx_miss <- sapply(t_idx_all, is.null) # finding all nodes where t is undefined (null)
-        t_idx_miss <- which(t_idx_miss%in%TRUE)
-        if (length(t_idx_miss)>0) {
-          y_vec <- c(y_vec, seq(length(t_idx_miss)))
-        }
-        for (t in tunique) { # finding node indices for each t value in the DAG
-          idx_t <- which(t_idx_all%in%t)
-          if (length(idx_t)>0) {
-            y_vec <- c(y_vec, seq(length(idx_t)))
-          }
-        }
-        y_layout <- y_vec
-      }
+  	tmax <- 0
+    num_bsl <- length(DAG)
+    num_tv <- 0
+    y_bsl <- rep(c(0,1), length.out = num_bsl) + rnorm(num_bsl)     # y placement for bsl nodes
+    y_layout <- y_bsl
 
-      if (!missing(yjitter)) {
-        y_layout <- y_layout + rnorm(n=length(y_layout), mean=0, sd=yjitter)
+  # Plot when t nodes are present:
+  } else { 
+    arrow.width <- 0.3
+    arrow.size <- 0.2
+    vertsize <- 7
+    y_vec <- NULL # y coordinates for each DAG node
+    # get node t values in a DAG as a list (including NULLs)
+    t_idx_all <- Nattr(DAG, "t") # a list of t values from current DAG (including NULLs)
+    tunique <- unique(unlist(t_idx_all))
+    t_idx_miss <- sapply(t_idx_all, is.null) # finding all nodes where t is undefined (null)
+    t_idx_miss <- which(t_idx_miss%in%TRUE)
+    if (length(t_idx_miss)>0) {
+      y_vec <- c(y_vec, seq(length(t_idx_miss)))
+    }
+    for (t in tunique) { # finding node indices for each t value in the DAG
+      idx_t <- which(t_idx_all%in%t)
+      if (length(idx_t)>0) {
+        y_vec <- c(y_vec, seq(length(idx_t)))
       }
-      layoutcustom_2 <- cbind(x_layout, y_layout)
+    }
+    y_layout <- y_vec
+  }
 
-      # create a layout for attribute nodes
-      # check if any of the attributes are on the exclude list, if so, do not plot those nodes
-      if (length(nullorder_idx)>0) {
-        gennames <- sapply(strsplit(names(par_nodes_nullorder), "_"), '[[', 1)
-        excl <- rep(FALSE, length(par_nodes_nullorder))
-        if (!missing(excludeattrs)) {
-          excl <- gennames%in%excludeattrs
-          if (sum(excl)>0) {
-            par_nodes_nullorder <- par_nodes_nullorder[!excl]
-          }
-        }
-        x_layout_nullorder <- rep(-2, length(par_nodes_nullorder))
-        maxy <- max(layoutcustom_2[,2])
-        y_layout_nullorder <- seq(from=1, to=maxy, length.out=length(par_nodes_nullorder))
-        layout_nullorder <- cbind(x_layout_nullorder, y_layout_nullorder)
-        layoutcustom_2 <- rbind(layout_nullorder, layoutcustom_2)
-        par_nodes <- c(par_nodes_nullorder, par_nodes)
-      }
+  if (!missing(yjitter)) {
+    y_layout <- y_layout + rnorm(n=length(y_layout), mean=0, sd=yjitter)
+  }
+  layoutcustom_2 <- cbind(x_layout, y_layout)
 
-      # VERTEX AND EDGE plotting ATTRIBUTES
-      # collect all attributes (must be named)
-      attnames_ver <- names(vertex_attrs)
-      attnames_edge <- names(edge_attrs)
-      if (length(vertex_attrs) != 0 && (is.null(attnames_ver) || any(attnames_ver==""))) {
-        stop("please specify name for each attribute in vertex_attrs")
+  # create a layout for attribute nodes
+  # check if any of the attributes are on the exclude list, if so, do not plot those nodes
+  if (length(nullorder_idx)>0) {
+    gennames <- sapply(strsplit(names(par_nodes_nullorder), "_"), '[[', 1)
+    excl <- rep(FALSE, length(par_nodes_nullorder))
+    if (!missing(excludeattrs)) {
+      excl <- gennames%in%excludeattrs
+      if (sum(excl)>0) {
+        par_nodes_nullorder <- par_nodes_nullorder[!excl]
       }
-      if (length(edge_attrs) != 0 && (is.null(attnames_edge) || any(attnames_edge==""))) {
-        stop("please specify name for each attribute in edge_attrs")
-      }
-      vertex_attrs_default <- list(color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
-      edge_attrs_default <- list(color="black", width=0.2, arrow.width=arrow.width, arrow.size=arrow.size)
-      vertex_attrs <- append(vertex_attrs, vertex_attrs_default[!(names(vertex_attrs_default)%in%attnames_ver)])
-      edge_attrs <- append(edge_attrs, edge_attrs_default[!(names(edge_attrs_default)%in%attnames_edge)])
-      message("using the following vertex attributes: "); message(vertex_attrs)
-      message("using the following edge attributes: "); message(edge_attrs)
+    }
+    x_layout_nullorder <- rep(-2, length(par_nodes_nullorder))
+    maxy <- max(layoutcustom_2[,2])
+    y_layout_nullorder <- seq(from=1, to=maxy, length.out=length(par_nodes_nullorder))
+    layout_nullorder <- cbind(x_layout_nullorder, y_layout_nullorder)
+    layoutcustom_2 <- rbind(layout_nullorder, layoutcustom_2)
+    par_nodes <- c(par_nodes_nullorder, par_nodes)
+  }
 
-      g <- igraph::graph.empty()
-      # g <- igraph::add.vertices(g, nv=length(names(par_nodes)), color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
-      
-      vlabs <- names(par_nodes)
-      g <- igraph::add.vertices(g, nv=length(vlabs), attr=vertex_attrs)
-      igraph::V(g)$name <- vlabs
-      for (i in c(1:length(names(par_nodes)))) {
-        if (length(par_nodes[[i]])>0) {
-          # check that parent nodes actually exist and already have been defined:
-          parents_i <- par_nodes[[i]]
-          ind_parexist <- parents_i%in%(names(par_nodes)[1:i])
-          if (!all(ind_parexist)) {
-            par_outvec <- parents_i[!ind_parexist]
-            if (length(par_outvec)>1) par_outvec <- paste0(par_outvec, collapse=",")
-            warning("some of the extracted parent nodes aren't defined and are being omitted: "%+%par_outvec)
-            parents_i <- parents_i[ind_parexist]
-          }
-          if (length(parents_i)>0) {
-            # g <- igraph::add.edges(g, t(cbind(parents_i, names(par_nodes)[i])), color="black", width=0.2, arrow.width=arrow.width, arrow.size=arrow.size)
-            g <- igraph::add.edges(g, t(cbind(parents_i, names(par_nodes)[i])), attr=edge_attrs)
-          }
-        }
+  # VERTEX AND EDGE plotting ATTRIBUTES
+  # collect all attributes (must be named)
+  attnames_ver <- names(vertex_attrs)
+  attnames_edge <- names(edge_attrs)
+  if (length(vertex_attrs) != 0 && (is.null(attnames_ver) || any(attnames_ver==""))) {
+    stop("please specify name for each attribute in vertex_attrs")
+  }
+  if (length(edge_attrs) != 0 && (is.null(attnames_edge) || any(attnames_edge==""))) {
+    stop("please specify name for each attribute in edge_attrs")
+  }
+  vertex_attrs_default <- list(color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
+  edge_attrs_default <- list(color="black", width=0.2, arrow.width=arrow.width, arrow.size=arrow.size)
+  vertex_attrs <- append(vertex_attrs, vertex_attrs_default[!(names(vertex_attrs_default)%in%attnames_ver)])
+  edge_attrs <- append(edge_attrs, edge_attrs_default[!(names(edge_attrs_default)%in%attnames_edge)])
+  message("using the following vertex attributes: "); message(vertex_attrs)
+  message("using the following edge attributes: "); message(edge_attrs)
+
+  g <- igraph::graph.empty()
+  # g <- igraph::add.vertices(g, nv=length(names(par_nodes)), color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
+
+  vlabs <- names(par_nodes)
+  g <- igraph::add.vertices(g, nv=length(vlabs), attr=vertex_attrs)
+  igraph::V(g)$name <- vlabs
+  for (i in c(1:length(names(par_nodes)))) {
+    if (length(par_nodes[[i]])>0) {
+      # check that parent nodes actually exist and already have been defined:
+      parents_i <- par_nodes[[i]]
+      ind_parexist <- parents_i%in%(names(par_nodes)[1:i])
+      if (!all(ind_parexist)) {
+        par_outvec <- parents_i[!ind_parexist]
+        if (length(par_outvec)>1) par_outvec <- paste0(par_outvec, collapse=",")
+        warning("some of the extracted parent nodes weren't defined in the DAG and are being omitted: "%+%par_outvec)
+        parents_i <- parents_i[ind_parexist]
       }
-      # mark intervention node labels with another color
-      if ("DAG.action"%in%class(DAG_orig)) {
-        actnodenames <- attr(DAG_orig, "actnodes")
-        if (missing(node.action.color)) node.action.color <- "red"
-        # V(g)[name%in%actnodenames]$color <-"red"
-        igraph::V(g)[igraph::V(g)$name%in%actnodenames]$label.color <- node.action.color
+      if (length(parents_i)>0) {
+        # g <- igraph::add.edges(g, t(cbind(parents_i, names(par_nodes)[i])), color="black", width=0.2, arrow.width=arrow.width, arrow.size=arrow.size)
+        g <- igraph::add.edges(g, t(cbind(parents_i, names(par_nodes)[i])), attr=edge_attrs)
       }
-      if (!missing(customvlabs)) {  # use user-supplied custom labels for DAG nodes
-        igraph::V(g)$name <- customvlabs
-      }
-      g <- igraph::set.graph.attribute(g,'layout',layoutcustom_2)
-      igraph::plot.igraph(g, asp=0.5)
+    }
+  }
+  # mark intervention node labels with another color
+  if ("DAG.action"%in%class(DAG_orig)) {
+    actnodenames <- attr(DAG_orig, "actnodes")
+    if (missing(node.action.color)) node.action.color <- "red"
+    # V(g)[name%in%actnodenames]$color <-"red"
+    igraph::V(g)[igraph::V(g)$name%in%actnodenames]$label.color <- node.action.color
+  }
+  if (!missing(customvlabs)) {  # use user-supplied custom labels for DAG nodes
+    igraph::V(g)$name <- customvlabs
+  }
+  g <- igraph::set.graph.attribute(g,'layout',layoutcustom_2)
+  igraph::plot.igraph(g, asp=0.5)
 }
 
 #' Show Node Parents Given DAG Object
@@ -414,26 +421,26 @@ set.DAG <- function(DAG, vecfun) {
   # ************
 
   rndseed <- NULL
-	# set of allowed named arguments
-	node_args_all <- c("name", "t", "distr", "dist_params", "EFU", "order")
-	# set of required named arguments
-	node_args_req <- c("name", "distr", "order")
-	# set of optional named arguments
-	node_args_opt <- c("t", "dist_params", "EFU")
+  # set of allowed named arguments
+  node_args_all <- c("name", "t", "distr", "dist_params", "EFU", "order")
+  # set of required named arguments
+  node_args_req <- c("name", "distr", "order")
+  # set of optional named arguments
+  node_args_opt <- c("t", "dist_params", "EFU")
 
-	#---------------------------------------------------------------------------------
-	# DAG specification errors checks
-	#---------------------------------------------------------------------------------
+  #---------------------------------------------------------------------------------
+  # DAG specification errors checks
+  #---------------------------------------------------------------------------------
 
-	# *) check DAG is a list and all of its items are also lists
-	if (!(is.list(DAG))) stop("DAG must be a list")
+  # *) check DAG is a list and all of its items are also lists
+  if (!(is.list(DAG))) stop("DAG must be a list")
   # *) if DAG is a empty create a wanring and return empty DAG
   if (length(DAG)==0) {
     warning("trying to lock an empty DAG, add nodes before calling set.DAG()")
     # attr(DAG, "locked") <- TRUE
     return(DAG)
   }
-	if (!(all(sapply(DAG, is.list)))) stop("each of DAG items must be a list specifying DAG node(s)")
+  if (!(all(sapply(DAG, is.list)))) stop("each of DAG items must be a list specifying DAG node(s)")
   class(DAG) <- "DAG"
   # *) check all DAG have order attribute defined, if not, assign the order based on the node location in the list
   check.order <- sapply(Nattr(DAG, "order"), is.null)
@@ -449,30 +456,31 @@ set.DAG <- function(DAG, vecfun) {
       message("node "%+%DAG[[inode]]$name%+%", order:"%+%DAG[[inode]]$order)
     }
   }
-	# *) check each node contains required named arguments
-	checknames.req <- unlist(lapply(DAG, function(node) all(node_args_req%in%names(node))))
-	if (!all(checknames.req)) stop(paste0("some nodes are missing required named arguments, check node(s): ",
-									paste0(which(!checknames.req), collapse=",")))
-	# *) check all DAG names are unique
-	if (!check_namesunique(DAG)) stop("All DAG nodes must have unique name attributes")
-	# *) check the DAG nodes are already in expanded format (length(t)==1, length(order)==1), if not, 
-	# in the future give warning and call node() constructor on not expanded nodes
-	# for now just throws an exception and quits
-	check_expanded(DAG)
+  # *) check each node contains required named arguments
+  checknames.req <- unlist(lapply(DAG, function(node) all(node_args_req%in%names(node))))
+  if (!all(checknames.req)) stop(paste0("some nodes are missing required named arguments, check node(s): ",
+  								paste0(which(!checknames.req), collapse=",")))
+  # *) check all DAG names are unique
+  if (!check_namesunique(DAG)) stop("All DAG nodes must have unique name attributes")
+  # *) check the DAG nodes are already in expanded format (length(t)==1, length(order)==1), if not, 
+  # in the future give warning and call node() constructor on not expanded nodes
+  # for now just throws an exception and quits
+  check_expanded(DAG)
 
-	#---------------------------------------------------------------------------------
-	# Sort DAG (by order) - giving order argument supersedes the order in which the nodes were added to the DAG
-	#---------------------------------------------------------------------------------
-	Nsublists <- length(DAG)
-	Nnodes <- Nsublists	# Actual number of nodes that will appear in DAG (Nnodes) (for now equal to number of sublists)
-	inputDAG <- sortbyorder(DAG)	# Sort sublists by order value
-	for (node_idx in c(1:length(inputDAG))) {	# add all optional missing named arguments as 'argname'=NULL (when DAG is entered without node() constructor)
-		inputDAG[[node_idx]] <- createNodeObj(inputDAG[[node_idx]], node_args_all)
-	}
-	#---------------------------------------------------------------------------------
-	# Returning the full DAG object (expanded + nodes renamed + sorted by order)
-	# Saved each node as an object node that has a fixed named items (=NULL when not used)
-	#---------------------------------------------------------------------------------
+  #---------------------------------------------------------------------------------
+  # Sort DAG (by order) - giving order argument supersedes the order in which the nodes were added to the DAG
+  #---------------------------------------------------------------------------------
+  Nsublists <- length(DAG)
+  Nnodes <- Nsublists	# Actual number of nodes that will appear in DAG (Nnodes) (for now equal to number of sublists)
+  inputDAG <- sortbyorder(DAG)	# Sort sublists by order value
+  for (node_idx in c(1:length(inputDAG))) {	# add all optional missing named arguments as 'argname'=NULL (when DAG is entered without node() constructor)
+  	inputDAG[[node_idx]] <- createNodeObj(inputDAG[[node_idx]], node_args_all)
+  }
+
+  #---------------------------------------------------------------------------------
+  # Returning the full DAG object (expanded + nodes renamed + sorted by order)
+  # Saved each node as an object node that has a fixed named items (=NULL when not used)
+  #---------------------------------------------------------------------------------
   class(inputDAG) <- "DAG"
   #---------------------------------------------------------------------------------
   # Add vectorized functions to vectorized function list and DAG attribute "vect_fun"
@@ -483,17 +491,22 @@ set.DAG <- function(DAG, vecfun) {
     # print("get_vecfun"); print(get_vecfun()); newvecfun <- vecfun_reset(oldvecfun); print("get_vecfun"); print(get_vecfun())
     attr(inputDAG, "vecfun") <- vecfun
   }
+
+  #---------------------------------------------------------------------------------
+  # Adding the user calling environment for evaluation of node formulas
+  #---------------------------------------------------------------------------------
+  attr(inputDAG, "user.env") <- user.env
+
   #---------------------------------------------------------------------------------
   # Checking for correct DAG specification by simulating one observation
   #---------------------------------------------------------------------------------
-  obs.df <- try(simobs(inputDAG, n=10, rndseed=rndseed))
+  obs.df <- try(simobs(inputDAG, n = 10, rndseed = rndseed))
   if(inherits(obs.df, "try-error")) {
     stop("\n...attempt to simulate data from DAG failed...")
   }
-	attr(inputDAG, "parents") <- attr(obs.df, "parents")
+  attr(inputDAG, "parents") <- attr(obs.df, "parents")
   attr(inputDAG, "locked") <- TRUE
-  attr(inputDAG, "user.env") <- user.env # Adding parent env. for future evaluation of node formulas.
-	return(inputDAG)
+  return(inputDAG)
 }
 
 # given a DAG and a newnode, find the DAG node by name and change its values to those in newnode (that aren't equal to NULL)
@@ -514,6 +527,9 @@ modDAGnode <- function(oldDAG, newnode) {
 }
 ###################################################################
 # An internal function that processes an action by finding intervention nodes and returning modified DAG object
+# ******************************
+# TODO: Make action attributes vars part of the evaluation environment rather than adding them as DAG nodes
+# ******************************
 ###################################################################
 # Define intervention DAG(s) consisting of action node(s)
 # inputDAG - Previously defined DAG object
@@ -525,7 +541,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 	expandattr <- function(attname, attvals, tvals) {
 		if (!is.numeric(attvals)) stop("action attribute values must be numeric: "%+%attname)
     # ***ASSUMPTION***: We are assuming if the attribute vector is of length 1 than it is TIME-INVARIANT (e.g., theta=0.5)
-		if (length(attvals)>1) { 
+		if (length(attvals)>1) {
 			if (length(attvals)!=length(tvals)) stop("vector-valued attributes of length > 1 must be equal to the number of action node time points: "%+%attname)
 			new_nodes <- sapply(seq(attvals), function(i) node(name=attname, t=tvals[i], distr="rconst", const=.(attvals[i])))
 		} else {
@@ -545,20 +561,21 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 
 	modDAG.full <- inputDAG # This is either observed data DAG (locked) or already existing DAG.action
   dagattrs_saved <- attributes(inputDAG) # save existing attributes
-  dagattrs_saved$parents <- NULL  # remove all actions
-  dagattrs_saved$actions <- NULL  # and parents
+  dagattrs_saved$parents <- NULL  # remove all parents
+  dagattrs_saved$actions <- NULL  # and actions
 
   class(actnodes) <- "DAG.nodelist"
   mod_names <- unlist(Nattr(actnodes, "name")) # get intervention node names
   DAG_names <- unlist(Nattr(inputDAG, "name"))  # get DAG node names
 
-	checkintnames <- (mod_names%in%DAG_names)
+	checkintnames <- mod_names %in% DAG_names
 	if (!all(checkintnames)) stop(paste0("setActions(): some intervention node names do not exist in the original DAG: ", paste0(mod_names[!checkintnames], collapse=",")))
 	DAG_chgnodes <- match(mod_names, DAG_names)	# nodes indices in DAG that need to be modified
 	if (length(DAG_chgnodes)!=length(mod_names)) stop("setActions(): action node and DAG node names do not make a unique pair match")
 	for (inode in (1:length(mod_names))) {	# MODIFY DAG NODES w/ action nodes
 		modDAG.full <- modDAGnode(modDAG.full, actnodes[[inode]]) # launch a function for each pair (DAG_node <-> Intervention Node) that modifies DAG_node
 	}
+
   dprint("actnodes"); dprint(actnodes)
 
 	if (!is.null(actnodes[[1]]$t)) {
@@ -567,6 +584,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 	} else {
 		mod_tvals <- NULL
 	}
+
 	dprint("mod_tvals"); dprint(mod_tvals)
 
 	if (length(attr)>0) {	# either add attribute as a new DAG node or modify existing attribute node
@@ -602,6 +620,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
           # warning("\nTime-varying attribute ("%+% gattr_nm %+% ") was overwritten by non-time-varying attribute values")
         }
       }
+
       # either add or overwrite existing attribute values
       exist_attr <- which(names(dagattrs_saved$attrs)%in%gattr_nm)
       if (length(exist_attr)>0) {
@@ -613,7 +632,6 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
       attr_insert <- attr_nodes[which(!checkattrexist)]
       # 12/23/2014 OS: attributes no longer inserted at their corresponding time slots in the DAG, inserted at the beginning of the DAG as was originally designed
       modDAG.full <- append(modDAG.full, attr_insert, 0) # append new attributes as a first item(s) of the DAG
-      dprint("modDAG.full"); dprint(modDAG.full[1:5])
       class(modDAG.full) <- "DAG"
       # for attributes that already exists in the DAG, just modify the current node:
 			for (inode in which(checkattrexist)) modDAG.full <- modDAGnode(modDAG.full, attr_nodes[[inode]])
@@ -622,13 +640,16 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 		attnames <- NULL
 	}
 
-  # check data can be simulated from modified DAG
+  dagattrs_saved$names <- attr(modDAG.full, "names")
+  attributes(modDAG.full) <- dagattrs_saved
+  dprint("attributes(modDAG.full) in setAction(): "); dprint(attributes(modDAG.full))
+
+  # check data can be simulated from modified DAG:
   full.df <- try(simobs(modDAG.full, n=10, rndseed=rndseed))
   if(inherits(full.df, "try-error")) {
     stop("\n...attempt to simulate data from action DAG failed...")
   }
-  dagattrs_saved$names <- attr(modDAG.full,"names")
-  attributes(modDAG.full) <- dagattrs_saved
+
   # attributes(modDAG.full) <- c(attributes(modDAG.full)["names"], dagattrs_saved)
 	attr(modDAG.full, "parents") <- attr(full.df, "parents")
   attr(modDAG.full, "actname") <- actname
@@ -646,32 +667,32 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 # input.node - node content (names+values)
 # node_args_all - all node arguments
 createNodeObj <- function(input.node, node_args_all) {
-	indx_missargs <- which(!(node_args_all %in% names(input.node)))
-	temp <- list()	# temp list with NULL args that weren't defined yet
-	length(temp) <- length(indx_missargs)
-	names(temp) <- node_args_all[indx_missargs]
-	input.node <- c(input.node, temp)	# add NULL named items to action node
+  indx_missargs <- which(!(node_args_all %in% names(input.node)))
+  temp <- list()	# temp list with NULL args that weren't defined yet
+  length(temp) <- length(indx_missargs)
+  names(temp) <- node_args_all[indx_missargs]
+  input.node <- c(input.node, temp)	# add NULL named items to action node
   order_nms <- order(match(names(input.node),node_args_all)) # sort node names according to name order in newnode_args_all
-	node_obj <- input.node[order_nms] # reassign old node vals to reordered + NULL node vals
-	if (!identical(class(node_obj), "DAG.node")) class(node_obj) <- "DAG.node"
-	# return(input.node[order_nms])
-	return(node_obj)
+  node_obj <- input.node[order_nms] # reassign old node vals to reordered + NULL node vals
+  if (!identical(class(node_obj), "DAG.node")) class(node_obj) <- "DAG.node"
+  # return(input.node[order_nms])
+  return(node_obj)
 }
 
 # Sort a named list of node objects by node$order value -> get a DAG object
 sortbyorder <- function(DAG) {
-	node_names_L <- names(DAG)
-	node_names_attr <- sapply(DAG, '[[', "name")
-	if (length(node_names_L)!=length(node_names_attr)) stop("DAG list names of node objects and node name arguments do not match in length...")
-	if (!all(node_names_L==node_names_attr)) stop("DAG list names of node objects and node name arguments don't match")
-	order_vals <- sapply(DAG, '[[', "order")
-	if ((length(order_vals)!=length(DAG)) | any(is.null(order_vals))) stop("node order argument is either incorrectly specified or missing")
-	if (length(unique(order_vals))!=length(order_vals)) stop("some nodes have identical order values - all order values must be unique")
-	if (min(order_vals)<1) stop("node order values must start at 1")
-	# order_indx <- c(1:length(order_vals))	# the ordering that we want to sort by
-	order_indx <- sort(order_vals)
-	new_order_indx <- order(match(order_vals,order_indx)) # sort observed order values in increasing order and get new index vector for Input node list
-	DAG[new_order_indx]
+  node_names_L <- names(DAG)
+  node_names_attr <- sapply(DAG, '[[', "name")
+  if (length(node_names_L)!=length(node_names_attr)) stop("DAG list names of node objects and node name arguments do not match in length...")
+  if (!all(node_names_L==node_names_attr)) stop("DAG list names of node objects and node name arguments don't match")
+  order_vals <- sapply(DAG, '[[', "order")
+  if ((length(order_vals)!=length(DAG)) | any(is.null(order_vals))) stop("node order argument is either incorrectly specified or missing")
+  if (length(unique(order_vals))!=length(order_vals)) stop("some nodes have identical order values - all order values must be unique")
+  if (min(order_vals)<1) stop("node order values must start at 1")
+  # order_indx <- c(1:length(order_vals))	# the ordering that we want to sort by
+  order_indx <- sort(order_vals)
+  new_order_indx <- order(match(order_vals,order_indx)) # sort observed order values in increasing order and get new index vector for Input node list
+  DAG[new_order_indx]
 }
 
 
