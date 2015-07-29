@@ -1,9 +1,8 @@
 #------------------------------------
 # Structural equaion model for simulating networks with simcausal R package
-# To be added to the test set for simcausal
+# (Added to test set)
 # author: Oleg Sofrygin 
 #------------------------------------
-  # library(simcausal)
  
   #------------------------------------------------------------------------------------------------------------
   # The user-defined network sampler(s) fun passed as "netfun" argument to network()
@@ -49,21 +48,7 @@
   }
 
   #------------------------------------------------------------------------------------------------------------
-  # The user-defined network sampler(s) from igraph (ER model)
-  #------------------------------------------------------------------------------------------------------------
-  # p - Probability of making an edge between two observations
-  generate.igraph.ER <- function(n, p, ...) {
-    igraph.ER <- igraph::sample_gnp(n = n, p = p[1], directed = TRUE)
-    # From igraph object to sparse adj. matrix:
-    sparse_AdjMat <- simcausal:::igraph_to_sparseAdjMat(igraph.ER)
-    print("head(sparse_AdjMat)"); print(head(sparse_AdjMat))
-    # From igraph object to simcausal/tmlenet input (NetInd_k, nF, Kmax):
-    NetInd_out <- simcausal:::sparseAdjMat_to_NetInd(sparse_AdjMat)
-    return(NetInd_out$NetInd_k)
-  }
-
-  #------------------------------------------------------------------------------------------------------------
-  # THE SEM FOR NETWORKS
+  # THE SEM FOR NETWORKS generated with generateNET
   #------------------------------------------------------------------------------------------------------------
   Kmax <- 6
   D <- DAG.empty()
@@ -122,10 +107,9 @@
       # netfun: name of the user-defined function that builds NetInd_k matrix, the function takes n as first argument, has to return a matrix with n rows and Kmax columns
       # bslVar, nF: additional named arguments that will be passed on to netfun function
 
-
   # A[i] is a function W1[i] and the total of i's friends values W1, W2 and W3:
   betaA0 <- 2; betaA.W1 <- -0.5; betaA.netW1 <- -0.1; betaA.netW2 <- -0.4; betaA.netW3 <- -0.7
-  D <- D + node("A", distr = "rbern", 
+  D <- D + node("A", distr = "rbern",
                 prob = plogis(betaA0 + betaA.W1 * W1 +
                               betaA.netW1 * sum(W1[[1:Kmax]]) +
                               betaA.netW2 * sum(W2[[1:Kmax]]) +
@@ -146,7 +130,6 @@
   # Could also add N untreated friends of i: sum(1 - A[[1:Kmax]])
   # Could also add N infected friends of i: sum(W2[[1:Kmax]])
   D <- D + node("Y", distr = "rbern", prob = pYRisk)
-
   Dset <- set.DAG(D)
 
   # plotDAG(Dset)
@@ -219,5 +202,127 @@
     newNetcl$wipeoutNetInd
     newNetcl$NetInd_k
     attributes(dat)$netind_cl$NetInd_k
+
+
+  #------------------------------------------------------------------------------------------------------------
+  # THE SEM FOR NETWORKS generated with generate.igraph.ER
+  # *************************
+  # TO DO:
+  # NEED TO RECALCULATE Kmax after sampling NetInd_k, if new.Kmax > Kmax give a warning then reset to new Kmax 
+  # *************************
+  #------------------------------------------------------------------------------------------------------------
+  
+  #------------------------------------------------------------------------------------------------------------
+  # The user-defined network sampler(s) from igraph (ER model)
+  #------------------------------------------------------------------------------------------------------------
+  # Generate random graphs according to the G(n,p) or G(n,m) Erdos-Renyi model
+  # p - Probability of making an edge between two observations
+  # m_pn - above 0, a total number of edges in the network as a proportion of n (sample size)
+  generate.igraph.ER <- function(n, p, m_pn, m_psquare, Kmax, ...) {
+    if (!missing(p)) {
+      igraph.ER <- igraph::sample_gnp(n = n, p = p[1], directed = TRUE)
+    } else if (!missing(m_pn)) {
+      m <- as.integer(m_pn[1]*n)
+      message("simulating network with ER model using m: " %+% m)
+      igraph.ER <- igraph::sample_gnm(n = n, m = m, directed = TRUE)
+    } else if (!missing(m_psquare)) {
+      m <- as.integer(n^2/2)
+      if (n < 100) m <- n
+      message("simulating network with ER model using m: " %+% m)
+      igraph.ER <- igraph::sample_gnm(n = n, m = m, directed = TRUE)
+    } else {
+      stop("one of the arguments: p, m_pn or m_psquare must be specified")
+    }
+    # From igraph object to sparse adj. matrix:
+    sparse_AdjMat <- simcausal:::igraph_to_sparseAdjMat(igraph.ER)
+    # From igraph object to simcausal/tmlenet input (NetInd_k, nF, Kmax):
+    NetInd_out <- simcausal:::sparseAdjMat_to_NetInd(sparse_AdjMat)
+    print("old Kmax"); print(Kmax)
+    print("new Kmax"); print(NetInd_out$Kmax)
+    print("NetInd_k"); print(head(NetInd_out$NetInd_k))
+    if (Kmax < NetInd_out$Kmax) message("new network has larger Kmax value than requested, new Kmax = " %+% NetInd_out$Kmax)
+    return(NetInd_out$NetInd_k)
+  }
+
+  Kmax <- 5
+  D <- DAG.empty()
+
+  # Adding the ER model network generator from igraph:
+  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", p = 0.05)
+  # D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 50)
+  # D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_psquare = TRUE)
+
+  # W1 - categorical or continuous confounder (5 categories, 0-4)
+  nW1cat <- 6
+  rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])
+  D <- D + node("W1", distr = "rbinom2", size = (nW1cat-1), prob = c(0.4, 0.5, 0.7, 0.4))
+
+  # W2 - binary infection status at t=0, positively correlated with W1
+  prob_W2 <- seq(0.45, 0.8, by=0.3/nW1cat)[1:nW1cat]
+  # prob_W2 <- seq.int(0.45, 0.8, length.out = nW1cat)
+  length(prob_W2)
+  D <- D + node("W2", distr = "rbern", asis.params = list(prob = "prob_W2[W1+1]"))
+
+  # W3 - binary confounder:
+  prob_W3 <- 0.6
+  D <- D + node("W3", distr = "rbern", prob = prob_W3)
+
+  # A[i] is a function W1[i] and the total of i's friends values W1, W2 and W3:
+  betaA0 <- 2; betaA.W1 <- -0.5; betaA.netW1 <- -0.1; betaA.netW2 <- -0.4; betaA.netW3 <- -0.7
+  D <- D + node("A", distr = "rbern",
+                prob = plogis(betaA0 + betaA.W1 * W1 +
+                              betaA.netW1 * sum(W1[[1:Kmax]]) +
+                              betaA.netW2 * sum(W2[[1:Kmax]]) +
+                              betaA.netW3 * sum(W3[[1:Kmax]])),
+                replaceNAw0 = TRUE)
+
+  # Y[i] is a function of netW3 (friends of i W3 values) and the total N of i's friends who are infected AND untreated:
+  betaY0 <- -1; betaY.AW2 <- 2; betaY.W3 <- -1.5
+  D <- D + node("pYRisk", distr = "rconst", 
+                const = plogis(betaY0 +
+                              betaY.AW2 * sum(W2[[1:Kmax]] * (1 - A[[1:Kmax]])) +
+                              betaY.W3 * sum(W3[[1:Kmax]])),
+                replaceNAw0 = TRUE)
+  # Could also add N untreated friends of i: sum(1 - A[[1:Kmax]])
+  # Could also add N infected friends of i: sum(W2[[1:Kmax]])
+  D <- D + node("Y", distr = "rbern", prob = pYRisk)
+
+  Dset <- set.DAG(D)
+
+  # plotDAG(Dset)
+  t1 <- system.time(
+    dat <- sim(Dset, n = 1000, rndseed = 543)
+  )
+  t1
+  # for p = 0.5, Kmax = 548
+  #  user  system elapsed 
+  # 0.713   0.071   0.784 
+  # for p = 0.1, Kmax = 131
+  #  user  system elapsed 
+  # 0.139   0.019   0.176
+  # t2 <- system.time(
+  #   dat <- sim(Dset, n = 10000, rndseed = 543)
+  # )
+  # t2
+
+  # for p = 0.5, Kmax = 5205
+  # user  system elapsed 
+  #  51.724  16.203  71.594 
+  # for p = 0.1, Kmax = 1128
+  #  user  system elapsed 
+  # 9.882   2.605  12.445 
+
+  # t3 <- system.time(
+  #   dat <- sim(Dset, n = 50000, rndseed = 543)
+  # )
+  # t3
+  # ran for p = 0.05, Kmax = 2726
+  #    user  system elapsed 
+  # 183.921  99.342 323.541 
+
+  # To see the network:
+  attributes(dat)$netind_cl
+  head(attributes(dat)$netind_cl$NetInd)
+  # Can plot the observed network with igraph....
 
 

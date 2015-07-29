@@ -110,7 +110,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 
     # 1) Check & get the distribution function from the user-calling environment
     # 2) If it doesn't exist, search the package namespace, if not found throw an exception
-    # More efficient version the below:
+    # More efficient version:
     if (is.null(distr.fun <- get0(distr, mode = "function"))) {
       if (!is.null(distr.fun <- get0(distr, envir = user.env, mode = "function"))) {
         message(distr %+% ": note this distribution could not be located in package namespace, simulating from user-defined distribution found under the same name")
@@ -118,19 +118,6 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
         stop(distr %+%": this distribution function can\'t be found")
       }
     }
-    # if (exists(distr)) {
-    #   distr.fun <- get(distr, mode = "function")
-    # } else {
-    #   if (exists(distr, envir = user.env)) {
-    #     message(distr %+% "distribution function not found in package namespace, applying the user-defined function with the same name instead")
-    #     distr.fun <- get(distr, envir = user.env, mode = "function")
-    #   } else {
-    #     stop("can\'t find the distribution function: " %+% distr)
-    #   }
-    # }
-    # if (!exists(distr)) {
-    #   stop("...distribution function '"%+%distr%+% "' cannot be found...")
-    # }
 
     # *) Go over distribution parameters and for each parameter:
     # check for consistency; make it an appropriate length; turn each list parameter into matrix;
@@ -217,17 +204,16 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     # See if current expr naming strucutre in Define_sVar can be recycled for sampling from multivariate densities
     # NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH n
     #------------------------------------------------------------------------
-
     
     # ***********************    
     # ***** IMPORTANT *******
     # SETTING TO node-specific user environment:
     # NEED TO CHECK THAT MSM PARSER STILL WORKS FINE WITH THIS.....
     # ***********************
-    print("cur.node node.env: " %+% cur.node$name); 
-    print(cur.node);
-    print(cur.node$node.env); 
-    print(ls(cur.node$node.env))
+    # print("cur.node node.env: " %+% cur.node$name); 
+    # print(cur.node);
+    # print(cur.node$node.env); 
+    # print(ls(cur.node$node.env))
 
     # setting the node-specific user calling environment for the evaluator
     node_evaluator$set.user.env(cur.node$node.env)
@@ -261,7 +247,13 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       # *****************************************************************
     	NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev, 
                                   cur.node = cur.node, expr_str = cur.node$dist_params, asis.samp = TRUE)
-
+      
+      Kmax.new <- ncol(NetInd_k)
+      if (as.integer(Kmax.new) != as.integer(cur.node$Kmax)) {
+        message("Kmax for the simulated network differs from Kmax input arg, Kmax is reset to a new value; old Kmax: "
+                %+% cur.node$Kmax %+% "; new Kmax: " %+% Kmax.new)
+        cur.node$Kmax <- Kmax.new
+      }
       netind_cl <- NetIndClass$new(nobs = Nsamp, Kmax = cur.node$Kmax)
     	netind_cl$NetInd <- NetInd_k
       netind_cl$make.nF()

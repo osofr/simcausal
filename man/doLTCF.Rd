@@ -29,7 +29,7 @@ The first example below shows the default data format of the \code{sim} function
 \code{sim} function or by calling the \code{doLTCF} function. The second example demonstrates how to use the \code{doLTCF} function to perform LTCF imputation on already existing data simulated with the \code{sim} function based on its default non-imputation behavior.
 }
 \examples{
-t_end <- 16
+t_end <- 10
 lDAG <- DAG.empty()
 lDAG <- lDAG + 
 	node(name = "L2", t = 0, distr = "rconst", const = 0) + 

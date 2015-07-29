@@ -1,4 +1,4 @@
-t_end <- 16
+t_end <- 10
 lDAG <- DAG.empty()
 lDAG <- lDAG + 
 	node(name = "L2", t = 0, distr = "rconst", const = 0) + 

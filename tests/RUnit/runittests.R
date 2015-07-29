@@ -11,7 +11,7 @@ if(FALSE) {
   # simcausal:::debug_set() # SET TO DEBUG MODE
 
   setwd("..");
-  install("simcausal", build_vignettes=FALSE) # INSTALL W/ devtools:
+  install("simcausal", build_vignettes = FALSE) # INSTALL W/ devtools:
 
   # system("echo $PATH") # see the current path env var
   # system("R CMD Rd2pdf simcausal")  # just create the pdf manual from help files
