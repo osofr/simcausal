@@ -6,16 +6,17 @@
   # library(simcausal)
  
   #------------------------------------------------------------------------------------------------------------
-  # The user-defined network sampler fun passed as "netfun" argument to network()
+  # The user-defined network sampler(s) fun passed as "netfun" argument to network()
   #------------------------------------------------------------------------------------------------------------
   # Builds NetInd_k matrix of friends/connections
-  # Can be any function that:
+  # In general this can be any function that:
     # Takes "n" (# of obs) as a first argument
     # Return a matrix with n rows and Kmax columns
   # Arguments Kmax, bslVar[i] (W1) & nF are evaluated in the environment of the simulated data and then passed to generateNET
-    # - bslVar[i] has an affects on the probability of selecting i as someone else's friend (weighted sampling)
-    # - nF[i] is the total number of friends that need to be sampled for observation i
-  generateNET <- function(n, Kmax, bslVar, nF, ...) {
+    # - unif.F: when TRUE sample set F (connections/friends) from the uniform discrete distr (no weighting by bslVar)
+    # - bslVar[i]: used for contructing weights for the probability of selecting i as someone else's friend (weighted sampling), when missing the sampling goes to uniform
+    # - nF[i]: total number of friends that need to be sampled for observation i
+  generateNET <- function(n, Kmax, unif.F = FALSE, bslVar, nF, ...) {
     print("Kmax in generateNET: " %+% Kmax);
     nW1cat <- 6
     W1cat_arr <- c(1:nW1cat)/2
@@ -29,13 +30,15 @@
       if (nFriendSamp>0) {
         if (length(FriendSampSet)==1)  {  # To handle the case with |FriendSampSet| = 1
           friends_i <- FriendSampSet
-        } else { 
-          #sample from the possible friend set, with prob for selecting each j being based on categorical bslVar[j]
-          # bslVar[i] affects the probability of having [i] selected as someone's friend bslVar
-          friends_i <- sort(sample(FriendSampSet, size = nFriendSamp, prob = prob_F[bslVar[FriendSampSet] + 1]))
-          # Alternatives:
-          # friends_i <- sort(sample(FriendSampSet, size = nFriendSamp)) # no weighting of obs by prob_F
-          # friends_i <- FriendSampSet[1:nFriendSamp] # just picking first nF from the list
+        } else {
+          if (missing(bslVar) || unif.F[1]) {
+            friends_i <- sort(sample(FriendSampSet, size = nFriendSamp)) # sample with uniform prob, no weighting by bslVar
+            # friends_i <- FriendSampSet[1:nFriendSamp] # another alternative to just pick first nF from the list of available friends
+          } else {
+            #sample from the possible friend set, with prob for selecting each j being based on categorical bslVar[j]
+            # bslVar[i] affects the probability of having [i] selected as someone's friend bslVar
+            friends_i <- sort(sample(FriendSampSet, size = nFriendSamp, prob = prob_F[bslVar[FriendSampSet] + 1]))
+          }
         }
         # Turn any vector of IDs into a vector of length Kmax, filling each remainder with trailing NA's:
         NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, Kmax - length(friends_i)))
@@ -43,6 +46,20 @@
       }
     }
     return(NetInd_k)
+  }
+
+  #------------------------------------------------------------------------------------------------------------
+  # The user-defined network sampler(s) from igraph (ER model)
+  #------------------------------------------------------------------------------------------------------------
+  # p - Probability of making an edge between two observations
+  generate.igraph.ER <- function(n, p, ...) {
+    igraph.ER <- igraph::sample_gnp(n = n, p = p[1], directed = TRUE)
+    # From igraph object to sparse adj. matrix:
+    sparse_AdjMat <- simcausal:::igraph_to_sparseAdjMat(igraph.ER)
+    print("head(sparse_AdjMat)"); print(head(sparse_AdjMat))
+    # From igraph object to simcausal/tmlenet input (NetInd_k, nF, Kmax):
+    NetInd_out <- simcausal:::sparseAdjMat_to_NetInd(sparse_AdjMat)
+    return(NetInd_out$NetInd_k)
   }
 
   #------------------------------------------------------------------------------------------------------------

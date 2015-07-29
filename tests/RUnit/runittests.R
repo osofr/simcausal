@@ -93,20 +93,43 @@ sample_checks <- function() {   # doesn't run, this is just to show what test fu
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
-# adding test for custom distr funs and an error message for non-existing distribution functions:
+# Adding test for custom distr funs and an error message for non-existing distribution functions:
 test.noexistdistr <- function() {
-  funDAG <- function() {
+  # TEST 1: No longer rroduces an error, since a separate user.env is now captured by each node, not just set.DAG
+  funDAG1 <- function() {
     D <- DAG.empty()
     rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])
     D <- D + node("W1", distr = "rbinom2", size = 4, prob = c(0.4, 0.5, 0.7, 0.4))
-    D
   }
-  Dset <- set.DAG(funDAG())
+  D <- funDAG1()
+  Dset <- set.DAG(D)
 
+  # TEST 2: This always worked, since rbinom2 and set.DAG are now in the same environment:
+  funDAG2 <- function() {
+    D <- DAG.empty()
+    rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])
+    D <- D + node("W1", distr = "rbinom2", size = 4, prob = c(0.4, 0.5, 0.7, 0.4))
+    Dset <- set.DAG(D)
+    Dset
+  }
+  Dset <- funDAG2()
 
+  # TEST 3: Exception at undeclared distributions
   D <- DAG.empty()
   checkException(D <- D + node("W1", distr = "rbinom3", size = 4, prob = c(0.4, 0.5, 0.7, 0.4)))
   checkException(D <- D + network("net", netfun = "rbinom3", Kmax = 5, size = 4, prob = c(0.4, 0.5, 0.7, 0.4)))
+
+  # TEST 4: Overridding package distributions. What happens?
+  # NOTHING. THE PACKAGE DEFINED DISTRIBUTIONS (OR ANY OTHER PACKAGE FUNCTIONS) CANNOT BE OVERRIDDEN!
+  rbern <- function(n, prob) {
+    message("i've been overridden!")
+    print("i've been overridden!")
+    rbinom(n, size = 1, prob = prob)
+  }
+  D <- DAG.empty()
+  D <- D + node("W1", distr = "rbern", prob = 0.5)
+  Dset <- set.DAG(D)
+  sim(Dset, n = 20)
 }
 
 
@@ -916,7 +939,8 @@ test.condrcategor <- function() {
   dat2 <- simcausal:::simFromDAG(DAG = Dset2, Nsamp = 100, rndseed = 1234)
   all.equal(dat1a, dat2)
 
-  node_evaluator <- simcausal:::Define_sVar$new(user.env = attr(Dset2, "user.env"), netind_cl = NULL)
+  node_evaluator <- simcausal:::Define_sVar$new(netind_cl = NULL)
+  node_evaluator$set.user.env(attr(Dset2, "user.env"))
   eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = Dset2[["Cat3"]], data.df = dat2[,c("ID","W")])
   eval_expr_res[[1]]$par.nodes
   catprobs <- eval_expr_res[[1]]$evaled_expr
@@ -2238,14 +2262,11 @@ test.set.DAG_general <- function() {
 
 }
 
-# helper function to create sublist specifying the node in DAG
+# manually defining the distribution node
 fmakeBern <- function(name, order, meanform, EFU=NULL, logit=TRUE) {
-    #
-    # no 'time' specification for now
-    #
     meanform <- as.character(meanform)
     if (logit) meanform <-  paste0("plogis(", meanform, ")")
-    return(list(name=name, distr="rbern", dist_params=list(prob=meanform), EFU=EFU, order=order))
+    return(list(name = name, distr = "rbern", dist_params = list(prob = meanform), EFU = EFU, order = order, node.env = environment()))
 }
 
 test.set.DAG_DAG1 <- function() {
@@ -2262,9 +2283,9 @@ test.set.DAG_DAG1 <- function() {
     W3 <- fmakeBern("W3", 3, "-0.5 + 0.7*W1 + 0.3*W2")
     A <- fmakeBern("A", 4, "-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3")
     Y <- fmakeBern("Y", 5, "-0.1 + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3", TRUE)
-    testDAG_1 <- list(W1=W1, W2=W2, W3=W3, A=A, Y=Y)
+    testDAG_1 <- list(W1 = W1, W2 = W2, W3 = W3, A = A, Y = Y)
     datgendist_DAG1 <- set.DAG(testDAG_1)
-    simODAG_1 <- simobs(datgendist_DAG1, n=n, rndseed = 123)
+    simODAG_1 <- simobs(datgendist_DAG1, n = n, rndseed = 123)
     # attributes(datgendist_DAG1)
     # str(attributes(datgendist_DAG1))
     # head(simODAG_1)

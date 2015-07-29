@@ -100,34 +100,29 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
   }
   if (missing(EFU)) EFU <- NULL
 
-  node_dist_params <- list(distr = distr, dist_params = dist_params)
-
   # new check that also checks for distr in the calling environment:
   if (!exists(distr)) {
-    # message("distribution function exists(distr, envir = env): " %+% exists(distr, envir = env))
     if (!exists(distr, envir = env)) {
-      stop("distribution function '"%+%distr%+% "' cannot be found")
+      stop(distr %+% ": this node distribution function could not be located")
     }
   }
-  # check the distribution function exists:
-  # if (!exists(distr)) {
-  #   stop("distribution function '"%+%distr%+% "' cannot be found")
-  # }
 
-  node_dist_params <- c(node_dist_params, EFU = EFU)
+  node_dist_params <- list(distr = distr, dist_params = dist_params, EFU = EFU)
 
   if (!missing(t)) {
-    if (!is.null(t)) { # expand the nodes into list of lists, with VarName=name%+%t_i
+    # expand the nodes into list of lists, with VarName=name%+%t_i:
+    if (!is.null(t)) {
       if ((length(t)!=length(order)) & (!is.null(order))) stop("t and order arguments must have the same length")
       node_lists <- lapply(t, function(t_i) {
         order_t <- order
         if (!is.null(order)) order_t <- order[which(t%in%t_i)]
-        c(name = name%+%"_"%+%t_i, t = t_i, node_dist_params, order = order_t)
+        c(name = name%+%"_"%+%t_i, t = t_i, node_dist_params, order = order_t, node.env = env)
       })
       names(node_lists) <- name%+%"_"%+%t
     }
+  # Keep node as is, since t is undefined:
   } else {
-    node_lists <- list(c(name=name, t=NULL, node_dist_params, order=order))
+    node_lists <- list(c(name = name, t = NULL, node_dist_params, order = order, node.env = env))
     names(node_lists) <- name
   }
   if (!check_namesunique(node_lists)) stop("All nodes must have unique name attributes")

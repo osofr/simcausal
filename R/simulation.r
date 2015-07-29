@@ -70,9 +70,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
 
   # SAMPLING FROM ARBITRARY NODE DISTR FUN:
-  sampleNodeDistr <- function(newNodeParams, distr, user.env, EFUP.prev, cur.node, expr_str, asis.samp = FALSE) {
+  sampleNodeDistr <- function(newNodeParams, distr, EFUP.prev, cur.node, expr_str, asis.samp = FALSE) {
     N_notNA_samp <- sum(!EFUP.prev)
-    
+    user.env <- cur.node$node.env
+
     standardize_param <- function(distparam) {
       check_len <- function(param) {
         len <- length(param)
@@ -109,12 +110,12 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 
     # 1) Check & get the distribution function from the user-calling environment
     # 2) If it doesn't exist, search the package namespace, if not found throw an exception
-    # More efficient version:
+    # More efficient version the below:
     if (is.null(distr.fun <- get0(distr, mode = "function"))) {
       if (!is.null(distr.fun <- get0(distr, envir = user.env, mode = "function"))) {
-        message(distr %+% "distribution function not found in package namespace, applying the user-defined function with the same name instead")
+        message(distr %+% ": note this distribution could not be located in package namespace, simulating from user-defined distribution found under the same name")
       } else {
-        stop("can\'t find the distribution function: "%+%distr)
+        stop(distr %+%": this distribution function can\'t be found")
       }
     }
     # if (exists(distr)) {
@@ -183,12 +184,8 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   newVar <- vector(length = Nsamp)
   NodeParentsNms <- vector("list", length = length(DAG))	# list that will  have parents' names for each node
   names(NodeParentsNms) <- sapply(DAG, '[[', "name")
-  user.env <- attr(DAG, "user.env")
-  assert_that(!is.null(user.env))
   netind_cl <- NULL
-  # dprint("user.env: "); dprint(user.env); dprint(ls(user.env))
-  node_evaluator <- Define_sVar$new(user.env = user.env, netind_cl = netind_cl)
-
+  node_evaluator <- Define_sVar$new(netind_cl = netind_cl)
   t_pts <- NULL
   for (cur.node in DAG) {
     t <- cur.node$t # define variable for a current time point t
@@ -221,6 +218,20 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     # NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH n
     #------------------------------------------------------------------------
 
+    
+    # ***********************    
+    # ***** IMPORTANT *******
+    # SETTING TO node-specific user environment:
+    # NEED TO CHECK THAT MSM PARSER STILL WORKS FINE WITH THIS.....
+    # ***********************
+    print("cur.node node.env: " %+% cur.node$name); 
+    print(cur.node);
+    print(cur.node$node.env); 
+    print(ls(cur.node$node.env))
+
+    # setting the node-specific user calling environment for the evaluator
+    node_evaluator$set.user.env(cur.node$node.env)
+
     eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
     par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
     eval_dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
@@ -240,27 +251,31 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     #------------------------------------------------------------------------
     distr <- cur.node$distr
     if ("DAG.net" %in% class(cur.node)) {
+
       if (!is.null(netind_cl)) message("Previously sampled network is being sampled again during the same simulation!")
       distr <- cur.node$netfun
-    	NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, user.env = user.env,
-                                    EFUP.prev = EFUP.prev, cur.node = cur.node, expr_str = cur.node$dist_params, asis.samp = TRUE)
+
+      # ***************************************************************
+      # WHY ARE WE USING AS-IS FOR SAMPLING NETWORK?????
+      # BECAUSE THE OUTPUT IS A MATRIX. THIS IS A BAD WAY TO SOLVE THIS.
+      # *****************************************************************
+    	NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev, 
+                                  cur.node = cur.node, expr_str = cur.node$dist_params, asis.samp = TRUE)
+
       netind_cl <- NetIndClass$new(nobs = Nsamp, Kmax = cur.node$Kmax)
     	netind_cl$NetInd <- NetInd_k
       netind_cl$make.nF()
+
+      # set the network for the evaluator:
       node_evaluator$netind_cl <- netind_cl
       node_evaluator$Kmax <- netind_cl$Kmax
 
-      # print("netind_cl"); print(netind_cl)
-      # print("netind_cl$Kmax"); print(netind_cl$Kmax)
-      # print("NodeParentsNms"); print(NodeParentsNms)
-
       newVar <- NULL
       NodeParentsNms <- NodeParentsNms[-which(names(NodeParentsNms) %in% cur.node$name)]
-      # print("NodeParentsNms"); print(NodeParentsNms)
 
     } else {
-		  newVar <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, user.env = user.env,
-                                  EFUP.prev = EFUP.prev, cur.node = cur.node, expr_str = cur.node$dist_params)
+		  newVar <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev,
+                                cur.node = cur.node, expr_str = cur.node$dist_params)
     }
 
     if (!is.null(newVar)) {

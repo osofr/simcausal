@@ -422,12 +422,12 @@ set.DAG <- function(DAG, vecfun) {
   # ************
 
   rndseed <- NULL
-  # set of allowed named arguments
-  node_args_all <- c("name", "t", "distr", "dist_params", "EFU", "order")
-  # set of required named arguments
+  # set of allowed named arguments:
+  node_args_all <- c("name", "t", "distr", "dist_params", "EFU", "order", "node.env")
+  # set of required named arguments:
   node_args_req <- c("name", "distr", "order")
-  # set of optional named arguments
-  node_args_opt <- c("t", "dist_params", "EFU")
+  # set of optional named arguments:
+  node_args_opt <- c("t", "dist_params", "EFU", "node.env")
 
   #---------------------------------------------------------------------------------
   # DAG specification errors checks
@@ -441,6 +441,7 @@ set.DAG <- function(DAG, vecfun) {
     # attr(DAG, "locked") <- TRUE
     return(DAG)
   }
+
   if (!(all(sapply(DAG, is.list)))) stop("each of DAG items must be a list specifying DAG node(s)")
   class(DAG) <- "DAG"
   # *) check all DAG have order attribute defined, if not, assign the order based on the node location in the list

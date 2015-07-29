@@ -22,7 +22,6 @@ vector_math_fcns <- c("I","abs","sign","sqrt","round","signif","floor","ceil","c
                       "beta","lbeta","gamma","lgamma","psigamma","digamma","trigamma",
                       "choose","lchoose","factorial","lfactorial")
 
-
 # a) find TD var calls;
 # b) find baseline var calls;
 # c) parse the tree at most 10 times and evaluate all atomic expressions
@@ -384,7 +383,7 @@ Define_sVar <- R6Class("Define_sVar",
   class = TRUE,
   portable = TRUE,
   public = list(
-    user.env = emptyenv(),        # user environment to be used as enclos arg to eval(sVar)
+    user.env = NULL,        # user environment to be used as enclos arg to eval(sVar)
     cur.node = list(),            # current evaluation node (set by self$eval.nodeforms())
     asis.flags = list(),          # list of flags, TRUE for "as is" node expression evaluation
     ReplMisVal0 = FALSE,          # vector of indicators, for each TRUE sVar.expr[[idx]] will replace all NAs with gvars$misXreplace (0)
@@ -507,9 +506,11 @@ Define_sVar <- R6Class("Define_sVar",
       }
     ),
 
-    # capture the user environment; user.env is used when eval'ing sVar exprs (enclos = user.env)
-    initialize = function(user.env, netind_cl) {
-      self$user.env <- user.env
+    # No longer capture the user environment here; capture node-specific/expression specific user.env instead in self$set.user.env()
+    # this user.env is then used for eval'ing each sVar exprs (enclos = user.env)
+    # initialize = function(user.env, netind_cl) {
+    initialize = function(netind_cl) {
+      # self$user.env <- user.env
       self$netind_cl <- netind_cl
       self$Kmax <- self$netind_cl$Kmax
       invisible(self)
@@ -557,6 +558,7 @@ Define_sVar <- R6Class("Define_sVar",
     },
 
     eval.nodeforms = function(cur.node, data.df) {
+      assert_that(is.environment(self$user.env))
       self$cur.node <- cur.node
       self$ReplMisVal0 <- FALSE
       # print("initial asis.flags: "); print(attributes(cur.node$dist_params)[["asis.flags"]])
@@ -582,7 +584,20 @@ Define_sVar <- R6Class("Define_sVar",
 
     df.names = function(data.df) { # list of variable names from data.df with special var name (ANCHOR_ALLVARNMS_VECTOR_0)
       return(list(ANCHOR_ALLVARNMS_VECTOR_0 = colnames(data.df)))
+    },
+
+    # This user.env is used for eval'ing each sVar exprs (enclos = user.env)
+    set.user.env = function(user.env) {
+      assert_that(!is.null(user.env))
+      assert_that(is.environment(user.env))
+      self$user.env <- user.env
     }
+    # ,
+    # set.netind_cl = function(netind_cl) {
+    #   assert_that(!is.null(netind_cl))
+    #   assert_that("NetIndClass" %in% class(netind_cl))
+    #   self$netind_cl <- netind_cl
+    # }
   ),
 
   active = list(

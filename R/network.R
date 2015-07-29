@@ -239,24 +239,21 @@ network <- function(name, Kmax, netfun, ..., params = list()) {
   }
 
   if (missing(Kmax)) stop("Kmax argument must be specified")
+  assert_that(is.count(Kmax))
   dist_params$Kmax <- Kmax
-  assert_that(is.count(dist_params$Kmax))
-  # if (is.null(dist_params$Kmax)) stop("Kmax argument must be specified")
-  # dist_params$Kmax <- eval(parse(text = dist_params$Kmax))
-  # assert_that(is.count(dist_params$Kmax))
-  
-  net_dist_params <- list(netfun = netfun, dist_params = dist_params)
 
   # check the distribution function exists, if not found also check the calling environment:
   if (!exists(netfun)) {
     # message("network generator exists(netfun, envir = env): " %+% exists(netfun, envir = env))
     if (!exists(netfun, envir = env)) {
-      stop("network generator function '"%+%netfun%+% "' cannot be found")
+      stop(netfun %+% ": this network generator function could not be located")
     }
   }
 
-  net_lists <- list(c(name = name, Kmax = dist_params$Kmax, net_dist_params))
+  net_dist_params <- list(name = name, Kmax = Kmax, netfun = netfun, dist_params = dist_params, node.env = env)
+  net_lists <- list(net_dist_params)
   names(net_lists) <- name
+
   net_lists <- lapply(net_lists, function(node_i) {class(node_i) <- "DAG.net"; node_i})
   class(net_lists) <- "DAG.netlist"
   net_lists
