@@ -1484,16 +1484,17 @@ test.experimental_parsingMSMs <- function() {
   msm.form_3_error <- "Y ~ theta + t + I(theta*t) + S(A1[max(0,t-2)]) + S(L1[t]) + S(A1[max(0,t-1)])"
 
   t_vec <- c(0:16)
-  parse_form <- simcausal:::parse.MSMform(msm.form=msm.form_1, t_vec=t_vec) # parsing the msm formula
+  parse_form <- simcausal:::parse.MSMform(msm.form = msm.form_1, t_vec = t_vec, old.DAG = lDAG3) # parsing the msm formula
+  # parse_form <- simcausal:::parse.MSMform(msm.form=msm.form_1, t_vec=t_vec) # parsing the msm formula
   attributes(parse_form$MSMtermsDAG)$user.env <- attributes(D)$user.env
   parse_form$term_maptab
   
   # parsing new msm formula based on the old map table
-  parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_2, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
-  parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
+  parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_2, t_vec=t_vec, old.DAG = lDAG3, term_map_tab_old=parse_form$term_maptab)
+  parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3, t_vec=t_vec, old.DAG = lDAG3, term_map_tab_old=parse_form$term_maptab)
   # gives a gentle error when calling with S()  expressions that are not in the provided map
   checkException(
-    parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3_error, t_vec=t_vec, term_map_tab_old=parse_form$term_maptab)
+    parse_form_fromold <- simcausal:::parse.MSMform(msm.form=msm.form_3_error, t_vec=t_vec, old.DAG = lDAG3, term_map_tab_old=parse_form$term_maptab)
   )
 
 # First model Y_t by adding a summary measure covariate that is defined as the mean of exposure A1 from time 0 to t

@@ -114,9 +114,9 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
     if (!is.null(t)) {
       if ((length(t)!=length(order)) & (!is.null(order))) stop("t and order arguments must have the same length")
       node_lists <- lapply(t, function(t_i) {
-        order_t <- order
-        if (!is.null(order)) order_t <- order[which(t%in%t_i)]
-        c(name = name%+%"_"%+%t_i, t = t_i, node_dist_params, order = order_t, node.env = env)
+                              order_t <- order
+                              if (!is.null(order)) order_t <- order[which(t%in%t_i)]
+                              c(name = name%+%"_"%+%t_i, t = t_i, node_dist_params, order = order_t, node.env = env)
       })
       names(node_lists) <- name%+%"_"%+%t
     }

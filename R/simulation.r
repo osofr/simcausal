@@ -149,7 +149,6 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     }
   }
 
-
   #---------------------------------------------------------------------------------
   # Iteratively create observed DAG nodes (wide format data.fame of Nsamp observations)
   #---------------------------------------------------------------------------------
@@ -197,25 +196,14 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     #------------------------------------------------------------------------
     # CHECKS NODE DISTRIBUTIONS & EVALUATE NODE DISTRIBUTION PARAMS PROVIDED IN NODE FORMULA(S)
     #------------------------------------------------------------------------
-    #------------------------------------------------------------------------
     # TO DO:
     # Need to make sure that action attributes never get separate columns in df, since there are just constants
     # The attributes should be added to the eval env as variables
     # See if current expr naming strucutre in Define_sVar can be recycled for sampling from multivariate densities
-    # NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T TURN IT INTO A VECTOR OF LENGTH n
+    # NEED TO ADDRESS: WHEN A CONSTANT (length==1) IS PASSED AS A PARAMETER, DON'T ALWAYS WANT TO TURN IT INTO A VECTOR OF LENGTH n
     #------------------------------------------------------------------------
     
-    # ***********************    
-    # ***** IMPORTANT *******
-    # SETTING TO node-specific user environment:
-    # NEED TO CHECK THAT MSM PARSER STILL WORKS FINE WITH THIS.....
-    # ***********************
-    # print("cur.node node.env: " %+% cur.node$name); 
-    # print(cur.node);
-    # print(cur.node$node.env); 
-    # print(ls(cur.node$node.env))
-
-    # setting the node-specific user calling environment for the evaluator
+    # setting the node-specific user calling environment for the evaluator:
     node_evaluator$set.user.env(cur.node$node.env)
 
     eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
@@ -242,10 +230,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       distr <- cur.node$netfun
 
       # ***************************************************************
-      # WHY ARE WE USING AS-IS FOR SAMPLING NETWORK?????
-      # BECAUSE THE OUTPUT IS A MATRIX. THIS IS A BAD WAY TO SOLVE THIS.
+      # USING AS-IS FOR SAMPLING NETWORK BECAUSE THE OUTPUT IS A MATRIX. THIS IS A BAD WAY TO SOLVE THIS.
+      # A BETTER SOLUTION IS TO ALLOW THE distr RESULT TO BE A VECTOR OR MATRIX (for multivariate RVs)
       # *****************************************************************
-    	NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev, 
+      NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev, 
                                   cur.node = cur.node, expr_str = cur.node$dist_params, asis.samp = TRUE)
       
       Kmax.new <- ncol(NetInd_k)
@@ -255,7 +243,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
         cur.node$Kmax <- Kmax.new
       }
       netind_cl <- NetIndClass$new(nobs = Nsamp, Kmax = cur.node$Kmax)
-    	netind_cl$NetInd <- NetInd_k
+      netind_cl$NetInd <- NetInd_k
       netind_cl$make.nF()
 
       # set the network for the evaluator:
@@ -266,7 +254,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       NodeParentsNms <- NodeParentsNms[-which(names(NodeParentsNms) %in% cur.node$name)]
 
     } else {
-		  newVar <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev,
+      newVar <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev,
                                 cur.node = cur.node, expr_str = cur.node$dist_params)
     }
 
@@ -285,10 +273,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
           prevtVarnm <- gnodename %+% "_" %+% (t-1)
           # Check first that the variable exists (has been defined at the previous time point), if it doesn't exist, just assign NA
           if(!any(names(obs.df)%in%prevtVarnm)) {
-          	warning(gnodename%+%": is undefined at t="%+%(t-1)%+%", hence cannot be carried forward to t="%+%t)
-          	newVar[LTCF.prev] <- NA
+            warning(gnodename%+%": is undefined at t="%+%(t-1)%+%", hence cannot be carried forward to t="%+%t)
+            newVar[LTCF.prev] <- NA
           } else {
-          	newVar[LTCF.prev] <- obs.df[LTCF.prev, (gnodename %+% "_" %+% (t-1))]
+            newVar[LTCF.prev] <- obs.df[LTCF.prev, (gnodename %+% "_" %+% (t-1))]
           }
           # dprint("obs.df"); dprint(names(obs.df)); dprint(gnodename%+%"_"%+%(t-1))
         }

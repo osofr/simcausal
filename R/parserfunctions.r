@@ -1,3 +1,4 @@
+# nocov start
 # #
 # # FUNCTIONS FOR PARSING NODE EXPRESSIONS
 # #
@@ -299,3 +300,4 @@ eval_nodeform.depr <- function(expr_str, cur.node, env=parent.frame()) {
   # assign('[', node_func$'[', envir = env)	# define special '[' function in env environment
   return(list(evaled_expr=evaled_expr, par.nodes=c(Vnames,TD_t_vnames))) # return evaluated expression and parent node names
 }
+# nocov end

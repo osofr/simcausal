@@ -1,13 +1,18 @@
 
-# Parse MSM formula, create term object, replace all S() calls with "XMSMterms.i" vars that will be eval'ed and defined during MSM evaluation
-# Returns modified term.formula object and the DAG consisting of time-varying XMSMterms.i defined (mean=S() over t)
-parse.MSMform <- function(msm.form, t_vec, term_map_tab_old=NULL) {
+# Parse MSM formula
+# Create new term object
+# Replace all summary measure S() calls in glm formula with "XMSMterms.i" vars that will be eval'ed and defined during MSM evaluation
+# Define a DAG w/ time-varying nodes, each node is a summary measure from S(), with mapped node names, e.g., XMSMterms.i <-> S(...)[i]
+# Returns modified term.formula object and the new DAG
+parse.MSMform <- function(msm.form, t_vec, old.DAG, term_map_tab_old = NULL) {
   # *************
-  # convert the formula into a term object, marking the I() calls as "specials"
+  # Convert the formula into a term object, marking the I() calls as "specials":
   term_form <- terms.formula(as.formula(msm.form), keep.order=TRUE, specials=c("S", "I")) # create term.formula object
   call <- attr(term_form, "variables")    # get the call with all variables from the formula
   # *************
-  findS_exprs <- function(x) { # * recursively parse the call tree structure and find S() expressions
+
+  # Parse glm call tree and find all calls wrapped in S() expressions:
+  findS_exprs <- function(x) {
     if (is.atomic(x) || is.name(x)) {
       character()
     } else if (is.call(x)) {
@@ -24,59 +29,72 @@ parse.MSMform <- function(msm.form, t_vec, term_map_tab_old=NULL) {
         stop("Don't know how to handle type ", typeof(x), call. = FALSE)
     }
   }
-  modS_exprs <- function (x, where = parent.frame()) { # * recursively parse the call tree structure and replace S() expressions with corresponding names of future vars
+  # Parse the glm call tree and replace all S() expressions with mapped vars names to be evaluated:
+  modS_exprs <- function (x, where = parent.frame()) {
     if (is.atomic(x) || is.name(x)) {
         x   # Leave unchanged
     } else if (is.call(x)) {
-      if (identical(x[[1]], quote(S))) {  # replace with new variable name (lookup)
+      # Replace with glm term S() with its mapped variable name (lookup):
+      if (identical(x[[1]], quote(S))) {
         S_expr <- deparse(x[[2]])
         k_indx <- which(S_exprs_vec%in%S_expr)[1]
-        # print("S_expr: "%+%S_expr); print("k_indx: "%+%k_indx); print("MSM term: "%+%XMSMterms[k_indx]);
         parse(text=XMSMterms[k_indx])[[1]]
       } else {
         as.call(lapply(x, modS_exprs, where = where))
       }
     } else if (is.pairlist(x)) {
       as.pairlist(lapply(x, modS_exprs, where = where))
-    } else { # User supplied incorrect input
+    } else {
       stop("Don't know how to handle type ", typeof(x), call. = FALSE)
     }
   }
 
-  S_exprs_vec <- unique(findS_exprs(call))  # vector of unique S expressions that need to be evaluated by parser    
-  # dprint("S_exprs_vec"); dprint(S_exprs_vec); dprint(length(S_exprs_vec))
-  if (length(S_exprs_vec)>0) {	# there are S() terms that need to be replaced
-  if (is.null(term_map_tab_old)) { # if the map of variable names was not supplied
-    XMSMterms <- "XMSMterm."%+%seq(S_exprs_vec)  # vector of corresponding term names (column names) that replace S exprs	
-  } else {	# if the map with variable names was provided use that map
-    S_exprs_vec_old <- as.character(term_map_tab_old[,"S_exprs_vec"])
-    XMSMterms_old <- as.character(term_map_tab_old[,"XMSMterms"])
-    map_idx <- NULL
-    for (S_exprs in S_exprs_vec) {
-      map_idx <- c(map_idx, which(S_exprs_vec_old%in%S_exprs))
+  S_exprs_vec <- unique(findS_exprs(call))  # vector of unique S expressions that need to be evaluated by parser
+
+  # There are S() terms (summary measures) that need to be evaluated:
+  if (length(S_exprs_vec)>0) {
+    # No previously eval'ed S_exprs_vec => need to define a new mapping and evaluate (by defining a DAG of these summary measures):
+    if (is.null(term_map_tab_old)) {
+      XMSMterms <- "XMSMterm." %+% seq(S_exprs_vec)  # vector of corresponding term names (column names) that replace S exprs
+    # Summary measures have been evaluated before => get the old mapping for these summary measure variable names:
+    } else {
+      S_exprs_vec_old <- as.character(term_map_tab_old[, "S_exprs_vec"])
+      XMSMterms_old <- as.character(term_map_tab_old[, "XMSMterms"])
+      map_idx <- NULL
+      for (S_exprs in S_exprs_vec) {
+        map_idx <- c(map_idx, which(S_exprs_vec_old %in% S_exprs))
+      }
+      XMSMterms <- XMSMterms_old[map_idx]
+      if (length(XMSMterms)!=length(S_exprs_vec)) stop("unable to map some of S() expressions in MSM formula, check that all of the summary measure expressions have been previously defined")
     }
-    XMSMterms <- XMSMterms_old[map_idx]
-    if (length(XMSMterms)!=length(S_exprs_vec)) stop("unable to map some of S() expressions in MSM formula, check that all of the summary measure expressions have been previously defined")
-    # dprint("map_idx"); dprint(map_idx); dprint("XMSMterms"); dprint(XMSMterms);
-  }
 
-  term_maptab <- data.frame(S_exprs_vec = S_exprs_vec, XMSMterms = XMSMterms, stringsAsFactors = FALSE)
-  mod_S_call <- modS_exprs(call)
-  attr(term_form, "variables") <-  mod_S_call # add modified glm call to term formula object
-  dprint("original call"); dprint(call)
-  dprint("modified S() call"); dprint(mod_S_call)
-  dprint("mapping of S(.) MSM formula terms to data.frame variables"); dprint(term_maptab)
+    term_maptab <- data.frame(S_exprs_vec = S_exprs_vec, XMSMterms = XMSMterms, stringsAsFactors = FALSE)
+    # Modify the original MSM glm call with new names for S_exprs_vec (summary measures):
+    mod_S_call <- modS_exprs(call)
+    # Add modified MSM glm call to term formula object:
+    attr(term_form, "variables") <-  mod_S_call
 
-  # create a dag with nodes given by above MSM terms
-  MSMtermsD <- DAG.empty()
-  for (i in seq(XMSMterms)) {
-    MSMtermsD <- MSMtermsD + node(XMSMterms[i], t=t_vec,  distr="rconst", const=.(parse(text=S_exprs_vec[i])[[1]]))
-  }
-  } else { # no S() terms detected, no changes
+    dprint("original call"); dprint(call)
+    dprint("modified S() call"); dprint(mod_S_call)
+    dprint("mapping of S(.) MSM formula terms to data.frame variables"); dprint(term_maptab)
+
+    # Create a DAG with nodes given by above MSM terms (summary measure DAG):
+    MSMtermsD <- DAG.empty()
+    for (i in seq(XMSMterms)) {
+      MSMtermsD <- MSMtermsD + node(XMSMterms[i], t = t_vec,  distr = "rconst", const = .(parse(text = S_exprs_vec[i])[[1]]))
+    }
+    # Add user.env to all DAG nodes:
+    user.env <- attributes(old.DAG)$user.env
+    assert_that(!is.null(user.env))
+    MSMtermsD <- lapply(MSMtermsD, function(Dnode) {Dnode[["node.env"]] <- user.env; Dnode})
+    class(MSMtermsD) <- "DAG"
+    attributes(MSMtermsD)$user.env <- user.env
+  # no S() terms detected in the MSM glm call, nothing to change:
+  } else {
     MSMtermsD <- NULL
     term_maptab <- NULL
   }
-  return(list(term_form=term_form, MSMtermsDAG=MSMtermsD, term_maptab=term_maptab))
+  return(list(term_form = term_form, MSMtermsDAG = MSMtermsD, term_maptab = term_maptab))
 }
 
 #************
@@ -97,7 +115,7 @@ subset_dat <- function(df, outcome, t_sel) { # subset full data (in wide format)
     dprint("subsetting by t result"); dprint(head(df, 20)); # print(attributes(df))
     df
   } else {
-    message("...current target evaluation can't subset data in long format, parameter will be evaluated over the entire t range available in supplied data. Provide input data in wide format to evaluate outcomes over specific t ranges...")
+    message("current target evaluation can't subset data in long format, parameter will be evaluated over the entire t range available in supplied data. Provide input data in wide format to evaluate outcomes over specific t ranges")
     df
   }
 }
@@ -116,7 +134,7 @@ subset_dat_long <- function(dt, t_sel) {
     dprint("result of subsetting by t"); dprint(dt_subs); # print(attributes(dt_subs))
     dt_subs
   } else {
-    message("...this function can only subset data in long format...")
+    message("this function can only subset data in long format")
     dt
   }
 }
@@ -395,7 +413,7 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
 #' @export
 eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
   gen_full_dat <- function(actions, wide = TRUE, LTCF = FALSE) { # generate full data when its not provided as an argument
-    message("...evaluating the target on "%+%n%+%" simulated samples per action")
+    message("evaluating the target on "%+%n%+%" simulated samples per action")
     if (is.character(actions)) { # grab appropriate actions from the DAG by name
       actions <- getactions(DAG, actions)
     } else if (is.list(actions)) {
@@ -448,9 +466,9 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
 
   if (!is.null(params.E)) {
     if (missing(data)) {# if no full data, simulate full data from actions argument
-      message("...data not specified, simulating full data")
+      message("data not specified, simulating full data")
       if (missing(actions)) {	
-        message("...no actions specified, sampling full data for ALL actions from the DAG")
+        message("no actions specified, sampling full data for ALL actions from the DAG")
         actions <- A(DAG)
       }
       data <- gen_full_dat(actions=actions)
@@ -459,7 +477,7 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
     if (is.longfmt(data[[1]])) stop("full data must be in wide format for target set.targetE, run sim(actions, n)")
     vec_EFUP <- sapply(N(DAG)[outnode_nms], is.EFUP)
     if (any(vec_EFUP)&(!is.LTCF(data[[1]], outcome))) {
-      message("...some outcome nodes have EFU=TRUE, applying Last Time Point Carry Forward function: doLTCF()...")
+      message("some outcome nodes have EFU=TRUE, applying Last Time Point Carry Forward function: doLTCF()")
       data <- lapply(data, doLTCF, LTCF=outcome)
     }
     res <- eval.E(DAG = DAG, df_full = data, outnodes = outnodes, outnode_nms = outnode_nms, params.E = params.E, attrs = attrs)
@@ -471,9 +489,9 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
     }
 
     if (missing(data)) {# if no full data, simulate full data from actions argument			
-      message("...data not specified, simulating full data")
+      message("data not specified, simulating full data")
       if (missing(actions)) {	
-      	message("...no actions specified, sampling full data for ALL actions from the DAG")
+      	message("no actions specified, sampling full data for ALL actions from the DAG")
       	actions <- A(DAG)
       }
       if (is.null(params.MSM$hazard) || (params.MSM$hazard)) { # if hazard is missing or wanted, do not impute forward the outcome
@@ -504,7 +522,7 @@ eval.E <- function(DAG, df_full, outnodes, outnode_nms, params.E, attrs) {
                         ###########################################################
                         # CHECK ALL OUTCOMES ARE NOT NA
                         # IF NA -> THROW AN EXCEPTION (EFU EXCEPTION)
-                        if (any(is.na(out[,i]))) stop("Unable to evaluate the expectation for outcome "%+%outnode_nms[i]%+% ", some observations are censored before the outcome, the actions were defined incorrectly...")
+                        if (any(is.na(out[,i]))) stop("Unable to evaluate the expectation for outcome "%+%outnode_nms[i]%+% ", some observations are censored before the outcome, the actions were defined incorrectly")
                         ###########################################################
                       }
                       sapply(out, mean)
@@ -546,12 +564,12 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
   if (!is.null(hazard)) {
     if (!hazard) LTCF_param <- outcome	# for survival outcome, carry last known observation forward after failure event
     sim_paramstr <- "simfull(actions = actions, n = n, LTCF = " %+% LTCF_param %+% ")"
-    if (hazard & is.LTCF(df_full[[1]], outcome)) stop("For modeling hazard in target param.MSM full data must be simulated with LTCF=NULL (outcome NOT carried forward), run "%+%sim_paramstr%+%"...")
-    if (!hazard & !is.LTCF(df_full[[1]], outcome)) stop("For modeling survival in target param.MSM full data must be imputed with LTCF='outcome' (last time point (outcome) carried forward), where 'outcome' is the name of the EOF=TRUE node, run "%+%sim_paramstr%+%"...")
+    if (hazard & is.LTCF(df_full[[1]], outcome)) stop("For modeling hazard in target param.MSM full data must be simulated with LTCF=NULL (outcome NOT carried forward), run "%+%sim_paramstr%+%"")
+    if (!hazard & !is.LTCF(df_full[[1]], outcome)) stop("For modeling survival in target param.MSM full data must be imputed with LTCF='outcome' (last time point (outcome) carried forward), where 'outcome' is the name of the EOF=TRUE node, run "%+%sim_paramstr%+%"")
     if (hazard) {
-      if (!all(vec_EFUP)) stop("for hazard=TRUE all outcome nodes must be set to EFU=TRUE...")
+      if (!all(vec_EFUP)) stop("for hazard=TRUE all outcome nodes must be set to EFU=TRUE")
       # vec_Bern <- sapply(DAG[outnode_nms], is.Bern) # b) check all(is.binary(outcomes))
-      # if (!all(vec_Bern)) stop("for hazard=TRUE all outcome nodes must have Bernoulli distribution...")
+      # if (!all(vec_Bern)) stop("for hazard=TRUE all outcome nodes must have Bernoulli distribution")
     }
   }
 
@@ -559,9 +577,8 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
   # evaluating the summary measures for wide format df_full and then converting both to long format
   #*******************************
   if (!is.longfmt(df_full[[1]])) {
-    parse_form <- parse.MSMform(msm.form = form, t_vec = t_vec)
+    parse_form <- parse.MSMform(msm.form = form, t_vec = t_vec, old.DAG = DAG)
     MSMtermsDAG <- parse_form$MSMtermsDAG	# DAG that defines the exposure summaries that need to be eval'ed
-    attributes(MSMtermsDAG)$user.env <- attributes(DAG)$user.env
     term_maptab <- parse_form$term_maptab
 
     act_names <- names(df_full)
@@ -569,7 +586,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
 
       XMSM_terms <- as.character(term_maptab[,"XMSMterms"])
       dprint("MSM term names"); dprint(XMSM_terms)
-      message("...evaluating MSM summary measures and converting full data to long format for MSM target parameter...")
+      message("evaluating MSM summary measures and converting full data to long format for MSM target parameter")
       # evaluate summary measures for all observations in df_full, inside df_full environment
       SMSM_Xdat <- lapply(df_full, function(prevdat) simFromDAG(DAG = MSMtermsDAG, Nsamp = nrow(prevdat), LTCF = LTCF_param, prev.data = prevdat))
       # ***** cbind df_full and SMSM_Xdat, saving appropriate attributes
@@ -593,38 +610,39 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
     names(df_full) <- act_names
     # * Subset all data.frame variables by t once its in long format
     if(!is.null(t_vec)) df_full <- lapply(df_full, subset_dat_long, t_vec) #this should include the indicators
+    
     #*******************************
     # evaluating the target parameter when the df_full is already in long format (with warnings)
-    #*******************************		
     # ****TO DO**** 
     # ADD SUBSETTING BY t FOR DATA in LONG FORMAT
-    #********
+    #*******************************
   } else {
     MSM.parse_old <- attr(df_full[[1]], "target")$params.MSM.parse
     term_maptab_old <- MSM.parse_old$term_maptab
 
     dprint("old map of MSM formula terms to vars:"); dprint(term_maptab_old)
-    parse_form <- parse.MSMform(msm.form=form, t_vec=t_vec, term_map_tab_old=term_maptab_old)
+    parse_form <- parse.MSMform(msm.form = form, t_vec = t_vec, old.DAG = DAG, term_map_tab_old = term_maptab_old)
 
     if (!is.null(parse_form$term_maptab)) {
-      message("...for df_full in long format new summary measures cannot be calculated, using whatever summary measures already exist in df_full...")
-      message("...for df_full in long format outcome is pooled over the same t vector as defined in the first MSM that generated the long format data, changing pooling t requires re-generating the full data...")
-      message("...assuming the data is based on the following map of MSM terms to variable names...")
+      message("for df_full in long format new summary measures cannot be calculated, using whatever summary measures already exist in df_full")
+      message("for df_full in long format outcome is pooled over the same t vector as defined in the first MSM that generated the long format data, changing pooling t requires re-generating the full data")
+      message("assuming the data is based on the following map of MSM terms to variable names")
       print(parse_form$term_maptab)
     }
   }
+
   naout_byaction <- sapply(df_full, function(df) any(is.na(df[,outcome]))) # CHECK THAT NO OUTCOME NODES ARE MISSING (NA)
-  if (any(naout_byaction)) stop("Unable to evaluate MSMs outcome "%+%outcome%+% ", for action(s) ", paste(names(df_full)[naout_byaction], collapse=","), ", some observations are censored before the outcome, check DAG(s) defining the action(s)...")
+  if (any(naout_byaction)) stop("Unable to evaluate MSMs outcome "%+%outcome%+% ", for action(s) ", paste(names(df_full)[naout_byaction], collapse=","), ", some observations are censored before the outcome, check DAG(s) defining the action(s)")
 
   # * Combine all actions into one dataframe and convert to long format
   df_combine <- data.table::rbindlist(df_full, fill=TRUE)
   dprint("df_combine"); dprint(df_combine)
 
   # * Run the glm regression for form from params.MSM
-  message("MSM: fitting glm to full data...")
-  m <- glm(parse_form$term_form, data=df_combine, family=family, na.action=na.exclude)
+  message("MSM: fitting glm to full data")
+  m <- glm(parse_form$term_form, data = df_combine, family = family, na.action = na.exclude)
   coef <- coef(m)
-  return(list(msm=m, coef=coef, S.msm.map=parse_form$term_maptab, hazard=hazard, call=attr(DAG, "target")$call, df_long=df_full))
+  return(list(msm = m, coef = coef, S.msm.map = parse_form$term_maptab, hazard = hazard, call = attr(DAG, "target")$call, df_long = df_full))
 }
 
 
