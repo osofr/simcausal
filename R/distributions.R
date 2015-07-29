@@ -41,7 +41,7 @@ rbern <- function(n, prob) {
 #'Dset <- set.DAG(D)
 #'simdat <- simobs(Dset, n=200, rndseed=1)
 #' @export
-rconst = function(n, const) { 
+rconst <- function(n, const) { 
 	if (length(const)==1) {
 		rep.int(const,n)
 	} else {
@@ -79,16 +79,16 @@ rconst = function(n, const) {
 #'simdat <- simobs(Dset, n=200, rndseed=1)
 #' @export
 # rcategor = function(n, probs, labels) {
-rcategor = function(n, probs) {
+rcategor <- function(n, probs) {
 	if (is.vector(probs)) {
-		probs <- matrix(data=probs, nrow=n, ncol=length(probs), byrow=TRUE)
+		probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
 	}
-	probs <- cbind(probs, 1-rowSums(probs))	# sum each row and check if some need to be normalized
+	probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
 	pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
 	if (length(pover1_idx)>0) {
 		warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
 		probs[pover1_idx, ncol(probs)] <- 0
-		probs[pover1_idx, ] <- probs[pover1_idx, ,drop=FALSE] / rowSums(probs[pover1_idx, ,drop=FALSE]) # normalize
+		probs[pover1_idx, ] <- probs[pover1_idx, ,drop = FALSE] / rowSums(probs[pover1_idx, ,drop = FALSE]) # normalize
 	}
 	probs_cum <- matrix(nrow=nrow(probs), ncol=ncol(probs))
 	probs_cum[,1] <- probs[,1]
@@ -106,18 +106,18 @@ rcategor = function(n, probs) {
 #' @param probs Either a vector or a matrix of success probabilities. When probs is a vector, \code{n} identically distributed random categorical variables are generated with categories: 1, 2, ..., \code{length(probs)+1}. When \code{probs} is a matrix, the categorical probabilities of the \code{k}th sample are determined by the \code{k}th row of probs matrix, i.e., \code{probs[k,]}.
 #' @return An integer vector of length \code{n} with values: \code{1,2, ...,ncol(probs)+1}.
 #' @export
-rcategor.int = function(n, probs) {
+rcategor.int <- function(n, probs) {
 	if (is.vector(probs)) {
-		probs <- matrix(data=probs, nrow=n, ncol=length(probs), byrow=TRUE)
+		probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
 	}
-	probs <- cbind(probs, 1-rowSums(probs))	# sum each row and check if some need to be normalized
+	probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
 	pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
 	if (length(pover1_idx)>0) {
 		warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
 		probs[pover1_idx, ncol(probs)] <- 0
 		probs[pover1_idx, ] <- probs[pover1_idx, ] / rowSums(probs[pover1_idx, ]) # normalize
 	}
-	probs_cum <- matrix(nrow=nrow(probs), ncol=ncol(probs))
+	probs_cum <- matrix(nrow = nrow(probs), ncol = ncol(probs))
 	probs_cum[,1] <- probs[,1]
 	for (i in seq(ncol(probs))[-1]) {
 		probs_cum[,i] <- rowSums(probs[,c(1:i)])
@@ -125,8 +125,6 @@ rcategor.int = function(n, probs) {
 	samples <- rowSums(probs_cum - runif(nrow(probs_cum)) < 0) + 1
 	as.integer(samples)
 }
-
-
 
 #' List All Custom Distribution Functions in \code{simcausal}.
 #'

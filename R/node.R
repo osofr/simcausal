@@ -1,7 +1,7 @@
 # evaluate expressions enclosed by .(expression) right away in the parent (calling) environment
 bquote2 <- function (x, where = parent.frame()) { 
   if (is.atomic(x) || is.name(x)) { # Leave unchanged
-    x 
+    x
   } else if (is.call(x)) {
     if (identical(x[[1]], quote(.))) { # Call to .(), so evaluate
     eval(x[[2]], where)
@@ -58,24 +58,42 @@ bquote2 <- function (x, where = parent.frame()) {
 #' @param order An optional integer parameter specifying the order in which these nodes will be sampled. The value of order has to start at 1 and be unique for each new node, can be specified as a range / vector and has to be of the same length as the argument \code{t} above. When order is left unspecified it will be automatically inferred based on the order in which the node(s) were added in relation to other nodes. See Examples and Details below.
 #' @param ... Named arguments specifying distribution parameters that are accepted by the \code{distr} function. The parameters can be R expressions that are themselves formulas of the past node names.
 #' @param params A list of additional named parameters to be passed on to the \code{distr} function. The parameters have to be either constants or character strings of R expressions of the past node names.
+#' @param asis.params (ADVANCED USE ONLY) A list of additional named parameters that will be evaluated "as is", inside the currently simulated data.frame + user calling environment. No expression modifications or error-checking will be performed. Same syntax as for \code{params} argument.
 #' @return A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
 #' @example tests/RUnit/set.DAG.R
 #' @export
 # Constructor for node objects, uses standard R distribution functions, 
 # added optional attributes that are saved with the node (such as custom distribution functions, etc)
-node <- function(name, t, distr, EFU, order, ..., params = list()) {
+node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params = list()) {
   env <- parent.frame()
+
   if (grepl("_", name, fixed = TRUE)) stop("node names with underscore character '_' are not allowed")
-  # collect all distribution parameters with delayed evaluation (must be named)
+
+  # collect all distribution parameters with delayed evaluation (must be named):
   dist_params <- eval(substitute(alist(...)))
   if (length(dist_params)>0) {
     dist_params <- lapply(dist_params, function(x) deparse(bquote2(x, env)))
   }
+
+  # add params from params list:
   dist_params <- append(dist_params, params)
-  parnames <- names(dist_params)
-  if (length(dist_params) != 0 && (is.null(parnames) || any(parnames==""))) {
-    stop("please specify name for each attribute")
+  # add asis.params from asis.params list:
+  asis.parnames <- NULL
+  if (length(asis.params) > 0) {
+    asis.parnames <- names(asis.params)
+    dist_params <- append(dist_params, asis.params)
   }
+
+  parnames <- names(dist_params)
+
+  if (length(dist_params) != 0 && (is.null(parnames) || any(parnames==""))) stop("specify the name for each node argument")
+  if (length(unique(parnames)) < length(dist_params)) stop("each node argument must have a unique name")
+
+  asis.flags <- vector(mode = "list", length = length(dist_params))
+  names(asis.flags) <- parnames
+  asis.flags[] <- FALSE
+  asis.flags[asis.parnames] <- TRUE
+  attr(dist_params, "asis.flags") <- asis.flags
 
   if (missing(order)) {
     order <- NULL
@@ -84,14 +102,19 @@ node <- function(name, t, distr, EFU, order, ..., params = list()) {
 
   node_dist_params <- list(distr = distr, dist_params = dist_params)
 
-  # check the distribution function exists
+  # new check that also checks for distr in the calling environment:
   if (!exists(distr)) {
-    stop("...distribution function '"%+%distr%+% "' cannot be found...")
+    # message("distribution function exists(distr, envir = env): " %+% exists(distr, envir = env))
+    if (!exists(distr, envir = env)) {
+      stop("distribution function '"%+%distr%+% "' cannot be found")
+    }
   }
+  # check the distribution function exists:
+  # if (!exists(distr)) {
+  #   stop("distribution function '"%+%distr%+% "' cannot be found")
+  # }
 
-  # OS: changed to always add EFU, since order doesn't always have to be specified anymore
-  # if (!is.null(order)) node_dist_params <- c(node_dist_params, EFU=EFU) # specify EFU only when order is provided as well
-  node_dist_params <- c(node_dist_params, EFU=EFU)
+  node_dist_params <- c(node_dist_params, EFU = EFU)
 
   if (!missing(t)) {
     if (!is.null(t)) { # expand the nodes into list of lists, with VarName=name%+%t_i
@@ -99,7 +122,7 @@ node <- function(name, t, distr, EFU, order, ..., params = list()) {
       node_lists <- lapply(t, function(t_i) {
         order_t <- order
         if (!is.null(order)) order_t <- order[which(t%in%t_i)]
-        c(name=name%+%"_"%+%t_i, t=t_i, node_dist_params, order=order_t)
+        c(name = name%+%"_"%+%t_i, t = t_i, node_dist_params, order = order_t)
       })
       names(node_lists) <- name%+%"_"%+%t
     }

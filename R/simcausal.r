@@ -174,8 +174,8 @@ print.DAG.node <- function(x, ...) str(x)
 #' @param xindx A vector of indices for subsetting the survival vectors in \code{surv}, if omitted all survival probabilities in each \code{surv[[i]]} are plotted.
 #' @param ylab An optional title for y axis, passed to \code{\link{plot}}.
 #' @param xlab An optional title for x axis, passed to \code{\link{plot}}.
-#' @param ylim Optional y limits for the plot, passed to \code{\link{\link{plot}}}.
-#' @param legend.xyloc Optional x and y co-ordinates to be used to position the legend. Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{\link{graphics::xy.coords}}.
+#' @param ylim Optional y limits for the plot, passed to \code{\link{plot}}.
+#' @param legend.xyloc Optional x and y co-ordinates to be used to position the legend. Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{graphics::xy.coords}.
 #' @param ... Additional arguments passed to \code{\link{plot}}.
 #' @export
 plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim = c(0.0, 1.0), legend.xyloc = "topright", ...) {
@@ -205,13 +205,13 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @param customvlabs A named vector of custom DAG node labels (replaces node names from the DAG object).
 #' @param excludeattrs A character vector of attribute DAG nodes that shouldn't be plotted
 #' @export
-plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_attrs=list(), edge_attrs=list(), excludeattrs, customvlabs) {
+plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
     stop("igraph package is required for this function to work. Please install igraph.",
       call. = FALSE)
   }
   set.seed(12345)
-  DAG_orig <- DAG      
+  DAG_orig <- DAG
   # Get a list of parent nodes
   par_nodes <- attr(DAG, "parents")
   # Get a list of attributes
@@ -219,12 +219,11 @@ plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_
   # print("par_nodes"); print(par_nodes)
 
   # ID attribute DAG nodes (those with missing order) and have them plotted separately (so as not to mess up the grid)
-  ordervec <- sapply(DAG, '[[', "order")    
+  ordervec <- sapply(DAG, '[[', "order")
   nullorder_idx <- which(sapply(ordervec, is.null))
   if (length(nullorder_idx)>0) {
     DAG <- DAG[-nullorder_idx]
     class(DAG) <- "DAG"
-
     par_nodes_nullorder <- par_nodes[nullorder_idx]
     par_nodes <- par_nodes[-nullorder_idx]
   }
@@ -246,26 +245,27 @@ plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_
   x_layout <- c(0:(length(par_nodes)-1))
   if (!missing(xjitter)) {
     # x_layout <- x_layout + rnorm(length(x_layout))/5
-    x_layout <- x_layout + rnorm(n=length(x_layout), mean=0, sd=xjitter)
+    x_layout <- x_layout + rnorm(n = length(x_layout), mean = 0, sd = xjitter)
   }
 
   # custom layout where x_axis is arranged by order ranking and y_axis is random only for a type of variable, but not by time
   # x_layout <- 3*c(0:(length(par_nodes)-1))
 
-  # Plot when no t is defined in the DAG:
+  # Plot when no t:
   if (is.null(DAG[[length(DAG)]]$t)) {
     arrow.width <- 0.6
     arrow.size <- 0.5
     vertsize <- 10
 
   	tmax <- 0
-    num_bsl <- length(DAG)
+    num_bsl <- length(par_nodes)
+    # num_bsl <- length(DAG)
     num_tv <- 0
     y_bsl <- rep(c(0,1), length.out = num_bsl) + rnorm(num_bsl)     # y placement for bsl nodes
     y_layout <- y_bsl
 
   # Plot when t nodes are present:
-  } else { 
+  } else {
     arrow.width <- 0.3
     arrow.size <- 0.2
     vertsize <- 7
@@ -288,13 +288,13 @@ plotDAG <- function(DAG, tmax=NULL, xjitter, yjitter, node.action.color, vertex_
   }
 
   if (!missing(yjitter)) {
-    y_layout <- y_layout + rnorm(n=length(y_layout), mean=0, sd=yjitter)
+    y_layout <- y_layout + rnorm(n = length(y_layout), mean = 0, sd = yjitter)
   }
   layoutcustom_2 <- cbind(x_layout, y_layout)
 
   # create a layout for attribute nodes
   # check if any of the attributes are on the exclude list, if so, do not plot those nodes
-  if (length(nullorder_idx)>0) {
+  if (length(nullorder_idx) > 0) {
     gennames <- sapply(strsplit(names(par_nodes_nullorder), "_"), '[[', 1)
     excl <- rep(FALSE, length(par_nodes_nullorder))
     if (!missing(excludeattrs)) {
@@ -393,8 +393,9 @@ parents <- function(DAG, nodesChr) {
 # Internal function that checks all DAG node objects have unique name attributes
 check_namesunique <- function(inputDAG) {
 	node_names <- sapply(inputDAG, "[[", "name")
-	(length(unique(node_names))==length(inputDAG)) 
+	(length(unique(node_names))==length(inputDAG))
 }
+
 # Internal function that checks all DAG node objects are already in expanded format ((length(t)==1, length(order)==1))
 check_expanded <- function(inputDAG) {
 	for (node in inputDAG) {
@@ -457,7 +458,13 @@ set.DAG <- function(DAG, vecfun) {
     }
   }
   # *) check each node contains required named arguments
-  checknames.req <- unlist(lapply(DAG, function(node) all(node_args_req%in%names(node))))
+  checknames.req <- unlist(lapply(DAG, function(node) {
+                              if ("DAG.node" %in% class(node)) {
+                                all(node_args_req%in%names(node))  
+                              } else {
+                                TRUE
+                              }
+    }))
   if (!all(checknames.req)) stop(paste0("some nodes are missing required named arguments, check node(s): ",
   								paste0(which(!checknames.req), collapse=",")))
   # *) check all DAG names are unique
@@ -474,7 +481,9 @@ set.DAG <- function(DAG, vecfun) {
   Nnodes <- Nsublists	# Actual number of nodes that will appear in DAG (Nnodes) (for now equal to number of sublists)
   inputDAG <- sortbyorder(DAG)	# Sort sublists by order value
   for (node_idx in c(1:length(inputDAG))) {	# add all optional missing named arguments as 'argname'=NULL (when DAG is entered without node() constructor)
-  	inputDAG[[node_idx]] <- createNodeObj(inputDAG[[node_idx]], node_args_all)
+    if (!("DAG.net" %in% class(inputDAG[[node_idx]]))) {
+      inputDAG[[node_idx]] <- createNodeObj(inputDAG[[node_idx]], node_args_all)
+    }
   }
 
   #---------------------------------------------------------------------------------

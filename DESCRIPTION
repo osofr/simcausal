@@ -22,9 +22,11 @@ Depends:
     R (>= 3.2.0)
 Imports:
     data.table,
+    stringr,
     R6,
     assertthat,
-    reshape2
+    reshape2,
+    Matrix
 Suggests:
     ltmle,
     RUnit,

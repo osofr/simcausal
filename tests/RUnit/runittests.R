@@ -93,6 +93,108 @@ sample_checks <- function() {   # doesn't run, this is just to show what test fu
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
+# adding test for custom distr funs and an error message for non-existing distribution functions:
+test.noexistdistr <- function() {
+  funDAG <- function() {
+    D <- DAG.empty()
+    rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])
+    D <- D + node("W1", distr = "rbinom2", size = 4, prob = c(0.4, 0.5, 0.7, 0.4))
+    D
+  }
+  Dset <- set.DAG(funDAG())
+
+
+  D <- DAG.empty()
+  checkException(D <- D + node("W1", distr = "rbinom3", size = 4, prob = c(0.4, 0.5, 0.7, 0.4)))
+  checkException(D <- D + network("net", netfun = "rbinom3", Kmax = 5, size = 4, prob = c(0.4, 0.5, 0.7, 0.4)))
+}
+
+
+# Adding test set for generating networks for a biased network sample (conditional on bslVar) of size nF:
+test.networkgen <- function() {
+  Kmax <- 6
+  D <- DAG.empty()
+
+  generateNET <- function(n, Kmax, bslVar, nF, ...) {
+    print("Kmax in generateNET: " %+% Kmax);
+    nW1cat <- 6
+    W1cat_arr <- c(1:nW1cat)/2
+    prob_F <- plogis(-4.5 + 2.5*W1cat_arr) / sum(plogis(-4.5 + 2.5*W1cat_arr))
+    NetInd_k <- matrix(NA_integer_, nrow = n, ncol = Kmax)
+    nFriendTot <- rep(0L, n)
+    for (index in (1:n)) {
+      FriendSampSet <- setdiff( c(1:n), index)  #set of possible friends to sample, anyone but itself
+      nFriendSamp <- max(nF[index] - nFriendTot[index], 0L) #check i's network is not already filled to max
+      if (nFriendSamp>0) {
+        if (length(FriendSampSet)==1)  {  # To handle the case with |FriendSampSet| = 1
+          friends_i <- FriendSampSet
+        } else { 
+          #sample from the possible friend set, with prob for selecting each j being based on categorical bslVar[j]
+          # bslVar[i] affects the probability of having [i] selected as someone's friend bslVar
+          friends_i <- sort(sample(FriendSampSet, size = nFriendSamp, prob = prob_F[bslVar[FriendSampSet] + 1]))
+        }
+        # Turn any vector of IDs into a vector of length Kmax, filling each remainder with trailing NA's:
+        NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, Kmax - length(friends_i)))
+        nFriendTot[index] <- nFriendTot[index] + nFriendSamp
+      }
+    }
+    return(NetInd_k)
+  }
+
+  normprob <- function(x) x / sum(x)
+  k_arr <-c(1:Kmax)
+  pN_0 <- 0.02
+  prob_Ni_W1_0 <- normprob(c(pN_0, plogis(-3 - 0 - k_arr / 2)))    # W1=0 probabilities of |F_i|
+  prob_Ni_W1_1 <- normprob(c(pN_0, plogis(-1.5 - 0 - k_arr / 3)))  # W1=1 probabilities of |F_i|
+  prob_Ni_W1_2 <- normprob(c(pN_0, pnorm(-2*abs(2 - k_arr) / 5)))  # W1=2 probabilities of |F_i|
+  prob_Ni_W1_3 <- normprob(c(pN_0, pnorm(-2*abs(3 - k_arr) / 5)))  # W1=3 probabilities of |F_i|
+  prob_Ni_W1_4 <- normprob(c(pN_0, plogis(-4 + 2 * (k_arr - 2))))  # W1=4 probabilities of |F_i|
+  prob_Ni_W1_5 <- normprob(c(pN_0, plogis(-4 + 2 * (k_arr - 3))))  # W1=5 probabilities of |F_i|
+
+  nW1cat <- 6
+  rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])
+  D <- D + node("W1", distr = "rbinom2", size = (nW1cat-1), prob = c(0.4, 0.5, 0.7, 0.4))
+
+  prob_W2 <- seq(0.45, 0.8, by=0.3/nW1cat)[1:nW1cat]
+  D <- D + node("W2", distr = "rbern", asis.params = list(prob = "prob_W2[W1+1]"))
+
+  prob_W3 <- 0.6
+  D <- D + node("W3", distr = "rbern", prob = prob_W3)
+
+  probs_Nimat <- rbind(prob_Ni_W1_0, prob_Ni_W1_1, prob_Ni_W1_2, prob_Ni_W1_3, prob_Ni_W1_4, prob_Ni_W1_5)
+  D <- D + node("nF.plus1", distr = "rcategor.int", asis.params = list(probs = "probs_Nimat[W1+1,]"))
+  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generateNET", bslVar = W1, nF = nF.plus1 - 1)
+
+  betaA0 <- 2; betaA.W1 <- -0.5; betaA.netW1 <- -0.1; betaA.netW2 <- -0.4; betaA.netW3 <- -0.7
+  D <- D + node("A", distr = "rbern", 
+                prob = plogis(betaA0 + betaA.W1 * W1 +
+                              betaA.netW1 * sum(W1[[1:Kmax]]) +
+                              betaA.netW2 * sum(W2[[1:Kmax]]) +
+                              betaA.netW3 * sum(W3[[1:Kmax]])),
+                replaceNAw0 = TRUE)
+
+  betaY0 <- -1; betaY.AW2 <- 2; betaY.W3 <- -1.5
+  D <- D + node("pYRisk", distr = "rconst", 
+                const = plogis(betaY0 +
+                              betaY.AW2 * sum(W2[[1:Kmax]] * (1 - A[[1:Kmax]])) +
+                              betaY.W3 * sum(W3[[1:Kmax]])),
+                replaceNAw0 = TRUE)
+
+  D <- D + node("Y", distr = "rbern", prob = pYRisk)
+  Dset <- set.DAG(D)
+
+  # plotDAG(Dset)
+  # 10 fold increase in n results in ~ x100 increase in sim time:
+  t1 <- system.time(
+    dat <- sim(Dset, n = 1000, rndseed = 543)
+  )
+
+  # t2 <- system.time(
+  #   dat <- sim(Dset, n = 10000, rndseed = 543)
+  # )
+  # t1; t2
+}
+
 
 # DAG2 (from tech specs): defining actions with a new constructor and passing attributes
 test.set.DAG_DAG2b_newactions <- function() {
@@ -769,7 +871,61 @@ test.distr <- function() {
   checkException(rdistr.template(n = 100, arg1 = rep(0.5, 100), arg2 = rep(0.3, 50)))
 
 }
-test.bugfixes <- function() {
+
+test.condrcategor <- function() {
+  #-------------------------------------------------------------
+  # BUG WITH CONDITIONAL CATEGORICAL DISTRIBUTIONS (e.g., rcategor.int)
+  # probs arg should be evaluated to a matrix of probabilities, instead its a vector of length n
+  #-------------------------------------------------------------
+  # library(simcausal)
+  # THIS WORKS FINE, SINCE call to 'c' fun gets replaced with cbind:
+  D <- DAG.empty()
+  D <- D + node("W", distr = "rbern", prob = 0.3)
+  D <- D + node("Cat3", distr = "rcategor.int",
+                probs = (W == 0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
+  Dset1 <- set.DAG(D)
+
+  # THIS wasn't working, but was fixed by adding to parser a new if (quote(structure)):
+  D <- DAG.empty()
+  D <- D + node("W", distr = "rbern", prob = 0.3)
+  catprob.W0 <- cbind(0.7,0.1,0.2); catprob.W1 <- cbind(0.2,0.1,0.7)
+  D <- D + node("Cat3", distr = "rcategor.int",
+                probs = (W==0)*.(catprob.W0) + (W==1)*.(catprob.W1))
+  Dset2 <- set.DAG(D)
+
+  # THIS still doesn't work, since catprob.W0 gets evaluated INSIDE eval, parser sees catprob.W0 as a name, hence can't modify what's inside it
+  D <- DAG.empty()
+  D <- D + node("W", distr = "rbern", prob = 0.3)
+  catprob.W0 <- cbind(0.7,0.1,0.2); catprob.W1 <- cbind(0.2,0.1,0.7)
+  D <- D + node("Cat3", distr = "rcategor.int",
+                probs = (W==0)*catprob.W0 + (W==1)*catprob.W1)
+  # Dset3 <- set.DAG(D)
+  # catprob.W0 <- c(0.7,0.1,0.2); catprob.W1 <- c(0.2,0.1,0.7)
+  # D <- D + node("Cat3", distr = "rcategor.int",
+  #               probs = ifelse(W==0, catprob.W0, catprob.W1))
+  # D <- D + node("Cat3", distr = "rcategor.int",
+  #               probs = {if (W==0) {catprob.W0} else {catprob.W1}} )
+  # catprob.W0 <- matrix(c(0.7,0.1,0.2), nrow = 10, ncol = 3, byrow=TRUE)
+  # catprob.W1 <- matrix(c(0.2,0.1,0.7), nrow = 10, ncol = 3, byrow=TRUE)
+  # Dset <- set.DAG(D)
+
+  dat1a <- sim(Dset1, n=100, rndseed = 1234)
+  dat1b <- simcausal:::simFromDAG(DAG = Dset1, Nsamp = 100, rndseed = 1234)
+  all.equal(dat1a, dat1b)
+
+  dat2 <- simcausal:::simFromDAG(DAG = Dset2, Nsamp = 100, rndseed = 1234)
+  all.equal(dat1a, dat2)
+
+  node_evaluator <- simcausal:::Define_sVar$new(user.env = attr(Dset2, "user.env"), netind_cl = NULL)
+  eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = Dset2[["Cat3"]], data.df = dat2[,c("ID","W")])
+  eval_expr_res[[1]]$par.nodes
+  catprobs <- eval_expr_res[[1]]$evaled_expr
+  checkTrue(is.matrix(catprobs))
+
+}
+
+
+test.bugfixes <- function() {  
     #-------------------------------------------------------------
     # BUG (TO DO):
     # Should be able to handle character strings for node formulas (doesn't process them at all currently)

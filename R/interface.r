@@ -181,11 +181,15 @@ DAG.empty <- function() {
     dprint("name"); dprint(name)
     dprint("nodes"); dprint(nodes)
     dprint("attr"); dprint(attr)
-    res <- add.action(DAG=obj1, name=name, nodes=nodes, attr=attr)
+    res <- add.action(DAG = obj1, name = name, nodes = nodes, attr = attr)
   } else if ("DAG.nodelist" %in% class(obj2)) {
     # res <- c(obj1, obj2)
     # class(res) <- "DAG"
-    res <- add.nodes(DAG=obj1, nodes=obj2)
+    res <- add.nodes(DAG = obj1, nodes = obj2)
+  } else if ("DAG.netlist" %in% class(obj2)) {
+    if (!is.null(attr(obj1, "DAG.net"))) message("overwriting previously defined network object")
+    res <- add.nodes(DAG = obj1, nodes = obj2)
+    attr(res, "DAG.net") <- obj2
   } else {
     stop("Cannot add unknown type to DAG")
   }
