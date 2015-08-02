@@ -16,3 +16,15 @@ simcausal 0.2.0
 * New CRAN version release.
 
 * Adding vignette; improved documentation for ?simcausal; changing the documentation for sim, simobs and simfull functions; updated documentation add.nodes/+node and add.action/+action syntax; for node.depr is removed from the user access.
+
+simcausal 0.3.0
+==============
+
+* New CRAN version release.
+
+* Major updates:
+* Adding support for network-based sampling for dependent data with new syntax Var[[netind]] to index the covariate values of unit friends (connections); 
+* node function calling environment is now captured and used an enclosing env for node parameter evaluation; 
+
+* Minor updates:
+* Switching from warning to message when replacing/modifying existing DAG node object 

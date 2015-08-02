@@ -114,33 +114,34 @@ NetIndClass <- R6Class("NetIndClass",
 
     initialize = function(nobs, Kmax = 1) {
       self$nobs <- nobs
-      assert_that(is.count(Kmax))
-      self$Kmax <- Kmax
+      assert_that(is.integerish(Kmax))
+      self$Kmax <- as.integer(Kmax)
       self$nF <- rep.int(0L, nobs)
       self$NetInd_k <- matrix(NA_integer_, nrow = nobs, ncol = Kmax)
       invisible(self)
     },
 
     #------------------------------------------------------------------------------
-    # Netwk matrix of columns of friend indices (NetInd_k) from ids strings for network
+    # Netwk matrix of columns of friends indices (NetInd_k) from ids strings for network
     # Net_str - a string vector of friend IDs (rows in obs data)
-    # Kmax - max number of friends
+    # IDs_str - a string vector of observation IDs that identify observation row numbers from Net_str
     # sep - character symbol separating two friend IDs in data[i, NETIDnode] for observation i
-    makeNetInd.fromIDs = function(Net_str, NETIDnode, sep = ' ') {
+    makeNetInd.fromIDs = function(Net_str, IDs_str = NULL, sep = ' ') {
       # Turn string of IDs into a vector, trim extra spaces on both edges
-      splitstr_tovec <- function(Net_str_i) stringr::str_trim(unlist(strsplit(Net_str_i, sep, fixed=TRUE)), side = "both")
+      splitstr_tovec <- function(Net_str_i) stringr::str_trim(unlist(strsplit(Net_str_i, sep, fixed = TRUE)), side = "both")
       # Turn a vector of character IDs into integer row numbers
-      getRowsfromIDs <- function(NetIDvec) as.integer(sapply(NetIDvec, function(x) which(IDs %in% x)))
+      getRowsfromIDs <- function(NetIDvec, IDs_str) as.integer(sapply(NetIDvec, function(x) which(IDs_str %in% x)))
       # Turn any vector of IDs into a vector of length Kmax, filling remainder with trailing NA's
       makeKmaxIDvec <- function(NetIDVec) c(as.integer(NetIDVec), rep_len(NA_integer_, self$Kmax - length(NetIDVec)))
-      # Net_str <- as.character(data[,NETIDnode])
-      NetRows_l <- lapply(Net_str, splitstr_tovec) # Get list of n NET ID (character) vectors from NETIDnode
+      NetIDs_l <- lapply(Net_str, splitstr_tovec) # Get list of n NET ID (character) vectors from Net_str
+      NetRows_l <- NetIDs_l
+      # if IDnode was provided, get the network row #s from IDs:
+      if (!is.null(IDs_str)) NetRows_l <- lapply(NetIDs_l, getRowsfromIDs, IDs_str)
       # Make an array (n x Kmax) of network rows (filling remainder of each row with NA's)
       self$NetInd_k <- as.matrix(vapply(NetRows_l, makeKmaxIDvec, FUN.VALUE = rep.int(0L, self$Kmax), USE.NAMES = FALSE))
       if (self$Kmax > 1L) self$NetInd_k <- t(self$NetInd_k) # for Kmax > 1 need to transpose since the output mat will have dims (Kmax x nrow(data))
       self$make.nF()
       invisible(list(nF = self$nF, NetInd_k = self$NetInd_k)) # invisible(self)
-      # return(list(nF = nF, NetInd_k = NetInd_k)) # invisible(self)
     },
 
     make.nF = function(NetInd_k = self$NetInd_k, nobs = self$nobs, Kmax = self$Kmax) {

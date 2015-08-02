@@ -4,7 +4,6 @@ if(FALSE) {
   library("RUnit")
   library("roxygen2")
   library("devtools")
-  # library(R6)
   setwd(".."); setwd(".."); getwd()
   document()
   load_all("./") # load all R files in /R and datasets in /data. Ignores NAMESPACE:
@@ -36,6 +35,10 @@ if(FALSE) {
   # simcausal:::addvectorfcn("poisson")
   # simcausal:::debug_set() # SET TO DEBUG MODE
   # simcausal:::debug_off() # SET DEBUG MODE OFF
+
+  # To install a specific branch:
+  # devtools::install_github('osofr/simcausal', ref = "simnet", build_vignettes = FALSE)
+  # devtools::install_github('osofr/simcausal', ref = "master", build_vignettes = FALSE)
 
   # TEST COVERATE:
   # if your working directory is in the packages base directory

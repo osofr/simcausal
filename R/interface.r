@@ -71,7 +71,7 @@ add.nodes <- function(DAG, nodes) {
       class(modDAG) <- "DAG"
     } else { # this node name already exist in the DAG, existing node is overwritten
       modDAG <- modDAGnode(modDAG, nodes[[node_idx]])
-      warning("existing node "%+% nodes[[node_idx]]$name %+% " was modified")
+      message("existing node "%+% nodes[[node_idx]]$name %+% " was modified")
     } 
   }
   return(modDAG)

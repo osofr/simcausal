@@ -2,7 +2,7 @@ Package: simcausal
 Type: Package
 Version: 0.2.2
 Title: Simulating Longitudinal Data with Causal Inference Applications
-Date: 2015-06-11
+Date: 2015-07-29
 Authors@R: c(
     person("Oleg", "Sofrygin", role=c("aut", "cre"), email="oleg.sofrygin@gmail.com"),
     person(c("Mark", "J."), "van der Laan", role="aut", email="laan@berkeley.edu"),

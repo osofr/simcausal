@@ -122,7 +122,7 @@
 
   # Y[i] is a function of netW3 (friends of i W3 values) and the total N of i's friends who are infected AND untreated:
   betaY0 <- -1; betaY.AW2 <- 2; betaY.W3 <- -1.5
-  D <- D + node("pYRisk", distr = "rconst", 
+  D <- D + node("pYRisk", distr = "rconst",
                 const = plogis(betaY0 +
                               betaY.AW2 * sum(W2[[1:Kmax]] * (1 - A[[1:Kmax]])) +
                               betaY.W3 * sum(W3[[1:Kmax]])),
