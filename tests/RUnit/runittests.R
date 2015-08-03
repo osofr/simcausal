@@ -226,7 +226,6 @@ test.networkgen <- function() {
 test.set.DAG_DAG2b_newactions <- function() {
     library(simcausal)
 
-
     #-------------------------------------------------------------
     # EXAMPLE 1: lets start with a simple example of a (W,A,Y) DAG
     #-------------------------------------------------------------

@@ -13,7 +13,9 @@ node(name, t, distr, EFU, order, ..., params = list(), asis.params = list())
 
 \item{distr}{Character name of the node distribution, can be a standard distribution R function, s.a. rnorm, rbinom, runif or user defined. The function must accept a named argument "n" to specify the total sample size. Distributional parameters (arguments) must be passed as either named arguments to node or as a named list of parameters "params".}
 
-\item{EFU}{End-Of-Follow up, only applies to Bernoulli nodes, when TRUE this node becomes an indicator for the end of follow-up (censoring, end of study, death, etc). When simulated variable with this node distribution evaluates to 1, subsequent nodes with higher \code{order} values are set to NA by default (or carried forward from their previous observed values). Can only be set to TRUE for Bernoulli nodes.}
+\item{EFU}{End-of-Follow Up flag for designating a survival/censoring type node, only applies to Bernoulli nodes. When \code{EFU=TRUE} this node becomes an indicator for the end of follow-up event (censoring, end of study, death, etc).
+When simulated variable with this node distribution evaluates to value 1 subsequent nodes with higher temporal \code{order} values will be set to NA by default (or imputed with carry forward imputation, depending on the settings of the \code{sim} function).
+This can only be set to \code{TRUE} and should be omitted otherwise.}
 
 \item{order}{An optional integer parameter specifying the order in which these nodes will be sampled. The value of order has to start at 1 and be unique for each new node, can be specified as a range / vector and has to be of the same length as the argument \code{t} above. When order is left unspecified it will be automatically inferred based on the order in which the node(s) were added in relation to other nodes. See Examples and Details below.}
 
@@ -21,7 +23,8 @@ node(name, t, distr, EFU, order, ..., params = list(), asis.params = list())
 
 \item{params}{A list of additional named parameters to be passed on to the \code{distr} function. The parameters have to be either constants or character strings of R expressions of the past node names.}
 
-\item{asis.params}{(ADVANCED USE ONLY) A list of additional named parameters that will be evaluated "as is", inside the currently simulated data.frame + user calling environment. No expression modifications or error-checking will be performed. Same syntax as for \code{params} argument.}
+\item{asis.params}{(ADVANCED USE ONLY) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
+There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}). Time varying nodes should be refernced by their names as they appear in the simulated data, as in \code{TVar_t}.}
 }
 \value{
 A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
@@ -59,8 +62,8 @@ to each node indexed by a given time point denoted by \code{t}. This generic exp
 different set of parent nodes for each time point as illustrated below. Note that the parents of each node represented by a given \code{node} object are implicitly defined
 by the nodes referenced in formulas of that \code{node} call.
 
-Distribution parameters (mean, probs, sd, unifmin and unifmax) are passed down with delayed evaluation, to force immediate evaluation of any variable
-inside these expressions wrap the variable with \code{.()} function, see Example 2 for \code{.(t_end)}.
+(ADVANCED USE ONLY) All distribution parameters (e.g., \code{mean}, \code{probs}, \code{sd}, \code{unifmin} and \code{unifmax}) are always interpreted with delayed evaluation,
+to force immediate evaluation of a variable \code{Var} wrap the variable inside \code{.()} function, as in \code{.(Var)}. See Example 2 for a working example that evaluates \code{.(t_end)} variable.
 }
 \examples{
 #---------------------------------------------------------------------------------------

@@ -1,3 +1,8 @@
+
+#' @importFrom assertthat is.string
+
+is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.integer(x)))
+
 # ------------------------------------------------------------------------------------
 # CONVERTING THE NETWORK FROM SPARSE ADJACENCY MATRIX FORMAT INTO simcausal/tmlenet INPUT FORMAT (NetInd_k)
 # Returns NetInd_k - (n, Kmax) matrix of friend IDs (rows)) listed as columns, fill remainders with NAs
