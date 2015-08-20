@@ -204,8 +204,9 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @param edge_attrs A named list of \code{igraph} graphical parameters for plotting DAG edges. These parameters are passed on to \code{add.edges} \code{igraph} function.
 #' @param customvlabs A named vector of custom DAG node labels (replaces node names from the DAG object).
 #' @param excludeattrs A character vector of attribute DAG nodes that shouldn't be plotted
+#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
 #' @export
-plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs) {
+plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, verbose = getOption("simcausal.verbose")) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
     stop("igraph package is required for this function to work. Please install igraph.",
       call. = FALSE)
@@ -325,8 +326,10 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
   edge_attrs_default <- list(color="black", width=0.2, arrow.width=arrow.width, arrow.size=arrow.size)
   vertex_attrs <- append(vertex_attrs, vertex_attrs_default[!(names(vertex_attrs_default)%in%attnames_ver)])
   edge_attrs <- append(edge_attrs, edge_attrs_default[!(names(edge_attrs_default)%in%attnames_edge)])
-  message("using the following vertex attributes: "); message(vertex_attrs)
-  message("using the following edge attributes: "); message(edge_attrs)
+  if (verbose) {
+    message("using the following vertex attributes: "); message(vertex_attrs)
+    message("using the following edge attributes: "); message(edge_attrs)    
+  }
 
   g <- igraph::graph.empty()
   # g <- igraph::add.vertices(g, nv=length(names(par_nodes)), color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
@@ -342,7 +345,9 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
       if (!all(ind_parexist)) {
         par_outvec <- parents_i[!ind_parexist]
         if (length(par_outvec)>1) par_outvec <- paste0(par_outvec, collapse=",")
-        warning("some of the extracted parent nodes weren't defined in the DAG and are being omitted: "%+%par_outvec)
+        if (verbose) {
+          message("some of the extracted parent nodes weren't defined in the DAG and are being omitted: "%+%par_outvec)
+        }
         parents_i <- parents_i[ind_parexist]
       }
       if (length(parents_i)>0) {
@@ -410,10 +415,11 @@ check_expanded <- function(inputDAG) {
 #' Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution. Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.
 #' @param DAG Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.
 #' @param vecfun A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.
+#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/RUnit/set.DAG.R
 #' @export
-set.DAG <- function(DAG, vecfun) {
+set.DAG <- function(DAG, vecfun, verbose = getOption("simcausal.verbose")) {
 
   # ************
   # Adding parent env. for future evaluation of node formulas.
@@ -448,14 +454,14 @@ set.DAG <- function(DAG, vecfun) {
   check.order <- sapply(Nattr(DAG, "order"), is.null)
   # print("check.order"); print(check.order)
   if (any(check.order)) {
-    message("...automatically assigning order attribute to some nodes...")
+    if (verbose) message("...automatically assigning order attribute to some nodes...")
     for (inode in which(check.order)) {
       if (inode==1) {
         DAG[[inode]]$order <- 1
       } else {
         DAG[[inode]]$order <- DAG[[inode-1]]$order+1
       }
-      message("node "%+%DAG[[inode]]$name%+%", order:"%+%DAG[[inode]]$order)
+      if (verbose) message("node "%+%DAG[[inode]]$name%+%", order:"%+%DAG[[inode]]$order)
     }
   }
   # *) check each node contains required named arguments

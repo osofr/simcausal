@@ -1574,7 +1574,7 @@ define interventions that are indexed by a scalar \code{theta} whose value chang
 the square-bracket syntax \code{theta[t]} is used for referencing the time-varying values of the action attribute
 \code{theta}. More details on the use of time-varying action attributes are provided in the next section.
 
-<<>>=
+<<message=FALSE, warning=FALSE>>=
   act_theta_t <-c(node("A1",t = 0, distr = "rbern", 
                       prob = ifelse(L2[0] >=  theta[t], 1, 0)),
                   node("A1",t = 1:t.end, distr = "rbern", 

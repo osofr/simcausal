@@ -5,7 +5,8 @@
 \title{Plot DAG}
 \usage{
 plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
-  vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs)
+  vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs,
+  verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{A DAG object that was specified by calling \code{\link{set.DAG}}}
@@ -25,6 +26,8 @@ plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
 \item{excludeattrs}{A character vector of attribute DAG nodes that shouldn't be plotted}
 
 \item{customvlabs}{A named vector of custom DAG node labels (replaces node names from the DAG object).}
+
+\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
 }
 \description{
 Plot a DAG object using functions from \code{igraph} package.

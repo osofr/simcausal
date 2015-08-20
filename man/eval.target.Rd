@@ -4,7 +4,8 @@
 \alias{eval.target}
 \title{Evaluate the True Value of the Causal Target Parameter}
 \usage{
-eval.target(DAG, n, data, actions, rndseed = NULL)
+eval.target(DAG, n, data, actions, rndseed = NULL,
+  verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{DAG object with target parameter set via \code{set.targetE} or \code{set.targetMSM} functions}
@@ -16,6 +17,8 @@ eval.target(DAG, n, data, actions, rndseed = NULL)
 \item{actions}{Character vector of action names which play the role of the data generating mechanism for simulated data when argument \code{data} is missing. Alternatively, \code{actions} can be a list of action DAGs  pre-selected with \code{A(DAG)} function. When this argument is missing, full data is automatically sampled from all available actions in the \code{DAG} argument.}
 
 \item{rndseed}{Seed for the random number generator.}
+
+\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
 }
 \value{
 For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}),

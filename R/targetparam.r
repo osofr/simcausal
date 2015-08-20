@@ -120,7 +120,7 @@ subset_dat <- function(df, outcome, t_sel) { # subset full data (in wide format)
   }
 }
 # subset full data (in long format) by time-points:
-subset_dat_long <- function(dt, t_sel) { 
+subset_dat_long <- function(dt, t_sel) {
   if (is.longfmt(dt)) {
     dtDAG <- attr(dt, "DAG")
     savedattrs <- CopyAttributes(attrslist=attributes(dt), tvals=t_sel) 	# save attributes for original data
@@ -405,15 +405,16 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
 #' @param data List of action-specific \code{data.frames} generated with \code{sim} or \code{simfull}
 #' @param actions Character vector of action names which play the role of the data generating mechanism for simulated data when argument \code{data} is missing. Alternatively, \code{actions} can be a list of action DAGs  pre-selected with \code{A(DAG)} function. When this argument is missing, full data is automatically sampled from all available actions in the \code{DAG} argument.
 #' @param rndseed Seed for the random number generator.
+#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
 #' @return For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}), 
 #'MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}), 
 #'and the long format full data that was used for fitting this MSM \code{"df_long"}.
 #' 
 #' @importFrom assertthat assert_that is.count
 #' @export
-eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
+eval.target <- function(DAG, n, data, actions, rndseed = NULL, verbose = getOption("simcausal.verbose")) {
   gen_full_dat <- function(actions, wide = TRUE, LTCF = FALSE) { # generate full data when its not provided as an argument
-    message("evaluating the target on "%+%n%+%" simulated samples per action")
+    if (verbose) message("evaluating the target on "%+%n%+%" simulated samples per action")
     if (is.character(actions)) { # grab appropriate actions from the DAG by name
       actions <- getactions(DAG, actions)
     } else if (is.list(actions)) {
@@ -435,7 +436,7 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
     if (!all(sapply(data, is.data.frame))) stop("data must be a list of full data (action) data.frames")
     n_all <- unique(sapply(data, nrow))
     # if (length(n_all)>1) warning("number of rows for different data.frames in data is not unique")
-    if (!missing(n)) warning("argument n is not used, number of rows in data determines the evaluation sample size for each action")
+    if (!missing(n)) message("argument n will not be used, the action-specific simulated data is alrady provided by argument data")
     n <- n_all[1]
   }
   if (!missing(n)) {
@@ -466,9 +467,9 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
 
   if (!is.null(params.E)) {
     if (missing(data)) {# if no full data, simulate full data from actions argument
-      message("data not specified, simulating full data")
-      if (missing(actions)) {	
-        message("no actions specified, sampling full data for ALL actions from the DAG")
+      if (verbose) message("data not specified, simulating full data")
+      if (missing(actions)) {
+        if (verbose) message("no actions specified, sampling full data for ALL actions from the DAG")
         actions <- A(DAG)
       }
       data <- gen_full_dat(actions=actions)
@@ -477,21 +478,21 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
     if (is.longfmt(data[[1]])) stop("full data must be in wide format for target set.targetE, run sim(actions, n)")
     vec_EFUP <- sapply(N(DAG)[outnode_nms], is.EFUP)
     if (any(vec_EFUP)&(!is.LTCF(data[[1]], outcome))) {
-      message("some outcome nodes have EFU=TRUE, applying Last Time Point Carry Forward function: doLTCF()")
+      if (verbose) message("some outcome nodes have EFU=TRUE, applying Last Time Point Carry Forward function: doLTCF()")
       data <- lapply(data, doLTCF, LTCF=outcome)
     }
     res <- eval.E(DAG = DAG, df_full = data, outnodes = outnodes, outnode_nms = outnode_nms, params.E = params.E, attrs = attrs)
   } else if (!is.null(params.MSM)) {
     if (is.null(params.MSM$form)) stop("MSM formula must be specified")
     if (is.null(params.MSM$family)) {
-      message("defaulting glm family for MSM to quasibinomial")
+      message("using the default glm family for MSM: quasibinomial")
       params.MSM$family <- "quasibinomial"
     }
 
     if (missing(data)) {# if no full data, simulate full data from actions argument			
-      message("data not specified, simulating full data")
+      if (verbose) message("data not specified, simulating full data")
       if (missing(actions)) {	
-      	message("no actions specified, sampling full data for ALL actions from the DAG")
+      	if (verbose) message("no actions specified, sampling full data for ALL actions from the DAG")
       	actions <- A(DAG)
       }
       if (is.null(params.MSM$hazard) || (params.MSM$hazard)) { # if hazard is missing or wanted, do not impute forward the outcome
@@ -501,7 +502,7 @@ eval.target <- function(DAG, n, data, actions, rndseed=NULL) {
       }
       data <- gen_full_dat(actions=actions, wide=TRUE, LTCF=LTCF)
     }
-    res <- eval.MSM(DAG=DAG, df_full=data, outnodes=outnodes, outnode_nms=outnode_nms, params.MSM=params.MSM, attrs=attrs)
+    res <- eval.MSM(DAG=DAG, df_full=data, outnodes=outnodes, outnode_nms=outnode_nms, params.MSM=params.MSM, attrs=attrs, verbose=verbose)
   } else {
     stop("target parameter can be either E (expectation) or working MSM, other parameters are not implemented")
   }
@@ -549,7 +550,7 @@ eval.E <- function(DAG, df_full, outnodes, outnode_nms, params.E, attrs) {
 # calculate parameters based on MSMs
 #	*) combine action-specific datasets into one
 #	*) run a working regression model on that full data to calculate the true value of the target param
-eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
+eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, verbose = getOption("simcausal.verbose")) {
   outcome <- outnodes$gen_name
   t_vec <- outnodes$t
   form <- params.MSM$form
@@ -586,7 +587,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
 
       XMSM_terms <- as.character(term_maptab[,"XMSMterms"])
       dprint("MSM term names"); dprint(XMSM_terms)
-      message("evaluating MSM summary measures and converting full data to long format for MSM target parameter")
+      if (verbose) message("evaluating MSM summary measures and converting full data to long format for MSM target parameter")
       # evaluate summary measures for all observations in df_full, inside df_full environment
       SMSM_Xdat <- lapply(df_full, function(prevdat) simFromDAG(DAG = MSMtermsDAG, Nsamp = nrow(prevdat), LTCF = LTCF_param, prev.data = prevdat))
       # ***** cbind df_full and SMSM_Xdat, saving appropriate attributes
@@ -623,7 +624,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
     dprint("old map of MSM formula terms to vars:"); dprint(term_maptab_old)
     parse_form <- parse.MSMform(msm.form = form, t_vec = t_vec, old.DAG = DAG, term_map_tab_old = term_maptab_old)
 
-    if (!is.null(parse_form$term_maptab)) {
+    if (!is.null(parse_form$term_maptab) && verbose) {
       message("for df_full in long format new summary measures cannot be calculated, using whatever summary measures already exist in df_full")
       message("for df_full in long format outcome is pooled over the same t vector as defined in the first MSM that generated the long format data, changing pooling t requires re-generating the full data")
       message("assuming the data is based on the following map of MSM terms to variable names")
@@ -639,7 +640,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs) {
   dprint("df_combine"); dprint(df_combine)
 
   # * Run the glm regression for form from params.MSM
-  message("MSM: fitting glm to full data")
+  if (verbose) message("MSM: fitting glm to full data")
   m <- glm(parse_form$term_form, data = df_combine, family = family, na.action = na.exclude)
   coef <- coef(m)
   return(list(msm = m, coef = coef, S.msm.map = parse_form$term_maptab, hazard = hazard, call = attr(DAG, "target")$call, df_long = df_full))
@@ -651,6 +652,7 @@ GetWarningsToSuppress <- function() {
   "All 'measure.vars are NOT of the SAME type. By order of hierarchy, the molten data value column will be of type 'double'. Therefore all measure variables that are not of type 'double' will be coerced to. Check the DETAILS section of ?melt.data.table for more on coercion.")
   return(coercwarn)
 }
+
 SuppressGivenWarnings <- function(expr, warningsToIgnore) {
   h <- function (w) {
     if (w$message %in% warningsToIgnore) invokeRestart( "muffleWarning" )

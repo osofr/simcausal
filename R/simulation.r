@@ -100,8 +100,8 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
           stop("error while evaluating node "%+% cur.node$name %+%" expression(s): "%+%expr_str%+%".\n One of the distribution parameters evaluated to an incorrect vector length, check syntax.")
         }
       } else {
-        print("expr_str"); print(expr_str)
-        print(class(expr_str))
+        # print("expr_str"); print(expr_str)
+        # print(class(expr_str))
         # stop("...one of the distribution parameters evaluated to unsported data type...")
         stop("error while evaluating node "%+% cur.node$name %+%" expression(s): "%+%expr_str%+%".\n One of the formulas evaluated to an unsported data type, check syntax.")
       }

@@ -4,12 +4,14 @@
 \alias{set.DAG}
 \title{Create and Lock DAG Object}
 \usage{
-set.DAG(DAG, vecfun)
+set.DAG(DAG, vecfun, verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.}
 
 \item{vecfun}{A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.}
+
+\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
 }
 \value{
 A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.

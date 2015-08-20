@@ -24,13 +24,13 @@ if(FALSE) {
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
   setwd("..")
-  system("R CMD check --as-cran simcausal_0.2.0.tar.gz") # check R package tar ball prior to CRAN submission
+  system("R CMD check --as-cran simcausal_0.2.2.tar.gz") # check R package tar ball prior to CRAN submission
       ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
       ## system("R CMD build simcausal --no-build-vignettes")
       ## system("R CMD build simcausal")  
   # devtools::use_travis() # SET UP TRAVIS CONFIG FILE
   # INSTALLING FROM SOURCE:
-  # install.packages("./simcausal_0.2.0.tar.gz", repos = NULL, type="source", dependencies=TRUE)
+  # install.packages("./simcausal_0.2.2.tar.gz", repos = NULL, type="source", dependencies=TRUE)
   # library(simcausal)
   # simcausal:::addvectorfcn("poisson")
   # simcausal:::debug_set() # SET TO DEBUG MODE
@@ -407,9 +407,7 @@ test.set.DAG_DAG2b_newactions <- function() {
     #-------------------------------------------------------------
     # EXAMPLE 2: longitudinal data
     #-------------------------------------------------------------
-    library(simcausal)
     # Define longitudinal DAG for the observed data
-
     # t_end <- 16
     # OLD FORMAT (STILL WORKS)
     # L2_0 <- node("L2", t=0, distr="rbern", prob=0.05, order=1)
@@ -422,7 +420,7 @@ test.set.DAG_DAG2b_newactions <- function() {
     # A2_t <- node("A2", t=1:t_end, distr="rbern", prob=1, order=8+4*(0:(t_end-1)))
     # Y_t <- node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
     # lDAG2b <- set.DAG(c(L2_0,L1_0, A1_0, A2_0, Y_0, L2_t, A1_t, A2_t, Y_t))
-
+    
     # new interface:
     t_end <- 16
     D <- DAG.empty()
@@ -1227,7 +1225,7 @@ test.bugfixes <- function() {
 }
 
 test.plotting <- function() {
-    # # skipping order
+    # # skipping order, gives messages by default:
     t_end <- 16
     D <- DAG.empty()
     D <- D + node("L2", t=0,        distr="rbern", prob=0.05)
@@ -1240,6 +1238,24 @@ test.plotting <- function() {
     D <- D + node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), EFU=TRUE) # informative censoring
     D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
     lDAG3 <- set.DAG(D)
+
+    # turn off default messages:
+    oldverboseopt <- getOption("simcausal.verbose")
+    options(simcausal.verbose=FALSE)
+    t_end <- 16
+    D <- DAG.empty()
+    D <- D + node("L2", t=0,        distr="rbern", prob=0.05)
+    D <- D + node("L1", t=0,        distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1))
+    D <- D + node("A1", t=0,        distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))))
+    D <- D + node("A2", t=0,        distr="rbern", prob=0, EFU=TRUE)
+    D <- D + node("Y",  t=0,        distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), EFU=TRUE)
+    D <- D + node("L2", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))))
+    D <- D + node("A1", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))))
+    D <- D + node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), EFU=TRUE) # informative censoring
+    D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
+    lDAG3 <- set.DAG(D)
+    options(simcausal.verbose=oldverboseopt)
+
 
     # plotDAG(lDAG3)
     # plotDAG(lDAG3, xjitter=0.3, yjitter=0.01)
