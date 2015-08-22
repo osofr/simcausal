@@ -22,7 +22,7 @@ nodeform_parsers.depr <- function(node_form_call) {
   vector_fcns_all <- c(vector_fcns, vector_ops_fcns, vector_math_fcns, vecfun.get())
   # print("vector_fcns_all"); print(vector_fcns_all)
 
-  # (not USED) SUMMARY FCNS (non-vectorized): these will be always turned into apply(arg, 1, func) 
+  # (not USED) SUMMARY FCNS (non-vectorized): these will be always turned into apply(arg, 1, func)
   # summary_fcns <- c("c","all","any","sum","mean","prod","min","max","range")
   # (not USED) FOR FUTURE IMPLEMENTATION: FUNCTION NAMES THAT AREN'T ALLOWED IN FORMULA EXPRESSIONS:
   # banned_fcns <- c( "apply", "cbind", "&&", "||")

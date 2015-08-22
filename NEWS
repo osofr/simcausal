@@ -26,10 +26,10 @@ simcausal 0.3.0
 * Addition of network() function that allows simulating networks;
 * Support for network-based sampling of dependent data. New syntax Variable[[netindx]] allows one to to index Variable values of friends (connections) (assuming a network has been already generated with the network() function);
 * User calling environment is now captured by each call to node() function; this is used as an enclosing environment when evaluating node() function arguments;
-* Moving to R6 class node call parser
+* Moving to R6 class node call parser;
 
 * Minor updates:
-* Adding global option options(simcausal.verbose) that can be set to TRUE/FALSE; default is TRUE
-* Adding network simulation example to /tests/Runit/gen.net.example.R, simulating networks using igraph package; Examples for simulating networks based on igraph ER model
+* Adding global option options(simcausal.verbose) that can be set to FALSE to suppress message printing; default is TRUE;
+* Adding network simulation example to /tests/Runit/gen.net.example.R, simulating networks using igraph package; Examples for simulating networks based on igraph ER model;
 * Adding conversion utility function to/from sparse adjacency network matrix to simcausal internet network storage;
-* Switching from warning to message when replacing/modifying existing DAG node object 
+* Switching from warning to message when replacing/modifying existing DAG node object;

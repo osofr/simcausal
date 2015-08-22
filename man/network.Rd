@@ -88,7 +88,7 @@ One can also define summary measures of the network covariates by specifying a n
 The rules for defining and applying such summary measures are identical to the rules for defining summary measures for time-varying nodes VarName[t_indx].
 For example, use \code{sum(VarName[[net_indx]])} to define a summary measure as a sum of \code{VarName} values of friends in \code{F_i[net_indx]}, across all observations \code{i} in \code{1:n}.
 Similarly, use \code{mean(VarName[[net_indx]])} to define a summary measure as a mean of \code{VarName} values of friends in \code{F_i[net_indx]}, across all \code{i}.
-For more details on defining such summary functions see the simcausal package vignette.
+For more details on defining such summary functions see the \code{simcausal} vignette.
 }
 \examples{
 #--------------------------------------------------------------------------------------------------

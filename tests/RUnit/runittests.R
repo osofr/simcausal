@@ -24,7 +24,7 @@ if(FALSE) {
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
   setwd("..")
-  system("R CMD check --as-cran simcausal_0.2.2.tar.gz") # check R package tar ball prior to CRAN submission
+  system("R CMD check --as-cran simcausal_0.3.0.tar.gz") # check R package tar ball prior to CRAN submission
       ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
       ## system("R CMD build simcausal --no-build-vignettes")
       ## system("R CMD build simcausal")  
@@ -39,7 +39,6 @@ if(FALSE) {
   # To install a specific branch:
   # devtools::install_github('osofr/simcausal', ref = "simnet", build_vignettes = FALSE)
   # options(simcausal.verbose = FALSE)
-  # devtools::install_github('osofr/simcausal', ref = "master", build_vignettes = FALSE)
   # devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
   # devtools::install_github('osofr/tmlenet', build_vignettes = FALSE)
 

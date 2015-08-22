@@ -249,10 +249,37 @@ netvar <- function(varnm, fidx) {
 # netvar(c("A", "W"), c(0:5, 0, 3))
 
 ## ---------------------------------------------------------------------
-# Class holds and creates NetInd_k, the matrix of network connection indices in Odata of dim = (nobs x Kmax)
-# Also calculates a vector nF - number of friends for each unit
-# When class = FALSE, a pointer "self" is still created, but parent.env(self) is the enclosing environment
-## ---------------------------------------------------------------------
+#' R6 class for creating and storing a friend matrix (network IDs) for simulating network data
+#'
+#' This R6 class defines fields and methods for creating and storing \code{NetInd_k}, 
+#' a matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
+#'
+#' @docType class
+#' @importFrom R6 R6Class
+#' @format An \code{\link{R6Class}} generator object
+#' @keywords R6 class
+#' @details
+#' \itemize{
+#' \item{NetInd_k} - Matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
+#' \item{nF} - Vector of integers, where \code{nF[i]} is the integer number of friends (0 to \code{Kmax}) for observation \code{i}.
+#' \item{nobs} - Number of observations
+#' \item{Kmax} - Maximum number of friends for any observation.
+#' }
+#' @section Methods:
+#' \describe{
+#'   \item{\code{new(nobs, Kmax = 1)}}{Uses \code{nobs} and \code{Kmax} to instantiate an object of R6 class and pre-allocate memory 
+#'          for the future network ID matrix.}
+#'   \item{\code{makeNetInd.fromIDs(Net_str, IDs_str = NULL, sep = ' ')}}{Build the matrix of network IDs (\code{NetInd_k}) from IDs string vector,
+#'          all friends of one observation \code{i} are located in a string Net_str[i], with two distinct friend IDs of \code{i} 
+#'          separated by character \code{sep}. If \code{IDs_str} is NULL it is assumed that the friends in Net_str are 
+#'          actual row numbers in \code{1:nobs}, otherwise IDs from Net_str will be used for looking up the observation row numbers in \code{IDs_str}.}
+#'   \item{\code{make.nF(NetInd_k = self$NetInd_k, nobs = self$nobs, Kmax = self$Kmax)}}{This method calculates the integer number of 
+#'         friends for each row of the network ID matrix (\code{self$NetInd_k}). The result is assigned to a field \code{self$nF} and 
+#'         is returned invisibly.}
+#'   \item{\code{mat.nF(nFnode)}}{\code{nFnode} - the character name for the number of friends variable that is assigned as a column 
+#'   name to a single column matrix in \code{self$nF}.}
+#' }
+#' @export
 NetIndClass <- R6Class("NetIndClass",
   class = TRUE,
   portable = TRUE,
@@ -272,7 +299,7 @@ NetIndClass <- R6Class("NetIndClass",
     },
 
     #------------------------------------------------------------------------------
-    # Netwk matrix of columns of friends indices (NetInd_k) from ids strings for network
+    # Network matrix of columns of friends indices (NetInd_k) from IDs strings for network
     # Net_str - a string vector of friend IDs (rows in obs data)
     # IDs_str - a string vector of observation IDs that identify observation row numbers from Net_str
     # sep - character symbol separating two friend IDs in data[i, NETIDnode] for observation i
