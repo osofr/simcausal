@@ -38,7 +38,10 @@ if(FALSE) {
 
   # To install a specific branch:
   # devtools::install_github('osofr/simcausal', ref = "simnet", build_vignettes = FALSE)
+  # options(simcausal.verbose = FALSE)
   # devtools::install_github('osofr/simcausal', ref = "master", build_vignettes = FALSE)
+  # devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
+  # devtools::install_github('osofr/tmlenet', build_vignettes = FALSE)
 
   # TEST COVERATE:
   # if your working directory is in the packages base directory
@@ -134,93 +137,6 @@ test.noexistdistr <- function() {
   Dset <- set.DAG(D)
   sim(Dset, n = 20)
 }
-
-
-# Adding test set for generating networks for a biased network sample (conditional on bslVar) of size nF:
-test.networkgen <- function() {
-  Kmax <- 6
-  D <- DAG.empty()
-
-  generateNET <- function(n, Kmax, bslVar, nF, ...) {
-    print("Kmax in generateNET: " %+% Kmax);
-    nW1cat <- 6
-    W1cat_arr <- c(1:nW1cat)/2
-    prob_F <- plogis(-4.5 + 2.5*W1cat_arr) / sum(plogis(-4.5 + 2.5*W1cat_arr))
-    NetInd_k <- matrix(NA_integer_, nrow = n, ncol = Kmax)
-    nFriendTot <- rep(0L, n)
-    for (index in (1:n)) {
-      FriendSampSet <- setdiff( c(1:n), index)  #set of possible friends to sample, anyone but itself
-      nFriendSamp <- max(nF[index] - nFriendTot[index], 0L) #check i's network is not already filled to max
-      if (nFriendSamp>0) {
-        if (length(FriendSampSet)==1)  {  # To handle the case with |FriendSampSet| = 1
-          friends_i <- FriendSampSet
-        } else { 
-          #sample from the possible friend set, with prob for selecting each j being based on categorical bslVar[j]
-          # bslVar[i] affects the probability of having [i] selected as someone's friend bslVar
-          friends_i <- sort(sample(FriendSampSet, size = nFriendSamp, prob = prob_F[bslVar[FriendSampSet] + 1]))
-        }
-        # Turn any vector of IDs into a vector of length Kmax, filling each remainder with trailing NA's:
-        NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, Kmax - length(friends_i)))
-        nFriendTot[index] <- nFriendTot[index] + nFriendSamp
-      }
-    }
-    return(NetInd_k)
-  }
-
-  normprob <- function(x) x / sum(x)
-  k_arr <-c(1:Kmax)
-  pN_0 <- 0.02
-  prob_Ni_W1_0 <- normprob(c(pN_0, plogis(-3 - 0 - k_arr / 2)))    # W1=0 probabilities of |F_i|
-  prob_Ni_W1_1 <- normprob(c(pN_0, plogis(-1.5 - 0 - k_arr / 3)))  # W1=1 probabilities of |F_i|
-  prob_Ni_W1_2 <- normprob(c(pN_0, pnorm(-2*abs(2 - k_arr) / 5)))  # W1=2 probabilities of |F_i|
-  prob_Ni_W1_3 <- normprob(c(pN_0, pnorm(-2*abs(3 - k_arr) / 5)))  # W1=3 probabilities of |F_i|
-  prob_Ni_W1_4 <- normprob(c(pN_0, plogis(-4 + 2 * (k_arr - 2))))  # W1=4 probabilities of |F_i|
-  prob_Ni_W1_5 <- normprob(c(pN_0, plogis(-4 + 2 * (k_arr - 3))))  # W1=5 probabilities of |F_i|
-
-  nW1cat <- 6
-  rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])
-  D <- D + node("W1", distr = "rbinom2", size = (nW1cat-1), prob = c(0.4, 0.5, 0.7, 0.4))
-
-  prob_W2 <- seq(0.45, 0.8, by=0.3/nW1cat)[1:nW1cat]
-  D <- D + node("W2", distr = "rbern", asis.params = list(prob = "prob_W2[W1+1]"))
-
-  prob_W3 <- 0.6
-  D <- D + node("W3", distr = "rbern", prob = prob_W3)
-
-  probs_Nimat <- rbind(prob_Ni_W1_0, prob_Ni_W1_1, prob_Ni_W1_2, prob_Ni_W1_3, prob_Ni_W1_4, prob_Ni_W1_5)
-  D <- D + node("nF.plus1", distr = "rcategor.int", asis.params = list(probs = "probs_Nimat[W1+1,]"))
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generateNET", bslVar = W1, nF = nF.plus1 - 1)
-
-  betaA0 <- 2; betaA.W1 <- -0.5; betaA.netW1 <- -0.1; betaA.netW2 <- -0.4; betaA.netW3 <- -0.7
-  D <- D + node("A", distr = "rbern", 
-                prob = plogis(betaA0 + betaA.W1 * W1 +
-                              betaA.netW1 * sum(W1[[1:Kmax]]) +
-                              betaA.netW2 * sum(W2[[1:Kmax]]) +
-                              betaA.netW3 * sum(W3[[1:Kmax]])),
-                replaceNAw0 = TRUE)
-
-  betaY0 <- -1; betaY.AW2 <- 2; betaY.W3 <- -1.5
-  D <- D + node("pYRisk", distr = "rconst", 
-                const = plogis(betaY0 +
-                              betaY.AW2 * sum(W2[[1:Kmax]] * (1 - A[[1:Kmax]])) +
-                              betaY.W3 * sum(W3[[1:Kmax]])),
-                replaceNAw0 = TRUE)
-
-  D <- D + node("Y", distr = "rbern", prob = pYRisk)
-  Dset <- set.DAG(D)
-
-  # plotDAG(Dset)
-  # 10 fold increase in n results in ~ x100 increase in sim time:
-  t1 <- system.time(
-    dat <- sim(Dset, n = 1000, rndseed = 543)
-  )
-
-  # t2 <- system.time(
-  #   dat <- sim(Dset, n = 10000, rndseed = 543)
-  # )
-  # t1; t2
-}
-
 
 # DAG2 (from tech specs): defining actions with a new constructor and passing attributes
 test.set.DAG_DAG2b_newactions <- function() {
@@ -1254,6 +1170,7 @@ test.plotting <- function() {
     D <- D + node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), EFU=TRUE) # informative censoring
     D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
     lDAG3 <- set.DAG(D)
+    dat <- sim(lDAG3, n=50)
     options(simcausal.verbose=oldverboseopt)
 
 

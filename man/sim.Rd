@@ -4,7 +4,8 @@
 \alias{sim}
 \title{Simulate Observed or Full Data from \code{DAG} Object}
 \usage{
-sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
+sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
+  verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated if actions argument is omitted.}
@@ -18,6 +19,8 @@ sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 \item{LTCF}{If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event.}
 
 \item{rndseed}{Seed for the random number generator.}
+
+\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
 }
 \value{
 If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.

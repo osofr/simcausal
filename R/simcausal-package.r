@@ -58,8 +58,11 @@
 #'
 NULL
 
-# #' @import assertthat
-# NULL
+#' @importFrom graphics legend par plot
+#' @importFrom stats as.formula glm na.exclude rbinom reshape rnorm runif setNames terms.formula
+#' @importFrom utils head str
+NULL
+
 
 # \item {\code{node}} - defines a node in the structural equation model and
 # its conditional distribution, i.e., the outcome of one equation in the

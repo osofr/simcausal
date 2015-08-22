@@ -4,7 +4,8 @@
 \alias{simobs}
 \title{Simulate Observed Data}
 \usage{
-simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
+simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
+  verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated.}
@@ -16,6 +17,8 @@ simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 \item{LTCF}{If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.}
 
 \item{rndseed}{Seed for the random number generator.}
+
+\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
 }
 \value{
 A \code{data.frame} where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.

@@ -4,7 +4,8 @@
 \alias{simfull}
 \title{Simulate Full Data (From Action DAG(s))}
 \usage{
-simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
+simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
+  verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{actions}{Actions specifying the counterfactual DAG. This argument must be either an object of class DAG.action or a list of DAG.action objects.}
@@ -16,6 +17,8 @@ simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL)
 \item{LTCF}{If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.}
 
 \item{rndseed}{Seed for the random number generator.}
+
+\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
 }
 \value{
 A named list, each item is a \code{data.frame} corresponding to an action specified by the actions argument, action names are used for naming these list items.

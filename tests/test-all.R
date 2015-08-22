@@ -34,10 +34,10 @@ if(require("RUnit", quietly=TRUE)) {
     ## --- Testing ---
 
     ## Define tests
-    test.suite <- defineTestSuite(name=paste(pkg, "unit testing"), 
+    test.suite <- defineTestSuite(name=paste(pkg, "unit testing"),
                                         # dirs="./RUnit",
                                         dirs=path,
-                                        testFileRegexp="runittests.R",
+                                        testFileRegexp = "^runit.+\\.[rR]$",
                                         testFuncRegexp = "^test.+",
                                         rngKind = "Marsaglia-Multicarry",
                                         rngNormalKind = "Kinderman-Ramage")
