@@ -62,7 +62,12 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       exists.x <- exists(as.character(x), where = user.env, inherits = FALSE) # exists.x <- exists(as.character(x), where = user.env, inherits = TRUE)
       dprint("does x exist in user.env? " %+% exists.x)
 
-      if (notis.fun && !is.inDAG && !exists.x) stop("Undefined variable: " %+% as.character(x), call. = FALSE)
+      # CHECK THAT ITS NOT A SPECIAL (RESERVED) VAR (nF)
+      specialVar <- "nF"
+      special <- as.character(x)%in%specialVar
+      dprint("x is special? " %+% special)
+
+      if (notis.fun && !is.inDAG && !exists.x && !special) stop("Undefined variable: " %+% as.character(x), call. = FALSE)
 
       # ****************************
       # *) For non_TD var outside of the DAG also check that length(non_TD) < 2
@@ -332,7 +337,9 @@ eval.nodeform.out <- function(expr.idx, self, data.df) {
                         self$df.names(data.df), # special var "ANCHOR_ALLVARNMS_VECTOR_0" with names of already simulated vars
                         list(t = self$cur.node$t), 
                         list(misXreplace = misXreplace), # replacement value for missing network covars
-                        list(netind_cl = self$netind_cl))
+                        list(netind_cl = self$netind_cl),
+                        list(nF = self$netind_cl$nF)
+                        )
   data.env <- c(eval.sVar.params, data.df)
 
   if (eval.asis) {

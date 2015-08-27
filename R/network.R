@@ -147,7 +147,7 @@ igraph.to.sparseAdjMat <- function(igraph_network) {
 #' @seealso \code{\link{network}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}; \code{\link{igraph.to.sparseAdjMat}};
 #' @export
 sparseAdjMat.to.NetInd <- function(sparseAdjMat) {
-  assertthat::assert_that("dgCMatrix" %in% class(sparseAdjMat))
+  assertthat::assert_that(is(sparseAdjMat, "sparseMatrix"))
   # sparseAdjMat:
     # i: These are the 0-based row numbers for each non-zero element in the matrix.
     # Object of class "integer" of length nnzero (number of non-zero elements). These are the 0-
@@ -176,6 +176,7 @@ sparseAdjMat.to.NetInd <- function(sparseAdjMat) {
   stopifnot(nnonzero==sparseAdjMat@p[ncol(sparseAdjMat)+1])
   return(list(NetInd_k = NetInd_k, nF = nF, Kmax = Kmax))
 }
+
 
 #' Convert Network IDs Matrix into Sparse Adjacency Matrix
 #'

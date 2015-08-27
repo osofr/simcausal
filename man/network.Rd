@@ -9,7 +9,7 @@ network(name, Kmax, netfun, ..., params = list())
 \arguments{
 \item{name}{Character name for the network, to be used in future versions}
 
-\item{Kmax}{Either an R expression that evalutes to an integer constant or an integer specifying the maximum number of friends (connections) any simulated observation can have.}
+\item{Kmax}{Either an R expression that evaluates to an integer constant or an integer specifying the maximum number of friends (connections) any simulated observation can have.}
 
 \item{netfun}{Character name of the user-defined network generating function, can be any R function that returns a matrix of friend IDs of dimension \code{c(n, Kmax)}.
 The function must accept a named argument \code{n} that specifies the total sample size of the network.
@@ -66,7 +66,7 @@ To force the immediate evaluation of any variable inside these expressions wrap 
 
 The \code{network} function call that defines the network of friends can be added to a growing \code{DAG} object by using \code{'+'} syntax, much like a new \code{node} is added to a \code{DAG}.
 Subsequently defined nodes (\code{node} function calls) can employ the double square bracket subsetting syntax to reference previously simulated node values
-for specific friends in \code{F_i} simultaneusly across all observations \code{i}.
+for specific friends in \code{F_i} simultaneously across all observations \code{i}.
 For example, \code{VarName[[net_indx]]} can be used inside the \code{node} formula to reference the node \code{VarName} values of \code{i}'s friends in \code{F_i[net_indx]},
 simultaneously across all \code{i} in \code{1:n}.
 
