@@ -80,8 +80,7 @@ simplifying the conduct of transparent and reproducible simulation studies, with
 data and interventions frequently encountered in real-world causal inference problems, such as, observational data with
 time-dependent confounding, selection bias, and random monitoring processes. The package interface allows for concise
 expression of complex functional dependencies between a large number of nodes, where each node may represent a time-
-varying random variable. The package allows for specification and simulation of counterfactual data under various user-
-specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
+varying random variable. The package allows for specification and simulation of counterfactual data under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
 represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical
 monitoring events. Finally, the package enables the computation of a selected set of user-specified features of the
 distribution of the counterfactual data that represent common causal quantities of interest, such as, treatment-specific
@@ -388,8 +387,7 @@ such as, blood pressure).\\
 Each data generating distribution is specified via a structural equation model (SEM) \citep{pearl1995, Pearl2009,
 pearl2010}. The package allows for specification and simulation of counterfactual data (referred to as ``full data'')
 under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic), which are referred to
-as ``actions''. These actions may represent exposure to treatment regimens, the occurrence or non-occurrence of right-
-censoring events, or of clinical monitoring events (e.g., laboratory measurements based on which treatment decisions may
+as ``actions''. These actions may represent exposure to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical monitoring events (e.g., laboratory measurements based on which treatment decisions may
 be made). Finally, the package enables the computation of a selected set of user-specified features of the distribution
 of the full data that represent common causal quantities of interest, referred to as causal target parameters, such as,
 treatment-specific means, the average treatment effects (ATE) (on the multiplicative or additive scale) and coefficients

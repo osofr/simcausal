@@ -250,7 +250,7 @@ netvar <- function(varnm, fidx) {
 # netvar(c("A", "W"), c(0:5, 0, 3))
 
 ## ---------------------------------------------------------------------
-#' R6 class for creating and storing a friend matrix (network IDs) for simulating network data
+#' R6 class for creating and storing a friend matrix (network IDs) for network data
 #'
 #' This R6 class defines fields and methods for creating and storing \code{NetInd_k}, 
 #' a matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
@@ -261,7 +261,7 @@ netvar <- function(varnm, fidx) {
 #' @keywords R6 class
 #' @details
 #' \itemize{
-#' \item{NetInd_k} - Matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
+#' \item{NetInd} - Matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)} (Active Binding).
 #' \item{nF} - Vector of integers, where \code{nF[i]} is the integer number of friends (0 to \code{Kmax}) for observation \code{i}.
 #' \item{nobs} - Number of observations
 #' \item{Kmax} - Maximum number of friends for any observation.
@@ -344,6 +344,7 @@ NetIndClass <- R6Class("NetIndClass",
         assert_that(nrow(NetInd_k) == self$nobs)
         assert_that(ncol(NetInd_k) == self$Kmax)
         self$NetInd_k[, ] <- NetInd_k
+        self$make.nF()
       }
     },
 
