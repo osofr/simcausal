@@ -79,8 +79,10 @@ data structures that are based on structural equation models. The package aims t
 simplifying the conduct of transparent and reproducible simulation studies, with a particular emphasis on the types of
 data and interventions frequently encountered in real-world causal inference problems, such as, observational data with
 time-dependent confounding, selection bias, and random monitoring processes. The package interface allows for concise
-expression of complex functional dependencies between a large number of nodes, where each node may represent a time-
-varying random variable. The package allows for specification and simulation of counterfactual data under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
+expression of complex functional dependencies between a large number of nodes, where each node may represent a 
+measurement at a specific time point.
+% time-varying random variable. 
+The package allows for specification and simulation of counterfactual data under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
 represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical
 monitoring events. Finally, the package enables the computation of a selected set of user-specified features of the
 distribution of the counterfactual data that represent common causal quantities of interest, such as, treatment-specific
@@ -391,11 +393,11 @@ as ``actions''. These actions may represent exposure to treatment regimens, the 
 be made). Finally, the package enables the computation of a selected set of user-specified features of the distribution
 of the full data that represent common causal quantities of interest, referred to as causal target parameters, such as,
 treatment-specific means, the average treatment effects (ATE) (on the multiplicative or additive scale) and coefficients
-from working marginal structural model (MSM) \citep{neugebauer2007}. We demonstrate an application of the
+from working marginal structural model (MSM) \citep{robins1998marginal,neugebauer2007}. We demonstrate an application of the
 \pkg{simcausal} package by replicating the results of two published simulation studies from the causal inference
 literature \citep{neugebauer2014,neugebauer2015,lefebvre2008}.\\
 
-We note that the \pkg{simcausal} package differs from other R packages that implement data simulation based on
+We note that the \pkg{simcausal} package differs from other R packages \citep{R-lavaan,R-lavaan.survey,R-sem,R-semPLS,R-OpenMx} that implement data simulation based on
 structural equation modeling in the following ways. First, \pkg{simcausal} does not restrict the set of distributions
 available to the analyst to conduct a simulation study, i.e., any distribution that is currently available in
 \proglang{R} or that can be user-defined in the \proglang{R} programming environment can be used to sample observations
@@ -563,12 +565,11 @@ specified by the \code{distr} argument and the distributional parameters
 specified as additional named arguments to the \code{node()} function.
 This \code{distr} argument can be set to the name of any \proglang{R}
 function that accepts an integer argument named \code{n} and returns
-a vector of size \code{n}. Examples and specifications for the types
-of distribution functions that can be used in \pkg{simcausal} are provided
-in Section~\ref{custom}.\\
+a vector of size \code{n}. Examples of such distribution functions are 
+provided in Section~\ref{custom}.\\
 
-The distributional parameters (also referred to as \emph{node formulas}
-thereafter) are specified as additional named arguments of the \code{node()}
+The distributional parameters are specified as additional named arguments of 
+the \code{node()}
 function and can be either constants or some summary measures of the parent
 nodes. Their values can be set to any evaluable \code{R} expressions
 that may reference any standard or user-specified \code{R} function,
@@ -677,7 +678,7 @@ function \code{set.targetE} defines causal parameters as the expected
 value(s) of \code{DAG} node(s) under one post-intervention distribution
 or the contrast of such expected value(s) from two post-intervention distributions.
 The function \code{set.targetMSM} defines causal parameters based on
-a \textbf{working} marginal structural model \citep{neugebauer2007}. In
+a \textit{working} marginal structural model \citep{neugebauer2007}. In
 both cases, the true value of the causal parameter is defined by one or
 several post-intervention distributions and can thus be approximated using
 full data.\\
@@ -800,14 +801,13 @@ is considered to be in wide format when each simulated observation of the
 complete sequence of nodes is represented by only one row of data, with
 each time-varying node represented by columns spanning distinct values
 of \code{t}. In contrast, for a dataset in long format, each simulated
-observation is typically represented by multiple rows of data, with separate
-rows of the same observation indexed by distinct values of \code{t} and
+observation is typically represented by multiple rows of data 
+indexed by distinct values of \code{t} and
 each time-varying node represented by a single column. The format of the
 output data is controlled by setting the argument \code{wide} of the
 \code{sim} function to \code{TRUE} or \code{FALSE}. The default setting
 for \code{sim} is to simulate data in wide format, i.e., \code{wide
-= TRUE}. An example describing these two formats is provided in Section~\ref{longdat}
-in the context of time-varying measurements.\\
+= TRUE}. An example describing these two formats is provided in Section~\ref{longdat}.\\
 
 In addition, as previously described, for nodes representing the occurrence
 of end of follow-up events (i.e., censoring or outcome nodes declared with
@@ -852,8 +852,7 @@ that builds upon the \pkg{igraph} \proglang{R} package \citep{igraph} to visuali
 The example below shows how to specify a structural equation model with six nodes to represent a single time point
 intervention study: one categorical baseline covariate with 3 categories (\code{race}), one normally distributed
 baseline confounder (\code{W1}), one uniformly distributed baseline confounder (\code{W2}), one binary baseline
-confounder (\code{W3}), one binary exposure (\code{Anode}), and one binary outcome (\code{Y}). This example uses pre-
-defined \proglang{R} functions \code{rcategor},  \code{rbern}, \code{rnorm} and \code{runif} for sampling from the
+confounder (\code{W3}), one binary exposure (\code{Anode}), and one binary outcome (\code{Y}). This example uses pre-defined \proglang{R} functions \code{rcategor},  \code{rbern}, \code{rnorm} and \code{runif} for sampling from the
 categorical, Bernoulli, normal, and uniform distributions, respectively. For details and examples on writing sampling
 functions for arbitrary distributions see Section~\ref{custom}. We also refer to Section~\ref{custom} for a description
 on how to specify node formulas (distributional parameters), such as with the use of \proglang{R} expressions specified
@@ -885,7 +884,7 @@ by the \code{probs}, \code{mean} and \code{prob} arguments in the example below.
   Dset <- set.DAG(D)
 @
 
-Running the code above results in implicitly assigning a sampling order (temporal order) to each node, based on the
+Running the code above results in implicitly assigning a sampling order (temporal order) to each node - based on the
 order in which the nodes were added to the \code{DAG} object \code{D}. Alternatively, one can use the optional
 \code{node()} argument \code{order} to explicitly specify the integer value of the sampling order of each node, as
 described in more detail in the documentation for the \code{node} function.\\
@@ -1044,7 +1043,7 @@ Similarly, the ATE on the multiplicative scale can be evaluated as follows:
 
 \subsubsection[Causal parameters defined with set.targetMSM]{Causal parameters defined with \code{set.targetMSM}}\label{targets1MSM}
 
-To specify the MSM target causal parameter, the user must provide the following arguments to \code{set.targetMSM}: (1)
+To specify MSM target causal parameter, the user must provide the following arguments to \code{set.targetMSM}: (1)
 the \code{DAG} object that contains all and only the actions of interest; (2) \code{outcome}, the name of the outcome
 node (possibly time-varying); (3) for a time-varying outcome node, the vector of time points \code{t} that index the
 outcome measurements of interest; (4) \code{form}, the regression formula defining the working MSM; (5) \code{family},
@@ -1106,7 +1105,7 @@ with a lower temporal ordering can be defined as a parent. Thus, such a distribu
 addition, the output of the distribution function must also be a vector of length \code{n}. Distributional parameters
 must be either scalars or vectors of \code{n} realizations of summary measures of the parent nodes. The latter types of
 distributional arguments are referred to as the \emph{node formula(s)} because they are specified by evaluable
-\proglang{R} expressions. Node formulas are passed as named arguments to the \code{node} function so they can be mapped
+\proglang{R} expressions. Distributional parameters are passed as named arguments to the \code{node} function so they can be mapped
 uniquely to the relevant argument of the function that is user-specified by the \code{distr} argument of the \code{node}
 function call. The node formula(s) of any given node may invoke the name(s) of any other node(s) with a lower temporal
 order value. The parents of a particular node are thus defined as the collection of nodes that are referenced by its
@@ -1339,7 +1338,7 @@ In this example we replicate results from the longitudinal data simulation proto
 \citet{neugebauer2014, neugebauer2015}. We first describe the structural equation model that implies the data generating
 distribution of the observed data, with time-to-event outcome, as reported in Section 5.1 of \citet{neugebauer2015}. We
 then show how to specify this model using the \pkg{simcausal} \proglang{R} interface, simulate observed data, define
-static and dynamic time-varying interventions, simulate full data, and calculate various causal parameters based on
+static and time-varying intervention, simulate full data, and calculate various causal parameters based on
 these interventions. In particular, we replicate estimates of true counterfactual risk differences under the dynamic
 interventions reported in \citet{neugebauer2014}.
 
@@ -1774,8 +1773,8 @@ simulated with the \code{sim} function based on its default non-imputation behav
 \paragraph{Example 1.} In the example below, we first define two causal target parameters as two vectors, each containing the expectations of
 the node \code{Y[t]}, for time points \code{t}=1, $\ldots$, 16, under the post-intervention distribution defined by one
 of the two dynamic interventions \code{"A1_th0"} and \code{"A1_th1"} defined in Section~\ref{dynact}. Second, we
-evaluate these target parameters using the full data simulated previously in Section~\ref{simfull2.dyn}. Third, we map
-the resulting estimates of cumulative risks into estimates of survival probabilities. Fourth, we plot the corresponding
+evaluate these target parameters using the full data simulated previously in Section~\ref{simfull2.dyn} and we map
+the resulting estimates of cumulative risks into estimates of survival probabilities. We also plot the corresponding
 two counterfactual survival curves using the \pkg{simcausal} routine \code{plotSurvEst} as shown in
 Figure~\ref{fig:survfig1}. Finally, we note that Figure~\ref{fig:survfig1} replicates the simulation study results
 reported in Figure 4 of \citet{neugebauer2014}.
