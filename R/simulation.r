@@ -578,8 +578,7 @@ DF.to.long <- function(df_wide) {
   simdf_long
 }
 
-#' @importFrom reshape2 melt
-NULL
+# @importFrom reshape2 melt
 #' @import data.table
 NULL
 #' Convert Data from Wide to Long Format Using \code{dcast.data.table}

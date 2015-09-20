@@ -28,14 +28,13 @@ os:
 r_binary_packages:
   - knitr
   - data.table
-  - reshape2
   - RUnit
   - igraph
   - ggplot2
   - Hmisc
 
-r_packages:
-  - ltmle
+# r_packages:
+#   - ltmle
 
 r_github_packages:
   - jimhester/covr

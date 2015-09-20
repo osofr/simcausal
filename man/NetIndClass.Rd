@@ -3,7 +3,7 @@
 \docType{class}
 \name{NetIndClass}
 \alias{NetIndClass}
-\title{R6 class for creating and storing a friend matrix (network IDs) for simulating network data}
+\title{R6 class for creating and storing a friend matrix (network IDs) for network data}
 \format{An \code{\link{R6Class}} generator object}
 \usage{
 NetIndClass
@@ -14,7 +14,7 @@ a matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
 }
 \details{
 \itemize{
-\item{NetInd_k} - Matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
+\item{NetInd} - Matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)} (Active Binding).
 \item{nF} - Vector of integers, where \code{nF[i]} is the integer number of friends (0 to \code{Kmax}) for observation \code{i}.
 \item{nobs} - Number of observations
 \item{Kmax} - Maximum number of friends for any observation.

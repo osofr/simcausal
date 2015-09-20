@@ -1,8 +1,6 @@
 simcausal
 ==========
 
-<!-- [![Build Status](https://travis-ci.org/osofr/simcausal.png?branch=master)](https://travis-ci.org/osofr/simcausal) -->
-<!-- [![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal) -->
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/simcausal)](http://cran.r-project.org/package=simcausal)
 [![](http://cranlogs.r-pkg.org/badges/simcausal)](http://cran.rstudio.com/web/packages/simcausal/index.html)
 [![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal)

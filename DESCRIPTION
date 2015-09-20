@@ -1,6 +1,6 @@
 Package: simcausal
 Type: Package
-Version: 0.3.0
+Version: 0.3.1
 Title: Simulating Longitudinal Data with Causal Inference Applications
 Date: 2015-08-21
 Authors@R: c(
@@ -25,7 +25,6 @@ Imports:
     stringr,
     R6,
     assertthat,
-    reshape2,
     Matrix
 Suggests:
     ltmle,
