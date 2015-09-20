@@ -33,3 +33,16 @@ simcausal 0.3.0
 * Adding network simulation example to /tests/Runit/gen.net.example.R, simulating networks using igraph package; Examples for simulating networks based on igraph ER model;
 * Adding conversion utility function to/from sparse adjacency network matrix to simcausal internet network storage;
 * Switching from warning to message when replacing/modifying existing DAG node object;
+
+simcausal 0.3.0
+==============
+
+* New CRAN version release.
+
+* Fixing a warning on v.0.3.0 for generic "melt" being exported by data.table and reshape2;
+
+* Minor updates to the vignette;
+
+* Fixing an issue with NetIndClass not calling self$make.nF() when outside network matrix is assigned;
+
+* Making nF (vector of the number of friends across observations) available as a special variable that can be used inside node expressions (as distributional parameters);

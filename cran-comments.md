@@ -1,3 +1,17 @@
+simcausal 0.4.0
+==============
+
+## Test environments:
+* local OS X install, R 3.2.2
+* ubuntu 12.04 (on travis-ci), R 3.2.2
+* win-builder (devel and release)
+
+## R CMD check --as-cran results:
+* no ERRORs or WARNINGs.
+* no NOTEs.
+
+* Fixing a warning on v.0.3.0 for generic "melt" being exported by data.table and reshape2.
+
 simcausal 0.3.0
 ==============
 
