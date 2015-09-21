@@ -10,7 +10,7 @@ simcausal 0.4.0
 * no ERRORs or WARNINGs.
 * no NOTEs.
 
-* Fixing a warning on v.0.3.0 for generic "melt" being exported by data.table and reshape2.
+* Fixing a warning on v.0.3.0 for generic "melt" being exported twice by data.table and reshape2.
 
 simcausal 0.3.0
 ==============
