@@ -61,6 +61,7 @@ NULL
 #' @importFrom graphics legend par plot
 #' @importFrom stats as.formula glm na.exclude rbinom reshape rnorm runif setNames terms.formula
 #' @importFrom utils head str
+#' @importFrom methods is
 NULL
 
 
