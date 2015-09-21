@@ -24,7 +24,8 @@ Imports:
     stringr,
     R6,
     assertthat,
-    Matrix
+    Matrix,
+    methods
 Suggests:
     ltmle,
     RUnit,
