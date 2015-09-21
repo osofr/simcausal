@@ -27,7 +27,8 @@ plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
 
 \item{customvlabs}{A named vector of custom DAG node labels (replaces node names from the DAG object).}
 
-\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
+\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
+Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \description{
 Plot a DAG object using functions from \code{igraph} package.

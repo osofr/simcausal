@@ -3,6 +3,18 @@
 `%/%` <- function(a, b) paste0(a, paste0(b, collapse=","))  # custom collapse with "," function
 `.` <- function(...) return(unlist(list(...)))	# defining function . to avoid warnings from the R check
 
+GetWarningsToSuppress <- function() {
+  coercwarn <-  c("example warning 1.", "example warning 2.")
+  return(coercwarn)
+}
+
+SuppressGivenWarnings <- function(expr, warningsToIgnore) {
+  h <- function (w) {
+    if (w$message %in% warningsToIgnore) invokeRestart( "muffleWarning" )
+  }
+  withCallingHandlers(expr, warning = h )
+}
+
 opts <- new.env(parent = emptyenv())
 opts$vecfun <- NULL           # character vector of user-defined vectorized function names
 opts$debug <- FALSE           # debug mode, when TRUE print all calls to dprint()
@@ -204,7 +216,8 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @param edge_attrs A named list of \code{igraph} graphical parameters for plotting DAG edges. These parameters are passed on to \code{add.edges} \code{igraph} function.
 #' @param customvlabs A named vector of custom DAG node labels (replaces node names from the DAG object).
 #' @param excludeattrs A character vector of attribute DAG nodes that shouldn't be plotted
-#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @export
 plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, verbose = getOption("simcausal.verbose")) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
@@ -415,7 +428,8 @@ check_expanded <- function(inputDAG) {
 #' Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution. Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.
 #' @param DAG Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.
 #' @param vecfun A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.
-#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/RUnit/set.DAG.R
 #' @export

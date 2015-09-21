@@ -397,8 +397,9 @@ from working marginal structural model (MSM) \citep{robins1998marginal,neugebaue
 \pkg{simcausal} package by replicating the results of two published simulation studies from the causal inference
 literature \citep{neugebauer2014,neugebauer2015,lefebvre2008}.\\
 
-We note that the \pkg{simcausal} package differs from other R packages \citep{R-lavaan,R-lavaan.survey,R-sem,R-semPLS,R-OpenMx} that implement data simulation based on
-structural equation modeling in the following ways. First, \pkg{simcausal} does not restrict the set of distributions
+We note that the \pkg{simcausal} package differs from other R packages 
+\citep{R-lavaan,R-lavaan.survey,R-sem,R-semPLS,R-OpenMx} for conducting simulations based on structural equation modeling 
+in the following ways. First, \pkg{simcausal} does not restrict the set of distributions
 available to the analyst to conduct a simulation study, i.e., any distribution that is currently available in
 \proglang{R} or that can be user-defined in the \proglang{R} programming environment can be used to sample observations
 in the \pkg{simcausal} package. In particular, the \pkg{simcausal} package is not restricted to data simulation based on
@@ -1933,7 +1934,7 @@ modify the working model formula by specifying a saturated MSM to directly repli
 
 The resulting estimates of the survival curves shown in Figure~\ref{fig:survfig4} approximate that reported in Figure 4
 of \citet{neugebauer2014}. Differences can be explained by the relative small sample size of the full data based on
-which the following plot is based (\code{n=1,000} here vs. \code{n=1,000,000} in the simulation study from
+which the following plot is based (\code{n=10,000} here vs. \code{n=1,000,000} in the simulation study from
 \citet{neugebauer2014}).
 
 \paragraph{Example 4. Working dynamic MSM for discrete-time hazards over time.} Here, we illustrate the evaluation of

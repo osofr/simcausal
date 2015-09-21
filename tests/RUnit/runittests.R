@@ -1524,6 +1524,8 @@ test.experimental_parsingMSMs <- function() {
   # X_dat <- simfull(A(D), n=1000, rndseed = 123)
   MSMres <- eval.target(D, data=X_dat)
   MSMres$msm
+
+  DF.to.longDT(X_dat[[1]])
   # Coefficients:
   #                                    (Intercept)                                           theta  
   #                                     -7.7719930                                       1.7599218  
@@ -1587,6 +1589,10 @@ test.experimental_parsingMSMs <- function() {
                                               dat
                                               })
   X_dat_MSMsum_lDT <- lapply(X_dat_MSMsum, DF.to.longDT)
+
+
+  DF.to.longDT(X_dat_MSMsum[[1]])
+
   # ---
   df_combine_DT <- data.table::rbindlist(X_dat_MSMsum_lDT, fill=TRUE)
   head(df_combine_DT,100)

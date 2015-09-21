@@ -20,7 +20,8 @@ sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
 
 \item{rndseed}{Seed for the random number generator.}
 
-\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
+\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
+Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \value{
 If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.

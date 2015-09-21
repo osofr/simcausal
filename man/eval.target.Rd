@@ -18,7 +18,8 @@ eval.target(DAG, n, data, actions, rndseed = NULL,
 
 \item{rndseed}{Seed for the random number generator.}
 
-\item{verbose}{\code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.}
+\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
+Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \value{
 For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}),

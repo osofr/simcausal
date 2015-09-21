@@ -405,7 +405,8 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
 #' @param data List of action-specific \code{data.frames} generated with \code{sim} or \code{simfull}
 #' @param actions Character vector of action names which play the role of the data generating mechanism for simulated data when argument \code{data} is missing. Alternatively, \code{actions} can be a list of action DAGs  pre-selected with \code{A(DAG)} function. When this argument is missing, full data is automatically sampled from all available actions in the \code{DAG} argument.
 #' @param rndseed Seed for the random number generator.
-#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}), 
 #'MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}), 
 #'and the long format full data that was used for fitting this MSM \code{"df_long"}.
@@ -606,12 +607,12 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, ver
                         dat
                         })
     }
-    # if(!is.null(t_vec)) df_full <- lapply(df_full, subset_dat, outcome, t_vec)
-    SuppressGivenWarnings(df_full <- lapply(df_full, DF.to.longDT), GetWarningsToSuppress())
+    # SuppressGivenWarnings(df_full <- lapply(df_full, DF.to.longDT), GetWarningsToSuppress())
+    df_full <- lapply(df_full, DF.to.longDT)
     names(df_full) <- act_names
     # * Subset all data.frame variables by t once its in long format
     if(!is.null(t_vec)) df_full <- lapply(df_full, subset_dat_long, t_vec) #this should include the indicators
-    
+
     #*******************************
     # evaluating the target parameter when the df_full is already in long format (with warnings)
     # ****TO DO**** 
@@ -644,18 +645,4 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, ver
   m <- glm(parse_form$term_form, data = df_combine, family = family, na.action = na.exclude)
   coef <- coef(m)
   return(list(msm = m, coef = coef, S.msm.map = parse_form$term_maptab, hazard = hazard, call = attr(DAG, "target")$call, df_long = df_full))
-}
-
-
-GetWarningsToSuppress <- function() {
-  coercwarn <- 	c("All 'measure.vars are NOT of the SAME type. By order of hierarchy, the molten data value column will be of type 'integer'. Therefore all measure variables that are not of type 'integer' will be coerced to. Check the DETAILS section of ?melt.data.table for more on coercion.",
-  "All 'measure.vars are NOT of the SAME type. By order of hierarchy, the molten data value column will be of type 'double'. Therefore all measure variables that are not of type 'double' will be coerced to. Check the DETAILS section of ?melt.data.table for more on coercion.")
-  return(coercwarn)
-}
-
-SuppressGivenWarnings <- function(expr, warningsToIgnore) {
-  h <- function (w) {
-    if (w$message %in% warningsToIgnore) invokeRestart( "muffleWarning" )
-  }
-  withCallingHandlers(expr, warning = h )
 }

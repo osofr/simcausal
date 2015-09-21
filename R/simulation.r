@@ -95,7 +95,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
         if (nrow(distparam)==1) { # for mtx with 1 row -> repeat N_notNA_samp times:
           distparam <- matrix(distparam, nrow = N_notNA_samp, ncol = ncol(distparam), byrow = TRUE)
         } else if (nrow(distparam)==Nsamp) { # for mtx with Nsamp rows -> subset mtx[!EFUP.prev,]
-          distparam <- distparam[!EFUP.prev,,drop=FALSE]
+          distparam <- distparam[!EFUP.prev, , drop=FALSE]
         } else {
           stop("error while evaluating node "%+% cur.node$name %+%" expression(s): "%+%expr_str%+%".\n One of the distribution parameters evaluated to an incorrect vector length, check syntax.")
         }
@@ -332,7 +332,8 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.
 #' @param rndseed Seed for the random number generator.
-#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A \code{data.frame} where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
 #' @family simulation functions
 #' @seealso \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
@@ -350,7 +351,8 @@ simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbose = g
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.
 #' @param rndseed Seed for the random number generator.
-#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A named list, each item is a \code{data.frame} corresponding to an action specified by the actions argument, action names are used for naming these list items.
 #' @family simulation functions
 #' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
@@ -406,7 +408,8 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbos
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. 
 #' @param rndseed Seed for the random number generator.
-#' @param verbose \code{TRUE} turns on printing of auxiliary information messages. To rurn this off by default use \code{options(simcausal.verbose=FALSE)}.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.
 #' @family simulation functions
 #' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
@@ -599,6 +602,13 @@ NULL
 #' @family data manipulation functions
 #' @export
 DF.to.longDT <- function(df_wide) {
+  # wrapping any call inside this function call will suppress all warnings:
+  SuppressAllWarnings <- function(expr) {
+    h <- function (w) {
+      if (!is.null(w$message)) invokeRestart("muffleWarning")
+    }
+    withCallingHandlers(expr, warning = h)
+  }
   # old attributes saved:
   newattrs <- CopyAttributes(attrslist=attributes(df_wide), dataform="long") 	# save attributes from input wide format data
   Nsamp <- nrow(df_wide)
@@ -629,7 +639,9 @@ DF.to.longDT <- function(df_wide) {
     t_vec <- "_"%+%(t_pts)
     for (var_nm in lvars) { # one TV var at a time approach
       value_vars <- var_nm%+%t_vec
-      DT_melt <- melt(dat_df, id.vars="ID", measure.vars=value_vars, variable.factor=TRUE, na.rm=FALSE)
+      SuppressAllWarnings(
+        DT_melt <- melt(dat_df, id.vars = "ID", measure.vars = value_vars, variable.factor = TRUE, na.rm = FALSE)
+      )
       # DT_melt <- melt.data.table(dat_df, id.vars="ID", measure.vars=value_vars, variable.factor=TRUE, na.rm=FALSE)
       # DT_melt <- data.table::melt(dat_df, id.vars="ID", measure.vars=value_vars, variable.factor=TRUE, na.rm=FALSE)
       var_nm_rep <- rep.int(var_nm, nrow(DT_melt))
