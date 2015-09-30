@@ -89,7 +89,7 @@ In addition, the functions `set.targetE`, `set.targetMSM` and `eval.target` prov
 
 ### Using networks in SEMs
 
-Finally, a new function `network` provides support for defining and simulating SEM for dependent data using a network. For example, a network sampling function like `generate.igraph.ER` defined below can be used to specify and simulate dependent data from a network-based SEM:
+Function `network` provies support for networks simulations, in particular it enables defining and simulating SEM for dependent data. For example, a network sampling function like `generate.igraph.ER` defined below can be used to specify and simulate dependent data from a network-based SEM:
 
 ```R
 #--------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ generate.igraph.ER <- function(n, m_pn, Kmax, ...) {
 }
 ```
 
-One can then start defining a SEM with a network by using a `+network` syntax and providing `generate.igraph.ER` to `netfun` argument:
+Next step is to start defining a SEM that uses the above network, with a `+network` syntax and providing `generate.igraph.ER` to `netfun` argument:
 
 ```R
 Kmax <- 5
@@ -117,7 +117,7 @@ D <- DAG.empty()
 D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 1.4)
 ```
 
-Finally, one can define new nodes (structural equations) conditional on the past node values of observations connected to each unit `i` (friends of `i`), where friends will be defined by the network ID matrix that will be returned by the `generate.igraph.ER` function above. Double square bracket syntax `[[...]]` now allows referencing the node values of connected friends as demonstrated in the example below:
+New nodes (structural equations) can now be specified conditional on the past node values of observations connected to each unit `i` (friends of `i`), where friends will be defined by the network ID matrix that will be returned by the `generate.igraph.ER` function above. Double square bracket syntax `[[...]]` now allows referencing the node values of connected friends as demonstrated in the example below:
 
 ```R
 # W1 - categorical (5 categories, 0-4):

@@ -34,7 +34,7 @@ simcausal 0.3.0
 * Adding conversion utility function to/from sparse adjacency network matrix to simcausal internet network storage;
 * Switching from warning to message when replacing/modifying existing DAG node object;
 
-simcausal 0.3.0
+simcausal 0.4.0
 ==============
 
 * New CRAN version release.
