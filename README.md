@@ -117,7 +117,7 @@ D <- DAG.empty()
 D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 1.4)
 ```
 
-New nodes (structural equations) can now be specified conditional on the past node values of observations connected to each unit `i` (friends of `i`), where friends will be defined by the network ID matrix that will be returned by the `generate.igraph.ER` function above. Double square bracket syntax `[[...]]` now allows referencing the node values of connected friends as demonstrated in the example below:
+New nodes (structural equations) can now be specified conditional on the past node values of observations connected to each unit `i` (friends of `i`), where friends will be defined by the network ID matrix that will be returned by the `generate.igraph.ER` function above. Double square bracket syntax `[[...]]` allows referencing the node values of connected friends, as shown here:
 
 ```R
 # W1 - categorical (5 categories, 0-4):
