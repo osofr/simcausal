@@ -4,12 +4,16 @@
 \alias{sparseAdjMat.to.NetInd}
 \title{Convert Network from Sparse Adjacency Matrix into Network IDs Matrix}
 \usage{
-sparseAdjMat.to.NetInd(sparseAdjMat)
+sparseAdjMat.to.NetInd(sparseAdjMat, trimKmax)
 }
 \arguments{
 \item{sparseAdjMat}{Network represented as a sparse adjacency matrix (S4 class object \code{dgCMatrix} from package \code{Matrix}).
 NOTE: The friends (row numbers) of observation \code{i} are assumed to be listed in column \code{i}
 (i.e, \code{which(sparseAdjMat[,i])} are friends of \code{i}).}
+
+\item{trimKmax}{Trim the maximum number of friends to this integer value. If this argument is not missing,
+the conversion network matrix obtained from \code{sparseAdjMat} will be trimmed, so that each observation has at most \code{trimKmax} friends.
+The trimming initiates from the last column of the network ID matrix, removing columns until only \code{trimKmax} columns are left.}
 }
 \value{
 A named list with 3 items: 1) \code{NetInd_k}; 2) \code{nF}; and 3) \code{Kmax}.
