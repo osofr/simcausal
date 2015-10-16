@@ -137,6 +137,9 @@ igraph.to.sparseAdjMat <- function(igraph_network) {
 #' @param sparseAdjMat Network represented as a sparse adjacency matrix (S4 class object \code{dgCMatrix} from package \code{Matrix}).
 #' NOTE: The friends (row numbers) of observation \code{i} are assumed to be listed in column \code{i}
 #' (i.e, \code{which(sparseAdjMat[,i])} are friends of \code{i}).
+#' @param trimKmax Trim the maximum number of friends to this integer value. If this argument is not missing, 
+#'  the conversion network matrix obtained from \code{sparseAdjMat} will be trimmed, so that each observation has at most \code{trimKmax} friends.
+#'  The trimming initiates from the last column of the network ID matrix, removing columns until only \code{trimKmax} columns are left.
 #' @return A named list with 3 items: 1) \code{NetInd_k}; 2) \code{nF}; and 3) \code{Kmax}.
 #' 1) \code{NetInd_k} - matrix of network IDs of dimension \code{(n=nrow(sparseAdjMat),Kmax)}, where each row \code{i} consists of the network IDs (friends) for observation \code{i}. 
 #' Remainders are filled with NAs.
@@ -146,7 +149,7 @@ igraph.to.sparseAdjMat <- function(igraph_network) {
 # @family network functions
 #' @seealso \code{\link{network}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}; \code{\link{igraph.to.sparseAdjMat}};
 #' @export
-sparseAdjMat.to.NetInd <- function(sparseAdjMat) {
+sparseAdjMat.to.NetInd <- function(sparseAdjMat, trimKmax) {
   assertthat::assert_that(is(sparseAdjMat, "sparseMatrix"))
   # sparseAdjMat:
     # i: These are the 0-based row numbers for each non-zero element in the matrix.
@@ -161,7 +164,7 @@ sparseAdjMat.to.NetInd <- function(sparseAdjMat) {
   cumFindx <- sparseAdjMat@p
   # 3) All non-zero elements as a vector of 0-based row numbers:
   base0_IDrownums <- sparseAdjMat@i
-  # 4) Figure out the dim of the result mat NetInd_k and initiate:
+  # 4) Figure out the dims of the result mat NetInd_k and initiate:
   Kmax <- max(nF)
   NetInd_k <- matrix(NA_integer_, nrow = length(nF), ncol = Kmax)
   # 5) For each non-zero elements in nF, populate NetInd_k with friend IDs:
@@ -174,6 +177,17 @@ sparseAdjMat.to.NetInd <- function(sparseAdjMat) {
   # Check the total n of non-zero elements is the same as in original sparseAdjMat:
   nnonzero <- sum(!is.na(NetInd_k))
   stopifnot(nnonzero==sparseAdjMat@p[ncol(sparseAdjMat)+1])
+  # If trimKmax provided, trim the max number of friends to the value in trimKmax:
+  if (!missing(trimKmax)) {
+    assert_that(is.integerish(trimKmax))
+    trimKmax <- as.integer(trimKmax)
+    # trim only is the actual number of friends in > trimKmax:
+    if (Kmax > trimKmax) {
+      NetInd_k <- NetInd_k[, 1L:trimKmax] # trim the network ID mat
+      nF <- as.integer(.rowSums(!is.na(NetInd_k), m = nrow(NetInd_k), n = ncol(NetInd_k))) # recalculate nF
+      Kmax <- max(nF) # assign new value to Kmax
+    }
+  }
   return(list(NetInd_k = NetInd_k, nF = nF, Kmax = Kmax))
 }
 
@@ -211,7 +225,6 @@ NetInd.to.sparseAdjMat <- function(NetInd_k, nF) {
 #' @param mode Character scalar, passed on to \code{igraph::graph_from_adjacency_matrix}, specifies how igraph should interpret the supplied matrix. 
 #' See \code{?igraph::graph_from_adjacency_matrix} for details.
 #' @return A list containing the network object(s) of type \code{DAG.net}.
-# @family network functions
 #' @seealso \code{\link{network}}; \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}};
 #' @export
 sparseAdjMat.to.igraph <- function(sparseAdjMat, mode = "directed") {
@@ -226,8 +239,8 @@ sparseAdjMat.to.igraph <- function(sparseAdjMat, mode = "directed") {
 # for fidx = 0 (var itself), ..., kmax. fidx can be a vector, in which case a 
 # character vector of network names is returned. If varnm is also a vector, a 
 # character vector for all possible combinations of (varnm x fidx) is returned.
-#-----------------------------------------------------------------------------
 # OUTPUT format: Varnm_net.j:
+#-----------------------------------------------------------------------------
 netvar <- function(varnm, fidx) {
   cstr <- function(varnm, fidx) {
     slen <- length(fidx)
