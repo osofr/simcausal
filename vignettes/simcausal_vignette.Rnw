@@ -369,53 +369,102 @@ means, the average treatment effects and coefficients from working marginal stru
 
 \newpage{}
 \tableofcontents
+
 \newpage{}
+
+%*********************************************************************
 \section{Introduction}\label{secintro}
 \addcontentsline{toc}{section}{Introduction}
 
-This vignette describes the \pkg{simcausal} package \citep{R-simcausal}, a comprehensive set of tools for specification
-and simulation of complex longitudinal data structures to study causal inference methodologies. The package is developed
-using the \proglang{R} system for statistical computing \citep{r} and is available from the Comprehensive \proglang{R}
-Archive Network (CRAN) at \url{http://CRAN.R-project.org/package=simcausal}. The main motivation behind the package is
-to provide a flexible tool to \emph{facilitate} the conduct of \emph{transparent} and \emph{reproducible} simulation
-studies, with a particular emphasis on the types of data and interventions frequently encountered in real-world causal
-inference problems. For example, the package simplifies the simulation of observational data based on random clinical
-monitoring to evaluate the effect of time-varying interventions in the presence of time-dependent confounding and
-sources of selection bias (e.g., informative right censoring). The package is built to provide a novel user-interface
-that allows concise and intuitive expression of complex functional dependencies for a large number of nodes that may
-represent time-varying random variables (e.g., repeated measurements over time of the same subject-matter attribute,
-such as, blood pressure).\\
+This article describes the \pkg{simcausal} package \citep{R-simcausal},
+a comprehensive set of tools for the specification and simulation of complex
+longitudinal data structures to study causal inference methodologies. The
+package is developed using the \proglang{R} system for statistical computing
+\citep{r} and is available from the Comprehensive \proglang{R} Archive
+Network (CRAN) at \url{http://CRAN.R-project.org/package=simcausal}. Our
+package is intended to provide a flexible tool to facilitate the process
+of conducting \emph{transparent} and \emph{reproducible} simulation studies,
+with a particular emphasis on the types of data and interventions frequently
+encountered in real-world causal inference problems. For example, our package
+simplifies the simulation of observational data based on random clinical
+monitoring to evaluate the effect of time-varying interventions in the
+presence of time-dependent confounding and sources of selection bias (e.g.,
+informative right censoring). The package provides a novel user-interface
+that allows concise and intuitive expression of complex functional dependencies
+between a large number of nodes that may represent time-varying random
+variables (e.g., repeated measurements over time of the same subject-matter
+attribute, such as, blood pressure).\\
 
-Each data generating distribution is specified via a structural equation model (SEM) \citep{pearl1995, Pearl2009,
-pearl2010}. The package allows for specification and simulation of counterfactual data (referred to as ``full data'')
-under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic), which are referred to
-as ``actions''. These actions may represent exposure to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical monitoring events (e.g., laboratory measurements based on which treatment decisions may
-be made). Finally, the package enables the computation of a selected set of user-specified features of the distribution
-of the full data that represent common causal quantities of interest, referred to as causal target parameters, such as,
-treatment-specific means, the average treatment effects (ATE) (on the multiplicative or additive scale) and coefficients
-from working marginal structural model (MSM) \citep{robins1998marginal,neugebauer2007}. We demonstrate an application of the
-\pkg{simcausal} package by replicating the results of two published simulation studies from the causal inference
-literature \citep{neugebauer2014,neugebauer2015,lefebvre2008}.\\
 
-We note that the \pkg{simcausal} package differs from other R packages 
-\citep{R-lavaan,R-lavaan.survey,R-sem,R-semPLS,R-OpenMx} for conducting simulations based on structural equation modeling 
-in the following ways. First, \pkg{simcausal} does not restrict the set of distributions
-available to the analyst to conduct a simulation study, i.e., any distribution that is currently available in
-\proglang{R} or that can be user-defined in the \proglang{R} programming environment can be used to sample observations
-in the \pkg{simcausal} package. In particular, the \pkg{simcausal} package is not restricted to data simulation based on
-linear structural equations only. Thus, this package allows the analyst to specify arbitrary functional dependencies
-between random variables, and, hence, enables data simulation from a much larger set of data generating mechanisms.
-Second, the \pkg{simcausal} package introduces an intuitive user-interface for specifying complex data-generating
-distributions to emulate realistic real-world longitudinal data studies characterized by a large number of repeated
-measurements of the same subject-matter attributes over time. Third, this package is particularly tailored to conduct
-data simulations to study causal inference methodologies for investigating the effect of complex intervention regimens
-such as dynamic and stochastic interventions (not just the common static and deterministic intervention regimens), and
-summary measures of these effects defined by (working) marginal structural models. The anticipated practical utility of
-this package thus extends beyond methodological research purposes by providing a tool for simulation-based power
-calculations to inform the design and analyses of real-world studies. Finally, the \pkg{simcausal} package provides a
-pipeline for conducting the typical steps of most simulation studies that consists of defining the observed data
-distribution, defining intervention/counterfactual distributions, defining causal parameters, simulating observed and
-counterfactual data, and evaluating the true value of causal parameters.\\
+In this package, a data generating distribution is defined via the specification
+of a structural equation model (SEM) \citep{pearl1995, Pearl2009,
+pearl2010}. Therefore, \pkg{simcausal} also allows for specification and simulation
+of counterfactual data (referred to as ``\emph{full data}'') under various
+user-specified interventions (e.g., static, dynamic, deterministic, or
+stochastic), which are referred to as ``\emph{actions}''. These actions
+may represent exposure to treatment regimens, the occurrence or non-occurrence
+of right-censoring events, or of clinical monitoring events (e.g., laboratory
+measurements based on which treatment decisions may be made). Finally,
+the package enables the computation of a selected set of user-specified
+features of the distribution of the full data that represent common causal
+quantities of interest, referred to as causal target parameters, such as,
+treatment-specific means, the average treatment effects (ATE) (on the multiplicative
+or additive scale) and coefficients from working marginal structural model
+(MSM) \citep{robins1998marginal,neugebauer2007} are a few of the causal
+target parameters implemented that can be evaluated by the package.\\
+
+
+The CRAN system contains several \proglang{R} packages for conducting
+data simulations with various statistical applications. We reference some
+of these packages below. Our review is not intended to be exhaustive and
+we focus on two key aspects in which \pkg{simcausal} differ from these
+other simulation tools.\\
+
+
+First, simulations in the \pkg{simcausal} package are based on data
+generating distributions that can be specified via \emph{general} structural
+equation models. By allowing the specification of a broad range of structural
+equations with independent or dependent errors, the set of possible distributions
+available to the analyst for simulating data is meant to be not overly
+restrictive. For instance, any sampling distribution that is currently
+available in \proglang{R} or that can be user-defined in the \proglang{R}
+programming environment can be used for defining the conditional distribution
+of a node given its parents. Some of the other \proglang{R} packages
+rely on alternative approaches for specifying and simulating data. For
+example, the package \pkg{gems} \citep{R-gems} is based on the generalized
+multistate models, and the package \pkg{survsim} \citep{R-survsim}
+is based on the Weibull, log-logistic or log-normal models. Finally, the
+following \proglang{R} simulation packages rely on linear structural
+equation models: \pkg{lavaan} \citep{R-lavaan}, \pkg{lavaan.survey}
+\citep{R-lavaan.survey}, \pkg{sem} \citep{fox2006teacher,R-sem}, \pkg{semPLS}
+\citep{R-semPLS}, \pkg{OpenMx} \citep{openmx2011,R-OpenMx} and \pkg{simsem}
+\citep{R-simsem}.\\
+
+
+Second, unlike the \pkg{simFrame} package, which is meant as a general
+object-oriented tool for designing simulation studies, the \pkg{simcausal}
+package is instead tailored to study causal inference methodologies and
+is particularly suited to investigate problems based on complex longitudinal
+data structures \citep{robins1998marginal}. Indeed, \pkg{simcausal}
+provides a single pipeline for performing the following common steps frequently
+encountered in simulation studies from the causal inference literature:
+defining the observed data distribution, defining intervention/counterfactual
+distributions, defining causal parameters, simulating observed and counterfactual
+data, and evaluating the true value of causal parameters. In addition,
+the package introduces an intuitive user-interface for specifying complex
+data-generating distributions to emulate realistic real-world longitudinal
+data studies characterized by a large number of repeated measurements of
+the same subject-matter attributes over time. In particular, the \pkg{simcausal}
+package was designed to facilitate the study of causal inference methods
+for investigating the effects of complex intervention regimens such as
+dynamic and stochastic interventions (not just the common static and deterministic
+intervention regimens), and summary measures of these effects defined by
+(working) marginal structural models. We note, however, that while the
+package was initially developed for this particular methodological research
+purpose, its utility can be extended to a broader range of causal inference
+research, e.g., to perform simulation-based power calculations for informing
+the design of real-world studies.\\
+
 
 The rest of this vignette is organized as follows. In Section~\ref{sectechn}, we provide an overview of the technical
 details for a typical use of the package. In Section~\ref{simstudy.pt}, we describe a template workflow for a simple
@@ -427,6 +476,8 @@ Section~\ref{repsimstudy2}, we apply the \pkg{simcausal} package to replicate re
 study by \citet{lefebvre2008}. We conclude with a discussion in Section~\ref{secdiscus}.
 
 \newpage{}
+
+%*********************************************************************
 \section{Technical details}\label{sectechn}
 \addcontentsline{toc}{section}{Technical details}
 
@@ -836,6 +887,8 @@ the argument \code{data} or a sample size value, specified by the argument
 size will be simulated first.
 
 \newpage{}
+
+%*********************************************************************
 \section{Simulation study with single time point interventions}\label{simstudy.pt}
 \addcontentsline{toc}{section}{Simulation study with single time point interventions}
 
@@ -925,7 +978,7 @@ dataset with 10,000 observations using the causal model defined in the previous 
 \code{data.frame} object.
 
 <<message=FALSE>>=
-  Odat <- sim(DAG = Dset, n = 10000, rndseed = 123)
+  Odat <- sim(DAG = Dset, n = 100, rndseed = 123)
 @
 
 The format of the output dataset is easily understood by examining the first row of the \code{data.frame} object:
@@ -989,7 +1042,7 @@ The example below shows how to use the \code{sim} function to simulate 100,000 o
 observations simulated from the same post-intervention distribution defined by one particular action only.
 
 <<message=FALSE, cache=cache_opt>>=
-  Xdat1 <- sim(DAG = Dset, actions = c("A1", "A0"), n = 100000, rndseed = 123)
+  Xdat1 <- sim(DAG = Dset, actions = c("A1", "A0"), n = 1000, rndseed = 123)
   names(Xdat1)
   nrow(Xdat1[["A1"]])
   nrow(Xdat1[["A0"]])  
@@ -1024,7 +1077,7 @@ Alternatively, \code{eval.target} can be called without the simulated full data,
 \code{n} instead. In this case a full dataset with the user-specified sample size is simulated first.
 
 <<message=FALSE>>=
-  eval.target(Dset, n = 100000, rndseed = 123)$res
+  eval.target(Dset, n = 1000, rndseed = 123)$res
 @
 
 The example below defines the causal target parameter as the ATE on the additive scale, i.e. the expectation of \code{Y}
@@ -1081,7 +1134,7 @@ below:
 <<message=FALSE, cache=cache_opt>>=
   msm.form <- "Y ~ d"
   Dset <- set.targetMSM(Dset, outcome = "Y", form = msm.form, family = "gaussian")
-  msm.res <- eval.target(Dset, n = 100000, rndseed = 123)
+  msm.res <- eval.target(Dset, n = 1000, rndseed = 123)
   msm.res$coef
 @
 
@@ -1332,6 +1385,8 @@ faster with the \code{ifelse2} function compared to the \code{ifelse1} function.
 gain of vectorization will be larger if the sample size \code{n} is increased.
 
 \newpage{}
+
+%*********************************************************************
 \section{Simulation study with multiple time point interventions}\label{simstudy.timevar}
 \addcontentsline{toc}{section}{Simulation study with multiple time point interventions}
 
@@ -1383,6 +1438,8 @@ point \code{t = 0} as Bernoulli random variables, using the distribution functio
 % <<message=FALSE,background='white'>>=
 <<message=FALSE>>=
   library(simcausal)
+  options(simcausal.verbose=FALSE)
+
   D <- DAG.empty()
   D <- D + 
           node("L2", t = 0, distr = "rbern", 
@@ -1476,7 +1533,7 @@ an observed dataset with $10,000$ observations using the causal model
 defined previously. The output is a \code{data.frame} object.
 
 <<message=FALSE>>=
-  Odat <- sim(DAG = lDAG, n = 10000, rndseed = 123)
+  Odat <- sim(DAG = lDAG, n = 100, rndseed = 123)
 @
 
 The format of the output dataset is easily understood by examining the first 10 columns of the first row of the
@@ -1665,7 +1722,7 @@ list of two named \code{data.frame} objects, where each \code{data.frame} object
 the same post-intervention distribution defined by one particular action only.
 
 <<message=FALSE, cache=cache_opt>>=
-  Xdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 10000, rndseed = 123)
+  Xdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 100, rndseed = 123)
   nrow(Xdyn[["A1_th0"]])
   nrow(Xdyn[["A1_th1"]])
   names(Xdyn)
@@ -1687,7 +1744,7 @@ objects, where each \code{data.frame} object contains observations simulated fro
 distribution defined by one particular action only.
 
 <<message=FALSE, cache=cache_opt>>=
-  Xstat <- sim(Dstat, actions = names(A(Dstat)), n = 1000, rndseed = 123)
+  Xstat <- sim(Dstat, actions = names(A(Dstat)), n = 100, rndseed = 123)
   length(Xstat)
   nrow(Xstat[["A1_ts3"]])
 @
@@ -1713,9 +1770,9 @@ The following code demonstrates the default data formatting behavior of the \cod
 can be modified to generate data in the long format:
 
 <<message=FALSE>>=
-  Odat.wide <- sim(DAG = lDAG, n = 1000, wide = TRUE, rndseed = 123)
+  Odat.wide <- sim(DAG = lDAG, n = 100, wide = TRUE, rndseed = 123)
   Odat.wide[1:2, 1:18]
-  Odat.long <- sim(DAG = lDAG, n = 1000, wide = FALSE, rndseed = 123)
+  Odat.long <- sim(DAG = lDAG, n = 100, wide = FALSE, rndseed = 123)
   Odat.long[1:10, ]
 @
 
@@ -1723,7 +1780,7 @@ As with observed data, the default behavior of the \code{sim} function can be ch
 instead structured in long format:
 
 <<message=FALSE, cache=cache_opt>>=
-  lXdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 10000, wide = FALSE, rndseed = 123)
+  lXdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 1000, wide = FALSE, rndseed = 123)
   head(lXdyn[["A1_th0"]], 5)
 @
 
@@ -1766,7 +1823,6 @@ simulated with the \code{sim} function based on its default non-imputation behav
 <<message=FALSE,warning=FALSE>>=
   Odat.wideLTCF2 <- doLTCF(data = Odat.wide, LTCF = "Y")
   Odat.wideLTCF2[c(11,76), 1:18]
-  all.equal(Odat.wideLTCF, Odat.wideLTCF2)
 @
 
 \subsection{Defining and evaluating various causal target parameters}\label{targets2}
@@ -1847,7 +1903,7 @@ the working MSM of interest is a model for survival probabilities. The argument 
 that the working model is a logistic model. Second, we evaluate the coefficients of the working model:
 
 <<message=FALSE, cache=cache_opt>>=
-  MSMres <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres <- eval.target(Ddyn, n = 1000, rndseed = 123)
   MSMres$coef
 @
 
@@ -1890,7 +1946,7 @@ flexible (i.e., more non-parametric) working MSM as follows:
 
   Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, formula = msm.form, 
                         family = "binomial", hazard = FALSE)
-  MSMres2 <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres2 <- eval.target(Ddyn, n = 1000, rndseed = 123)
   MSMres2$coef
 @
 
@@ -1917,7 +1973,7 @@ modify the working model formula by specifying a saturated MSM to directly repli
   msm.form <- "Y ~ theta + as.factor(t) + as.factor(t):theta "
   Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, formula = msm.form, 
                         family = "binomial", hazard = FALSE)
-  MSMres3 <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres3 <- eval.target(Ddyn, n = 1000, rndseed = 123)
   MSMres3$coef
 @
 
@@ -1956,7 +2012,7 @@ the working MSM of interest is now a model for hazards.\\
 Second, we evaluate the coefficients of the working model:
 
 <<message=FALSE, cache=cache_opt>>=
-  MSMres <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres <- eval.target(Ddyn, n = 1000, rndseed = 123)
   MSMres$coef
 @
 
@@ -2003,7 +2059,7 @@ for $E(Y_{d_{\theta}}(t))|Y_{d_{\theta}}(t-1)=0,L_{1})$: $$
   msm.form_sum <- "Y ~ theta + t + I(theta*t) + I(theta*L1)"
   Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, form = msm.form_sum, 
                         family = "binomial", hazard = TRUE)
-  MSMres <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres <- eval.target(Ddyn, n = 1000, rndseed = 123)
   MSMres$coef
 @
 
@@ -2046,7 +2102,7 @@ we define and estimate these target parameters:
   msm.form.correct <- "Y ~ theta + t + I(theta*t) + I(theta * S(L2[0]))"
   Ddyn <- set.targetMSM(Ddyn, outcome = "Y", t = 1:16, form = msm.form.correct, 
                         family = "binomial", hazard = TRUE)
-  MSMres.correct <- eval.target(Ddyn, n = 10000, rndseed = 123)
+  MSMres.correct <- eval.target(Ddyn, n = 1000, rndseed = 123)
   MSMres.correct$coef
 @
 
@@ -2113,6 +2169,8 @@ code provided in the appendix) as shown in Figure~\ref{fig:survfig8}.
 @
 
 \newpage{}
+
+%*********************************************************************
 \section[Replication study of the comparative performances of two estimators]{\protect\parbox{0.95\textwidth}{\protect\centering Replication study of the comparative performances of two estimators}}\label{repsimstudy1}
 \addcontentsline{toc}{section}{Replication study of the comparative performances of two estimators}
 
@@ -2409,6 +2467,8 @@ the IPW estimation performance in this simulation study should not be expected t
 @
 
 \newpage{}
+
+%*********************************************************************
 \section[Replication study of the impact of misspecification of propensity score models]{\protect\parbox{0.95\textwidth}{\protect\centering Replication study of the impact of misspecification of propensity score models}}\label{repsimstudy2}
 \addcontentsline{toc}{section}{Replication study of the impact of misspecification of propensity score models}
 
@@ -2810,6 +2870,8 @@ results closely match those in Table~\ref{origtab4Lefebvre} which were originall
 @
 
 \newpage{}
+
+%*********************************************************************
 \section{Discussion}\label{secdiscus}
 \addcontentsline{toc}{section}{Discussion}
 
@@ -2844,6 +2906,8 @@ data resulting from experiments with more complex sampling methodologies, e.g., 
 \citep{sarndal2003model} or network-based sampled (dependent) data \citep{eckles2014design}.
 
 \newpage{}
+
+%*********************************************************************
 \section*{Acknowledgments}
 \textbf{FUNDING ACKNOWLEDGEMENT}: 
 This study was partially funded through internal operational funds provided by the Kaiser Permanente Center for

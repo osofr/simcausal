@@ -28,6 +28,7 @@ Imports:
     methods
 Suggests:
     ltmle,
+    tmlenet,
     RUnit,
     knitr,
     igraph,
