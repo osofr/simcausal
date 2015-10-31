@@ -441,6 +441,14 @@ Define_sVar <- R6Class("Define_sVar",
         var <- substitute(var)
         var.chr <- as.character(var)
 
+
+        # message("inside `[` call: ")
+        # print("t: " %+% t)
+        # print("var: " %+% var)
+        # print("var.chr: " %+% var.chr)
+        # print("indx: " %+% indx)
+
+
         if (missing(indx)) stop("missing tindex when using Var[tindex] inside the node formula")
         if (identical(class(indx),"logical")) indx <- which(indx)
         if (is.null(t)) stop("references, s.a. Var[t] are not allowed when t is undefined")
@@ -479,25 +487,56 @@ Define_sVar <- R6Class("Define_sVar",
         if (is.null(netind_cl)) stop("Network must be defined (with simcausal::network(...)) prior to using Var[[netidx]] node syntax")
         Kmax <- netind_cl$Kmax
 
-        # print("t: " %+% t)
-        # print("var: " %+% var)
+        # message("inside `[[` call: ")
+        # print("var: "); print(var)
         # print("var.chr: " %+% var.chr)
+        # print("t: " %+% t)
         # print("netidx: " %+% netidx)
         # print("Kmax: " %+% Kmax)
+        # print("is.call(var): " %+% is.call(var))
+        # print("is.name(var): " %+% is.name(var))
         # print("env$misXreplace: " %+% env$misXreplace);
         # print("netind_cl: "); print(netind_cl)
 
-        if (!is.null(t)) stop("simultaneous time varying node references Var[t] and network references Var[[netidx]] are currently not supported")
+        # if (!is.null(t)) stop("simultaneous time varying node references Var[t] and network references Var[[netidx]] are currently not supported")
         if (missing(netidx)) stop("missing netidx when using Var[[netidx]] inside the node formula")
         if (identical(class(netidx),"logical")) netidx <- which(netidx)
-        if (! (var.chr %in% env[["ANCHOR_ALLVARNMS_VECTOR_0"]])) stop("variable " %+% var.chr %+% " doesn't exist")
+        # now checking if var has been previously defined only if its is.name()
+        if (is.name(var)) {
+          if (! (var.chr %in% env[["ANCHOR_ALLVARNMS_VECTOR_0"]])) {
+            stop("variable " %+% var %+% " doesn't exist")
+          }
+        }
 
-        var.val <- eval(var, envir = env)
+        # evaluate in its own environment, in case its fun(var[tindx])[[netindx]]-type expression:
+        # if (is.call(var)) {
+        var.val <- try(eval(var, envir = env))
+        # var.val <- eval(var, envir = env)
+        if(inherits(var.val, "try-error")) {
+          stop("\n...attempt to evaluate network indexing variable failed...")
+        }
+        
 
+        # print("var.val before vector: "); print(var.val)
+        # print("dim(var.val): "); print(dim(var.val))
+
+
+        # if result is one column matrix -> convert to a vector, if matrix has >1 columns -> throw an error:
+        if (length(dim(var.val)) > 1) {
+          var.chr <- colnames(var.val)[1]
+          if (dim(var.val)[2]==1) var.val <- as.vector(var.val) else stop("\n...network indexing variable evaluated to more than one column ...")
+        }
+        if (length(var.chr)>1) var.chr <- "X"
         n <- length(var.val)
+
+        # print("var.val as vector: "); print(var.val)
+        # print("var.chr: " %+% var.chr)
+        # print("n: " %+% n)
+
         if (identical(class(netidx),"logical")) netidx <- which(netidx)
         netVars_eval <- matrix(0L, nrow = n, ncol = length(netidx))
         colnames(netVars_eval) <- netvar(var.chr, netidx)
+
         for (neti in seq_along(netidx)) {
           if (netidx[neti] %in% 0L) {
             netVars_eval[, neti] <- var.val
