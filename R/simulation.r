@@ -155,6 +155,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   EFUP.prev <- rep(FALSE, Nsamp)
   LTCF.prev <- rep(FALSE, Nsamp)
   obs.df <- data.frame(ID = seq(1:Nsamp))
+  
+  # obs.mat <- matrix(,nrow=Nsamp, ncol=length(DAG)+1)
+  # obs.mat[,1] <- seq(1:Nsamp)
+  # colnames(obs.mat) <- c("ID", names(DAG))
 
   #---------------------------------------------------------------------------------
   # CHECKS PERFORMED DURING EVALUTION:
@@ -177,8 +181,14 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     t <- cur.node$t # define variable for a current time point t
     t_new <- !(t %in% t_pts) # set to TRUE when switch to new time point t occurs otherwise FALSE
     t_pts <- c(t_pts, t)
-    t_pts <- as.integer(unique(t_pts)) # vector that keeps track of unique timepoints t
+
+    # getunique_ts <- system.time(
+      t_pts <- as.integer(unique(t_pts)) # vector that keeps track of unique timepoints t
+    # )
+    # print("getunique_ts: "); print(getunique_ts)
+    
     gnodename <- as.character(unlist(strsplit(cur.node$name, "_"))[1])
+
     # dprint("current t: "%+%t%+%"; t new: "%+%t_new); dprint("current time points: ");  dprint(t_pts);
     # dprint("obs.df"); dprint(head(obs.df))
     # dprint("is null t_pts"); dprint(is.null(t_pts)); dprint(is.null(t))
@@ -206,7 +216,12 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     # setting the node-specific user calling environment for the evaluator:
     node_evaluator$set.user.env(cur.node$node.env)
 
-    eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
+    # teval <- system.time(
+      # eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else data.frame(obs.mat))
+      eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
+      # )
+    # print("teval: "); print(teval)
+    
     par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
     eval_dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
     newNodeParams <- list(dist_params = eval_dist_params, par.names = par.names)
@@ -290,7 +305,15 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       # modify the observed data by adding new sampled covariate
       # *** TODO: need to allow result to be a matrix (for multivar distributions) ***
       #------------------------------------------------------------------------
+    
+    # tadddat <- system.time(
+      # newcolidx <- which(colnames(obs.mat) %in% cur.node$name)
+      # if (length(newcolidx)!=1) stop("fatal error")
+      # obs.mat[,newcolidx] <- newVar
       obs.df <- within(obs.df, {assign(cur.node$name, newVar)})
+    # )
+    # print("tadddat: "); print(tadddat)
+
       if (is.EFUP(cur.node)) { # if cur.node is EFU=TRUE type set all observations that had value=1 to EFUP.prev[indx]=TRUE
         EFUP.now <- (obs.df[,ncol(obs.df)]%in%1)
         EFUP.prev <- (EFUP.prev | EFUP.now)
@@ -300,9 +323,11 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       }
     }
   }
+  # obs.df <- data.frame(obs.mat)
 
   # Collect all attributes to be assigned to the obs data
   all_ts <- get_allts(obs.df) # calculate actual time values used in the simulated data
+
   if (sum(LTCF.prev)>0) {	# only change the LTCF attribute if outcome carry forward imputation was really carried out for at least one obs
     LTCF_flag <- LTCF
   } else {
@@ -310,7 +335,6 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   }
 
   newattrs <- FormAttributes(DAG = DAG, parents = NodeParentsNms, dataform = "wide", LTCF = LTCF_flag, tvals = all_ts, netind_cl = netind_cl)
-
   attributes(obs.df) <- c(attributes(obs.df), newattrs)
   dprint("sim data"); dprint(head(obs.df, 1))
 

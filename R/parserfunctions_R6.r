@@ -58,12 +58,13 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       is.inDAG <- as.character(x) %in% curr.dfvarnms
       dprint("is x in DAG? " %+% is.inDAG);
 
-      # CHECK FOR UNDECLARED VARS: Verify if x is even defined in user env if (!notis.fun & !is.inDAG)
-      exists.x <- exists(as.character(x), where = user.env, inherits = FALSE) # exists.x <- exists(as.character(x), where = user.env, inherits = TRUE)
+      # CHECK FOR UNDECLARED VARS: Verify if x is defined in user env if (!notis.fun & !is.inDAG)
+      # exists.x <- exists(as.character(x), where = user.env, inherits = FALSE) 
+      exists.x <- exists(as.character(x), where = user.env, inherits = TRUE)
       dprint("does x exist in user.env? " %+% exists.x)
 
       # CHECK THAT ITS NOT A SPECIAL (RESERVED) VAR (nF)
-      specialVar <- "nF"
+      specialVar <- c("nF", "Kmax", "t", "Nsamp")
       special <- as.character(x)%in%specialVar
       dprint("x is special? " %+% special)
 
@@ -329,16 +330,17 @@ eval.nodeform.out <- function(expr.idx, self, data.df) {
     stop("node "%+%self$cur.node$name%+%": currently can't process node formulas that are not strings or calls")
   }
   
-  # Replace t in the node formula expression with current t value; Replace Kmax its val (returns a call):
+  # Replace (t, Kmax) in node formula by their actual values:
   expr_call <- eval(substitute(substitute(e, list(t = eval(self$cur.node$t), Kmax = eval(self$netind_cl$Kmax))), list(e = expr_call)))
 
   # Removed self$node_fun from data.env as they interfere with R expressions parsing in nodeform_parsers:
   eval.sVar.params <- c(list(self = self),
                         self$df.names(data.df), # special var "ANCHOR_ALLVARNMS_VECTOR_0" with names of already simulated vars
-                        list(t = self$cur.node$t), 
+                        list(t = self$cur.node$t),
                         list(misXreplace = misXreplace), # replacement value for missing network covars
                         list(netind_cl = self$netind_cl),
-                        list(nF = self$netind_cl$nF)
+                        list(nF = self$netind_cl$nF),
+                        list(Nsamp = self$Nsamp)
                         )
   data.env <- c(eval.sVar.params, data.df)
 
