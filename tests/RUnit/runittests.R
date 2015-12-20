@@ -137,6 +137,18 @@ test.noexistdistr <- function() {
   sim(Dset, n = 20)
 }
 
+# ADDING FUNCTIONALITY THAT ALLOWS EFU ARG TO BE ANY LOGICAL R EXPRESSION (allows for conditional right-censoring)
+test.EFUeval <- function(){
+  Drm <- DAG.empty()
+  Drm <- Drm +
+    node("C.time", t = 0:5, distr = "rbern", prob = if(t==0) {0.2} else {ifelse(C.time[t-1]==1,1,0.2)}) + # value 1 indicates that censoring time has arrived
+    node("Y", t = 0:5, distr = "rbern", prob = 0.3, EFU = ifelse(C.time[t]==1,TRUE,FALSE)) + # outcome that becomes a censoring var only after C.time[t]=1
+    node("D", t = 0:5, distr = "rbern", prob = 0.2, EFU = TRUE) # another outcome that is always a censoring variable
+  D <- set.DAG(Drm)
+  dat <- sim(D, n=100)
+}
+
+
 # DAG2 (from tech specs): defining actions with a new constructor and passing attributes
 test.set.DAG_DAG2b_newactions <- function() {
     library(simcausal)

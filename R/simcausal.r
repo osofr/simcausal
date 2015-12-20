@@ -113,7 +113,10 @@ is.DAG <- function(DAG) (("DAG" %in% class(DAG)) || ("DAG.action" %in% class(DAG
 is.DAG.action <- function(DAG) ("DAG.action" %in% class(DAG)) # check its a DAG.action object
 is.DAGnodelist <- function(DAG) "DAG.nodelist" %in% class(DAG) # check its a DAG object
 is.node <- function(node) "DAG.node" %in% class(node) # check its a DAG.node object
-is.EFUP <- function(node) (!is.null(node$EFU))&&(node$EFU) # if the node is end follow-up when value = 1 (EFUP)
+
+is.EFUP <- function(node) (!is.null(node$EFU)) # if the node is end follow-up when value = 1 (EFUP)
+# is.EFUP <- function(node) (!is.null(node$EFU))&&(node$EFU) # if the node is end follow-up when value = 1 (EFUP)
+
 is.Bern <- function(node) {
   (node$distr%in%"Bern"||node$distr%in%"rbern") 		# if the node is Bernoulli random variable
 }

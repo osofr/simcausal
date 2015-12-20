@@ -205,7 +205,6 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     
     # setting the node-specific user calling environment for the evaluator:
     node_evaluator$set.user.env(cur.node$node.env)
-
     eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
     par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
     eval_dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
@@ -288,15 +287,32 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       }
       #------------------------------------------------------------------------
       # modify the observed data by adding new sampled covariate
+      # *** TODO: need to internally save the evaluation results EFU.flag for the following lines to work correctly:
+        # in eval.target():
+        # vec_EFUP <- sapply(N(DAG)[outnode_nms], is.EFUP)
+        # in eval.MSM():
+        # vec_EFUP <- sapply(DAG[outnode_nms], is.EFUP)
+        # in doLTCF():
+        # if  (is.EFUP(cur.node)&(cur.outcome))
       # *** TODO: need to allow result to be a matrix (for multivar distributions) ***
       #------------------------------------------------------------------------
       obs.df <- within(obs.df, {assign(cur.node$name, newVar)})
-      if (is.EFUP(cur.node)) { # if cur.node is EFU=TRUE type set all observations that had value=1 to EFUP.prev[indx]=TRUE
-        EFUP.now <- (obs.df[,ncol(obs.df)]%in%1)
-        EFUP.prev <- (EFUP.prev | EFUP.now)
-        if ((!is.null(LTCF)) && (LTCF%in%gnodename) && is.null(prev.data)) { # is this node the one to be carried forward (LTCF node)? mark the observations with value = 1 (carry forward)
-          LTCF.prev <- (LTCF.prev | EFUP.now)
+      if (!is.null(cur.node$EFU)) {
+      # if (is.EFUP(cur.node)) { # if cur.node is EFU=TRUE type set all observations that had value=1 to EFUP.prev[indx]=TRUE
+        # EFU is now evaluated separately for each observation, only when evaluates to TRUE then the current node starts acting as a censoring variable
+        EFU.flag <- node_evaluator$eval.EFU(cur.node = cur.node, data.df = if (!is.null(prev.data)) prev.data else obs.df)
+        EFU.TRUE <- EFU.flag %in% TRUE
+        # EFU.TRUE <- which(EFU.flag %in% TRUE)
+        # print("EFU.flag: "); print(EFU.flag); print(EFU.flag %in% TRUE)
+        # check for censoring only when at least one observation had EFU=TRUE
+        if (sum(EFU.TRUE)>0) {
+          EFUP.now <- (obs.df[,ncol(obs.df)]%in%1) & (EFU.TRUE)
+          EFUP.prev <- (EFUP.prev | EFUP.now)
+          if ((!is.null(LTCF)) && (LTCF%in%gnodename) && is.null(prev.data)) { # is this node the one to be carried forward (LTCF node)? mark the observations with value = 1 (carry forward)
+            LTCF.prev <- (LTCF.prev | EFUP.now)
+          }
         }
+
       }
     }
   }

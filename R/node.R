@@ -101,7 +101,13 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
   if (missing(order)) {
     order <- NULL
   }
-  if (missing(EFU)) EFU <- NULL
+
+  if (!missing(EFU)) {
+    EFU <- deparse(bquote2(substitute(EFU), env))
+    # print("EFU: "); print(class(EFU)); print(EFU)
+  } else {
+    EFU <- NULL
+  }
 
   # new check that also checks for distr in the calling environment:
   if (!exists(distr)) {

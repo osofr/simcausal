@@ -58,12 +58,13 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       is.inDAG <- as.character(x) %in% curr.dfvarnms
       dprint("is x in DAG? " %+% is.inDAG);
 
-      # CHECK FOR UNDECLARED VARS: Verify if x is even defined in user env if (!notis.fun & !is.inDAG)
-      exists.x <- exists(as.character(x), where = user.env, inherits = FALSE) # exists.x <- exists(as.character(x), where = user.env, inherits = TRUE)
+      # CHECK FOR UNDECLARED VARS: Verify if x is defined in user env if (!notis.fun & !is.inDAG)
+      # exists.x <- exists(as.character(x), where = user.env, inherits = FALSE) 
+      exists.x <- exists(as.character(x), where = user.env, inherits = TRUE)
       dprint("does x exist in user.env? " %+% exists.x)
 
       # CHECK THAT ITS NOT A SPECIAL (RESERVED) VAR (nF)
-      specialVar <- "nF"
+      specialVar <- c("nF", "Kmax", "t", "Nsamp")
       special <- as.character(x)%in%specialVar
       dprint("x is special? " %+% special)
 
@@ -329,16 +330,17 @@ eval.nodeform.out <- function(expr.idx, self, data.df) {
     stop("node "%+%self$cur.node$name%+%": currently can't process node formulas that are not strings or calls")
   }
   
-  # Replace t in the node formula expression with current t value; Replace Kmax its val (returns a call):
+  # Replace (t, Kmax) in node formula by their actual values:
   expr_call <- eval(substitute(substitute(e, list(t = eval(self$cur.node$t), Kmax = eval(self$netind_cl$Kmax))), list(e = expr_call)))
 
   # Removed self$node_fun from data.env as they interfere with R expressions parsing in nodeform_parsers:
   eval.sVar.params <- c(list(self = self),
                         self$df.names(data.df), # special var "ANCHOR_ALLVARNMS_VECTOR_0" with names of already simulated vars
-                        list(t = self$cur.node$t), 
+                        list(t = self$cur.node$t),
                         list(misXreplace = misXreplace), # replacement value for missing network covars
                         list(netind_cl = self$netind_cl),
-                        list(nF = self$netind_cl$nF)
+                        list(nF = self$netind_cl$nF),
+                        list(Nsamp = self$Nsamp)
                         )
   data.env <- c(eval.sVar.params, data.df)
 
@@ -441,6 +443,14 @@ Define_sVar <- R6Class("Define_sVar",
         var <- substitute(var)
         var.chr <- as.character(var)
 
+
+        # message("inside `[` call: ")
+        # print("t: " %+% t)
+        # print("var: " %+% var)
+        # print("var.chr: " %+% var.chr)
+        # print("indx: " %+% indx)
+
+
         if (missing(indx)) stop("missing tindex when using Var[tindex] inside the node formula")
         if (identical(class(indx),"logical")) indx <- which(indx)
         if (is.null(t)) stop("references, s.a. Var[t] are not allowed when t is undefined")
@@ -479,25 +489,56 @@ Define_sVar <- R6Class("Define_sVar",
         if (is.null(netind_cl)) stop("Network must be defined (with simcausal::network(...)) prior to using Var[[netidx]] node syntax")
         Kmax <- netind_cl$Kmax
 
-        # print("t: " %+% t)
-        # print("var: " %+% var)
+        # message("inside `[[` call: ")
+        # print("var: "); print(var)
         # print("var.chr: " %+% var.chr)
+        # print("t: " %+% t)
         # print("netidx: " %+% netidx)
         # print("Kmax: " %+% Kmax)
+        # print("is.call(var): " %+% is.call(var))
+        # print("is.name(var): " %+% is.name(var))
         # print("env$misXreplace: " %+% env$misXreplace);
         # print("netind_cl: "); print(netind_cl)
 
-        if (!is.null(t)) stop("simultaneous time varying node references Var[t] and network references Var[[netidx]] are currently not supported")
+        # if (!is.null(t)) stop("simultaneous time varying node references Var[t] and network references Var[[netidx]] are currently not supported")
         if (missing(netidx)) stop("missing netidx when using Var[[netidx]] inside the node formula")
         if (identical(class(netidx),"logical")) netidx <- which(netidx)
-        if (! (var.chr %in% env[["ANCHOR_ALLVARNMS_VECTOR_0"]])) stop("variable " %+% var.chr %+% " doesn't exist")
+        # now checking if var has been previously defined only if its is.name()
+        if (is.name(var)) {
+          if (! (var.chr %in% env[["ANCHOR_ALLVARNMS_VECTOR_0"]])) {
+            stop("variable " %+% var %+% " doesn't exist")
+          }
+        }
 
-        var.val <- eval(var, envir = env)
+        # evaluate in its own environment, in case its fun(var[tindx])[[netindx]]-type expression:
+        # if (is.call(var)) {
+        var.val <- try(eval(var, envir = env))
+        # var.val <- eval(var, envir = env)
+        if(inherits(var.val, "try-error")) {
+          stop("\n...attempt to evaluate network indexing variable failed...")
+        }
+        
 
+        # print("var.val before vector: "); print(var.val)
+        # print("dim(var.val): "); print(dim(var.val))
+
+
+        # if result is one column matrix -> convert to a vector, if matrix has >1 columns -> throw an error:
+        if (length(dim(var.val)) > 1) {
+          var.chr <- colnames(var.val)[1]
+          if (dim(var.val)[2]==1) var.val <- as.vector(var.val) else stop("\n...network indexing variable evaluated to more than one column ...")
+        }
+        if (length(var.chr)>1) var.chr <- "X"
         n <- length(var.val)
+
+        # print("var.val as vector: "); print(var.val)
+        # print("var.chr: " %+% var.chr)
+        # print("n: " %+% n)
+
         if (identical(class(netidx),"logical")) netidx <- which(netidx)
         netVars_eval <- matrix(0L, nrow = n, ncol = length(netidx))
         colnames(netVars_eval) <- netvar(var.chr, netidx)
+
         for (neti in seq_along(netidx)) {
           if (netidx[neti] %in% 0L) {
             netVars_eval[, neti] <- var.val
@@ -569,7 +610,6 @@ Define_sVar <- R6Class("Define_sVar",
       self$cur.node <- cur.node
       self$ReplMisVal0 <- FALSE
       # print("initial asis.flags: "); print(attributes(cur.node$dist_params)[["asis.flags"]])
-
       # Parse the node formulas (parameters), set self$exprs_list, set new self$sVar.misXreplace and self$sVar.noname if found:
       self$set.new.exprs(exprs_list = cur.node$dist_params)
 
@@ -580,13 +620,29 @@ Define_sVar <- R6Class("Define_sVar",
       self$Nsamp <- nrow(data.df)
       sVar.res_l <- lapply(seq_along(self$exprs_list), eval.nodeform.out, self = self, data.df = data.df)
       names(sVar.res_l) <- names(self$exprs_list)
-      # print("sVar.res_l: "); print(sVar.res_l)
 
       # USE BELOW NAMING AND MAPPING SCHEME WHEN SAMPLING MULTIVAR RVs:
       # SAVE THE MAP BETWEEEN EXPRESSION NAMES AND CORRESPONDING COLUMN NAMES:
       # self$sVar.names.map <- lapply(sVar.res_l, colnames)
       # mat.sVar <- do.call("cbind", sVar.res_l)
       return(sVar.res_l)
+    },
+
+    # Parse the R expression for the EFU node arg (if not null)
+    eval.EFU = function(cur.node, data.df) {
+      assert_that(is.environment(self$user.env))
+      self$cur.node <- cur.node
+      self$ReplMisVal0 <- FALSE
+      if (!is.null(cur.node$EFU)) {
+        self$set.new.exprs(exprs_list = list(EFU = cur.node$EFU))
+        EFU.res <- eval.nodeform.out(expr.idx = 1, self = self, data.df = data.df)$evaled_expr
+        # print("EFU.res: "); print(EFU.res)
+        assert_that(is.logical(EFU.res))
+        if (length(EFU.res)==1) EFU.res <- rep.int(EFU.res, self$Nsamp)
+        return(EFU.res)
+      } else {
+        return(NULL)
+      }
     },
 
     df.names = function(data.df) { # list of variable names from data.df with special var name (ANCHOR_ALLVARNMS_VECTOR_0)
