@@ -636,9 +636,9 @@ Define_sVar <- R6Class("Define_sVar",
       if (!is.null(cur.node$EFU)) {
         self$set.new.exprs(exprs_list = list(EFU = cur.node$EFU))
         EFU.res <- eval.nodeform.out(expr.idx = 1, self = self, data.df = data.df)$evaled_expr
-        # print("EFU.res: "); print(EFU.res)
-        assert_that(is.logical(EFU.res))
         if (length(EFU.res)==1) EFU.res <- rep.int(EFU.res, self$Nsamp)
+        # print("EFU.res: "); print(EFU.res)
+        assert_that(all(is.logical(EFU.res) || is.null(EFU.res)))
         return(EFU.res)
       } else {
         return(NULL)

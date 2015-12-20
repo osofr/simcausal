@@ -2216,10 +2216,12 @@ test.set.DAG_general <- function() {
 }
 
 # manually defining the distribution node
-fmakeBern <- function(name, order, meanform, EFU=NULL, logit=TRUE) {
+fmakeBern <- function(name, order, meanform, EFU=NULL, logit=TRUE, t = NULL) {
     meanform <- as.character(meanform)
     if (logit) meanform <-  paste0("plogis(", meanform, ")")
-    return(list(name = name, distr = "rbern", dist_params = list(prob = meanform), EFU = EFU, order = order, node.env = environment()))
+    # node()
+    return(node(name = name, distr = "rbern", order = order, params = list(prob = meanform), EFU = .(EFU)))
+    # return(list(name = name, distr = "rbern", dist_params = list(prob = meanform), EFU = EFU, order = order, node.env = environment()))
 }
 
 test.set.DAG_DAG1 <- function() {
@@ -2230,13 +2232,13 @@ test.set.DAG_DAG1 <- function() {
     n <- 500
     # n <- 100000
     n <- n  # faster run time
-
     W1 <- fmakeBern("W1", 1, -0.5)
     W2 <- fmakeBern("W2", 2, "-0.5 + 0.5*W1")
     W3 <- fmakeBern("W3", 3, "-0.5 + 0.7*W1 + 0.3*W2")
     A <- fmakeBern("A", 4, "-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3")
     Y <- fmakeBern("Y", 5, "-0.1 + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3", TRUE)
-    testDAG_1 <- list(W1 = W1, W2 = W2, W3 = W3, A = A, Y = Y)
+    # testDAG_1 <- list(W1 = W1, W2 = W2, W3 = W3, A = A, Y = Y)
+    testDAG_1 <- c(W1, W2, W3, A, Y)
     datgendist_DAG1 <- set.DAG(testDAG_1)
     simODAG_1 <- simobs(datgendist_DAG1, n = n, rndseed = 123)
     # attributes(datgendist_DAG1)
@@ -2378,7 +2380,6 @@ test.set.DAG_DAG2_errors <- function() {
     # test for no underscore char "_" in node names
     checkException(node("A_2", distr="rbern", prob=0.5, order=1))
 
-    #
     # RETURNS AN ERROR (AS IT SHOULD) - FIXED TO CORRECTLY THROW AN EXCEPTION: VAR L2[0] NOT DEFINED
     L2_0 <- node(name="L1", t=0, distr="rbern", prob=0.05, order=1)
     L1_0 <- node(name="L2", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
@@ -2390,14 +2391,11 @@ test.set.DAG_DAG2_errors <- function() {
     # long DAG 2: set.DAG - catching a node naming error
     #--------------------------------------------------------
     n <- 500
-    # n <- 1000000
-    n <- n  # faster run time
-
-    L1_0 <- fmakeBern("L1_0", 1, 0.05, NULL, FALSE)
-    L2_0 <- fmakeBern("L2_0", 2, "ifelse(L1_0==1,0.5,0.1)", NULL, FALSE)
-    A1_0 <- fmakeBern("A1_0", 3, "ifelse(all(c(L1_0,L2_0)==c(1,0)), 0.5, ifelse(all(c(L1_0,L2_0)==c(0,0)) , 0.1, ifelse(all(c(L1_0,L2_0)==c(1,1)) , 0.9, 0.5)))", NULL, FALSE)
-    A2_0 <- fmakeBern("A1_0", 4, "0", NULL, FALSE)
-    Y_0 <- fmakeBern("Y_0", 5, "0", TRUE, FALSE)
+    L1_0 <- fmakeBern("L1", 1, 0.05, NULL, FALSE, t=0)
+    L2_0 <- fmakeBern("L2", 2, "ifelse(L1_0==1,0.5,0.1)", NULL, FALSE, t=0)
+    A1_0 <- fmakeBern("A1", 3, "ifelse(all(c(L1_0,L2_0)==c(1,0)), 0.5, ifelse(all(c(L1_0,L2_0)==c(0,0)) , 0.1, ifelse(all(c(L1_0,L2_0)==c(1,1)) , 0.9, 0.5)))", NULL, FALSE, t=0)
+    A2_0 <- fmakeBern("A1", 4, "0", NULL, FALSE, t=0)
+    Y_0 <- fmakeBern("Y", 5, "0", TRUE, FALSE, t=0)
     
     #*********************************************
     # GIVES AN ERROR AS IT SHOULD, SINCE THE NODE NAMES OF THE OBJECT AND LIST DON'T MATCH (A1_0!=A2_0)
