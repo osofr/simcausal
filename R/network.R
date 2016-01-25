@@ -61,8 +61,6 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' Similarly, use \code{mean(VarName[[net_indx]])} to define a summary measure as a mean of \code{VarName} values of friends in \code{F_i[net_indx]}, across all \code{i}.
 #' For more details on defining such summary functions see the \code{simcausal} vignette.
 #'
-#' @param name Character name for the network, to be used in future versions
-#' @param Kmax Either an R expression that evaluates to an integer constant or an integer specifying the maximum number of friends (connections) any simulated observation can have.
 #' @param netfun Character name of the user-defined network generating function, can be any R function that returns a matrix of friend IDs of dimension \code{c(n, Kmax)}. 
 #' The function must accept a named argument \code{n} that specifies the total sample size of the network.
 #' The matrix of network IDs should have \code{n} rows and \code{Kmax} columns, where each row \code{i} contains a vector of unique IDs in \code{1:n} that are \code{i}'s friends
@@ -70,6 +68,8 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' Arguments to \code{netfun} can be either passed as named arguments to \code{network} function itself or as a named list of parameters \code{params}.
 #' These network arguments can themselves be functions of the previously defined node names,
 #' allowing for network sampling itself to be dependent on the previously simulated node values, as shown in Example 2.
+#' @param name Character string specifiying the name of the current network, may be used for adding new network that replaces the existing one (resample previous network)
+# @param Kmax Either an R expression that evaluates to an integer constant or an integer specifying the maximum number of friends (connections) any simulated observation can have.
 #' @param ... Named arguments specifying distribution parameters that are accepted by the network sampling function in \code{netfun}. 
 #' These parameters can be R expressions that are themselves formulas of the past node names.
 #' @param params A list of additional named parameters to be passed on to the \code{netfun} function. 
@@ -79,7 +79,8 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 # @family network functions
 #' @seealso \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}
 #' @export
-network <- function(name, Kmax, netfun, ..., params = list()) {
+network <- function(name, netfun, ..., params = list()) {
+# network <- function(name, netfun, Kmax, ..., params = list()) {  
   env <- parent.frame()
   if (missing(netfun)) stop("netfun argument must be specified")
   # collect all distribution parameters with delayed evaluation (must be named)
@@ -93,9 +94,13 @@ network <- function(name, Kmax, netfun, ..., params = list()) {
     stop("please specify name for each attribute")
   }
 
-  if (missing(Kmax)) stop("Kmax argument must be specified")
-  assert_that(is.count(Kmax))
-  dist_params$Kmax <- Kmax
+  if (missing(name)) stop("Network name must be specified")
+  # name <- "net.node."%+%sample(c(10000:20000), 1)
+  # name <- "net.node."%+%netfun
+
+  # if (missing(Kmax)) stop("Kmax argument must be specified")
+  # assert_that(is.count(Kmax))
+  # dist_params$Kmax <- Kmax
 
   # check the distribution function exists, if not found also check the calling environment:
   if (!exists(netfun)) {
@@ -105,7 +110,8 @@ network <- function(name, Kmax, netfun, ..., params = list()) {
     }
   }
 
-  net_dist_params <- list(name = name, Kmax = Kmax, netfun = netfun, dist_params = dist_params, node.env = env)
+  net_dist_params <- list(name = name, netfun = netfun, dist_params = dist_params, node.env = env)
+  # net_dist_params <- list(name = name, netfun = netfun, Kmax = Kmax, dist_params = dist_params, node.env = env)
   net_lists <- list(net_dist_params)
   names(net_lists) <- name
 

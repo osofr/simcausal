@@ -225,7 +225,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     distr <- cur.node$distr
     if ("DAG.net" %in% class(cur.node)) {
 
-      if (!is.null(netind_cl) && verbose) message("Previously sampled network is being sampled again during the same simulation!")
+      if (!is.null(netind_cl) && verbose) message("Network is being re-sampled during the same simulation!")
       distr <- cur.node$netfun
 
       # ***************************************************************
@@ -235,11 +235,13 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev, 
                                   cur.node = cur.node, expr_str = cur.node$dist_params, asis.samp = TRUE)
       
+      # OS 01/25/16: changed to new Kmax evaluation, no longer require it to be an arg to network() function
+      cur.node$Kmax <- ncol(NetInd_k)
       Kmax.new <- ncol(NetInd_k)
-      if (as.integer(Kmax.new) != as.integer(cur.node$Kmax)) {
-        if (verbose) message("Kmax is reset to a new value; old Kmax: " %+% cur.node$Kmax %+% "; new Kmax: " %+% Kmax.new)
-        cur.node$Kmax <- Kmax.new
-      }
+      # if (as.integer(Kmax.new) != as.integer(cur.node$Kmax)) {
+      #   if (verbose) message("Kmax is reset to a new value; old Kmax: " %+% cur.node$Kmax %+% "; new Kmax: " %+% Kmax.new)
+      #   cur.node$Kmax <- Kmax.new
+      # }
       netind_cl <- NetIndClass$new(nobs = Nsamp, Kmax = cur.node$Kmax)
       netind_cl$NetInd <- NetInd_k
       netind_cl$make.nF()

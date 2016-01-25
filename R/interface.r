@@ -187,7 +187,7 @@ DAG.empty <- function() {
     # class(res) <- "DAG"
     res <- add.nodes(DAG = obj1, nodes = obj2)
   } else if ("DAG.netlist" %in% class(obj2)) {
-    if (!is.null(attr(obj1, "DAG.net"))) message("overwriting previously defined network object")
+    # if (!is.null(attr(obj1, "DAG.net"))) message("overwriting previously defined network object")
     res <- add.nodes(DAG = obj1, nodes = obj2)
     attr(res, "DAG.net") <- obj2
   } else {

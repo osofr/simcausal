@@ -4,12 +4,10 @@
 \alias{network}
 \title{Define a Network Generator}
 \usage{
-network(name, Kmax, netfun, ..., params = list())
+network(name, netfun, ..., params = list())
 }
 \arguments{
-\item{name}{Character name for the network, to be used in future versions}
-
-\item{Kmax}{Either an R expression that evaluates to an integer constant or an integer specifying the maximum number of friends (connections) any simulated observation can have.}
+\item{name}{Character string specifiying the name of the current network, may be used for adding new network that replaces the existing one (resample previous network)}
 
 \item{netfun}{Character name of the user-defined network generating function, can be any R function that returns a matrix of friend IDs of dimension \code{c(n, Kmax)}.
 The function must accept a named argument \code{n} that specifies the total sample size of the network.
