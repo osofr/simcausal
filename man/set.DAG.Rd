@@ -4,15 +4,17 @@
 \alias{set.DAG}
 \title{Create and Lock DAG Object}
 \usage{
-set.DAG(DAG, vecfun, verbose = getOption("simcausal.verbose"))
+set.DAG(DAG, vecfun, n.test = 100, verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.}
 
 \item{vecfun}{A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.}
 
-\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
+\item{n.test}{Simulation sample size used ONLY for testing the validity of this \code{DAG} object. A larger \code{n.test} may be useful for being able to determine issues with the data generating distribution code by \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
 Turn this off by default using options(simcausal.verbose=FALSE).}
+
+\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.}
 }
 \value{
 A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
