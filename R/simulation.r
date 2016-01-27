@@ -209,7 +209,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     par.names <- unique(unlist(lapply(eval_expr_res, '[[', "par.nodes")))
     eval_dist_params <- lapply(eval_expr_res, '[[' ,"evaled_expr")
     newNodeParams <- list(dist_params = eval_dist_params, par.names = par.names)
-    
+
     dprint("cur.node t:" %+% cur.node$t)
     dprint("original nodeform expr:"); dprint(lapply(cur.node$dist_params, function(expr) as.character(expr)))
     dprint("full eval_expr_res:"); dprint(eval_expr_res)
@@ -232,6 +232,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       # USING AS-IS FOR SAMPLING NETWORK BECAUSE THE OUTPUT IS A MATRIX. THIS IS A BAD WAY TO SOLVE THIS.
       # A BETTER SOLUTION IS TO ALLOW THE distr RESULT TO BE A VECTOR OR MATRIX (for multivariate RVs)
       # *****************************************************************
+
       NetInd_k <- sampleNodeDistr(newNodeParams = newNodeParams, distr = distr, EFUP.prev = EFUP.prev, 
                                   cur.node = cur.node, expr_str = cur.node$dist_params, asis.samp = TRUE)
       

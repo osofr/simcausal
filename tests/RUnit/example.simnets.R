@@ -12,21 +12,19 @@
 # Argument m_pn: > 0 
 # a total number of edges in the network as a fraction (or multiplier) of n (sample size)
 #--------------------------------------------------------------------------------------------------
-generate.igraph.ER <- function(n, m_pn, Kmax, ...) {
-  m <- as.integer(m_pn[1]*n)
+gen.ER <- function(n, m_pn, ...) {
+  m <- as.integer(m_pn*n)
   if (n<=10) m <- 20
   igraph.ER <- igraph::sample_gnm(n = n, m = m, directed = TRUE)
   sparse_AdjMat <- igraph.to.sparseAdjMat(igraph.ER)
   NetInd_out <- sparseAdjMat.to.NetInd(sparse_AdjMat)
-  if (Kmax < NetInd_out$Kmax) message("Kmax changed, new Kmax = ", NetInd_out$Kmax)
   return(NetInd_out$NetInd_k)
 }
 
-Kmax <- 5
 D <- DAG.empty()
 
 # Sample ER model network using igraph::sample_gnm with m_pn argument:
-D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 50)
+D <- D + network("Net1", netfun = "gen.ER", m_pn = 50)
 
 # W1 - categorical (5 categories, 0-4):
 nW1cat <- 6
@@ -80,8 +78,11 @@ Dset <- set.DAG(D)
 datnet <- sim(Dset, n = 1000, rndseed = 543)
 head(datnet, 100)
 
-# Extracting the network matrix from the simulated data:
-attributes(datnet)$netind_cl
+# Obtaining the network object from simulated data:
+net_object <- attributes(datnet)$netind_cl
+# Max number of friends:
+net_object$Kmax
+# Network matrix
 head(attributes(datnet)$netind_cl$NetInd)
 
 #--------------------------------------------------------------------------------------------------
@@ -90,18 +91,18 @@ head(attributes(datnet)$netind_cl$NetInd)
 
 #--------------------------------------------------------------------------------------------------
 # Example of a user-defined network sampler(s) function
-# Arguments Kmax, bslVar[i] (W1) & nF are evaluated in the environment of the simulated data then 
+# Arguments K, bslVar[i] (W1) & nF are evaluated in the environment of the simulated data then 
 # passed to generateNET() function
   # - unif.F: when TRUE sample friends set as discrete uniform distr (no weighting by bslVar)
   # - bslVar[i]: used for contructing weights for the probability of selecting i as 
   # someone else's friend (weighted sampling), when missing the sampling goes to uniform
   # - nF[i]: total number of friends that need to be sampled for observation i
 #--------------------------------------------------------------------------------------------------
-generateNET <- function(n, Kmax, unif.F = FALSE, bslVar, nF, ...) {
+generateNET <- function(n, K, unif.F = FALSE, bslVar, nF, ...) {
   nW1cat <- 6
   W1cat_arr <- c(1:nW1cat)/2
   prob_F <- plogis(-4.5 + 2.5*W1cat_arr) / sum(plogis(-4.5 + 2.5*W1cat_arr))
-  NetInd_k <- matrix(NA_integer_, nrow = n, ncol = Kmax)
+  NetInd_k <- matrix(NA_integer_, nrow = n, ncol = K)
   nFriendTot <- rep(0L, n)
 
   for (index in (1:n)) {
@@ -112,24 +113,20 @@ generateNET <- function(n, Kmax, unif.F = FALSE, bslVar, nF, ...) {
         friends_i <- FriendSampSet
       } else {
         if (missing(bslVar) || unif.F[1]) {
-           # Sample with uniform prob, no weighting by bslVar:
           friends_i <- sort(sample(FriendSampSet, size = nFriendSamp))
         } else {
-          # Sample from the possible friend set, with prob for selecting each j
-          # being based on categorical bslVar[j]
-          # bslVar[i] affects the probability of having [i] selected as someone's friend bslVar
           friends_i <- sort(sample(FriendSampSet, size = nFriendSamp,
                             prob = prob_F[bslVar[FriendSampSet] + 1]))
         }
       }
-      NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, Kmax - length(friends_i)))
+      NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, K - length(friends_i)))
       nFriendTot[index] <- nFriendTot[index] + nFriendSamp
     }
   }
   return(NetInd_k)
 }
 
-Kmax <- 6
+K <- 6
 D <- DAG.empty()
 
 # W1 - categorical or continuous confounder (5 categories, 0-4):
@@ -149,7 +146,7 @@ D <- D + node("W3", distr = "rbern", prob = prob_W3)
 
 # nF: total number of friends for each i (nF[i]), each nF[i] is influenced by categorical W1 
 normprob <- function(x) x / sum(x)
-k_arr <-c(1:Kmax)
+k_arr <-c(1:K)
 pN_0 <- 0.02
 prob_Ni_W1_0 <- normprob(c(pN_0, plogis(-3 - 0 - k_arr / 2)))    # W1=0 probabilities of |F_i|
 prob_Ni_W1_1 <- normprob(c(pN_0, plogis(-1.5 - 0 - k_arr / 3)))  # W1=1 probabilities of |F_i|
@@ -164,7 +161,7 @@ D <- D + node("nF.plus1", distr = "rcategor.int",
                       (W1 == 4)*.(prob_Ni_W1_4) + (W1 == 5)*.(prob_Ni_W1_5))
 
 # Adding the network generator that depends on nF and categorical W1:
-D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generateNET", bslVar = W1, nF = nF.plus1 - 1)
+D <- D + network("NetInd_k", K = K, netfun = "generateNET", bslVar = W1, nF = nF.plus1 - 1)
 
 # Define A[i] is a function W1[i] as well as the total sum of i's friends values for W1, W2 and W3:
 D <- D + node("A", distr = "rbern",

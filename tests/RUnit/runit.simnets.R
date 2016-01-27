@@ -20,7 +20,7 @@ test.networkgen1 <- function() {
   # p - Probability of making an edge between two observations
   # m_pn - above 0, a total number of edges in the network as a proportion of n (sample size)
   # m_psquare - define m argument to igraph::sample_gnm as sqrt(n)
-  generate.igraph.ER <- function(n, p, m_pn, m_psquare, Kmax, ...) {
+  generate.igraph.ER <- function(n, p, m_pn, m_psquare, ...) {
     if (!missing(p)) {
       igraph.ER <- igraph::sample_gnp(n = n, p = p[1], directed = TRUE)
     } else if (!missing(m_pn)) {
@@ -40,26 +40,26 @@ test.networkgen1 <- function() {
     sparse_AdjMat <- igraph.to.sparseAdjMat(igraph.ER)
     # From igraph object to simcausal/tmlenet input (NetInd_k, nF, Kmax):
     NetInd_out <- sparseAdjMat.to.NetInd(sparse_AdjMat)
-    print("old Kmax"); print(Kmax)
-    print("new Kmax"); print(NetInd_out$Kmax)
+    # print("old Kmax"); print(Kmax)
+    print("automatic Kmax: "); print(NetInd_out$Kmax)
     print("NetInd_k"); print(head(NetInd_out$NetInd_k))
-    if (Kmax < NetInd_out$Kmax) message("new network has larger Kmax value than requested, new Kmax = " %+% NetInd_out$Kmax)
+    # if (Kmax < NetInd_out$Kmax) message("new network has larger Kmax value than requested, new Kmax = " %+% NetInd_out$Kmax)
     return(NetInd_out$NetInd_k)
   }
 
-  Kmax <- 5
+  p.set <- 0.05
   D <- DAG.empty()
 
   # ------------------------------------------------------------------------------------
   # PUT THIS IN A FUNCTION....
   # Sample ER model network using igraph::sample_gnp with p argument:
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", p = 0.05)
+  D <- D + network("Net.sample", netfun = "generate.igraph.ER", p = p.set)
   D1 <- set.DAG(D)
   # Sample ER model network using igraph::sample_gnm with m_pn argument:
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 50)
+  D <- D + network("Net.sample", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 50)
   D2 <- set.DAG(D)
   # Sample ER model network using igraph::sample_gnm with m_psquare argument (m is sqrt(n)):
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.ER", m_psquare = TRUE)
+  D <- D + network("Net.sample", Kmax = Kmax, netfun = "generate.igraph.ER", m_psquare = TRUE)
   D3 <- set.DAG(D)
 # ------------------------------------------------------------------------------------
 
@@ -96,9 +96,6 @@ test.networkgen1 <- function() {
   # To examine the network:
   attributes(dat)$netind_cl
   head(attributes(dat)$netind_cl$NetInd)
-
-  # Can plot the observed network with igraph.... Future implementations
-  # ...
 }
 
 
@@ -106,7 +103,7 @@ test.networkgen2 <- function() {
   #------------------------------------------------------------------------------------------------------------
   # EXAMPLE 2. SIMULATING DATA FROM SEM WITH A CUSTOM NETWORK GENERATING FUNCTION generateNET()
   #------------------------------------------------------------------------------------------------------------
-  Kmax <- 6
+  K <- 6
   D <- DAG.empty()
   #------------------------------------------------------------------------------------------------------------
   # An example of a user-defined network sampler(s) function that will be specified as "netfun" argument to the network() function
@@ -114,18 +111,18 @@ test.networkgen2 <- function() {
   # Builds NetInd_k matrix of friends/connections
   # In general this can be any function that:
     # Takes "n" (# of obs) as a first argument
-    # Returns a matrix with n rows and Kmax columns with row i consisting of IDs (row numbers) of i's friends (connections that can influence i)
-  # Arguments Kmax, bslVar[i] (W1) & nF are evaluated in the environment of the simulated data then passed to generateNET() function
+    # Returns a matrix with n rows and K columns with row i consisting of IDs (row numbers) of i's friends (connections that can influence i)
+  # Arguments K, bslVar[i] (W1) & nF are evaluated in the environment of the simulated data then passed to generateNET() function
     # - unif.F: when TRUE sample set F (connections/friends) from the uniform discrete distr (no weighting by bslVar)
     # - bslVar[i]: used for contructing weights for the probability of selecting i as someone else's friend (weighted sampling), when missing the sampling goes to uniform
     # - nF[i]: total number of friends that need to be sampled for observation i
-  generateNET <- function(n, Kmax, unif.F = FALSE, bslVar, nF, ...) {
-    print("Kmax in generateNET: " %+% Kmax);
+  genNET <- function(n, K, unif.F = FALSE, bslVar, nF, ...) {
+    print("K in genNET: " %+% K);
     nW1cat <- 6
     W1cat_arr <- c(1:nW1cat)/2
     prob_F <- plogis(-4.5 + 2.5*W1cat_arr) / sum(plogis(-4.5 + 2.5*W1cat_arr))
 
-    NetInd_k <- matrix(NA_integer_, nrow = n, ncol = Kmax)
+    NetInd_k <- matrix(NA_integer_, nrow = n, ncol = K)
     nFriendTot <- rep(0L, n)
     for (index in (1:n)) {
       FriendSampSet <- setdiff( c(1:n), index)  #set of possible friends to sample, anyone but itself
@@ -143,8 +140,8 @@ test.networkgen2 <- function() {
             friends_i <- sort(sample(FriendSampSet, size = nFriendSamp, prob = prob_F[bslVar[FriendSampSet] + 1]))
           }
         }
-        # Turn any vector of IDs into a vector of length Kmax, filling each remainder with trailing NA's:
-        NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, Kmax - length(friends_i)))
+        # Turn any vector of IDs into a vector of length K, filling each remainder with trailing NA's:
+        NetInd_k[index, ] <- c(as.integer(friends_i), rep_len(NA_integer_, K - length(friends_i)))
         nFriendTot[index] <- nFriendTot[index] + nFriendSamp
       }
     }
@@ -152,7 +149,7 @@ test.networkgen2 <- function() {
   }
 
   normprob <- function(x) x / sum(x)
-  k_arr <-c(1:Kmax)
+  k_arr <-c(1:K)
   pN_0 <- 0.02
   prob_Ni_W1_0 <- normprob(c(pN_0, plogis(-3 - 0 - k_arr / 2)))    # W1=0 probabilities of |F_i|
   prob_Ni_W1_1 <- normprob(c(pN_0, plogis(-1.5 - 0 - k_arr / 3)))  # W1=1 probabilities of |F_i|
@@ -188,10 +185,10 @@ test.networkgen2 <- function() {
   # Adding the network generator that depends on nF and categorical W1:
   # Arguments to network function:
     # "NetInd_k" - the name for the output network matrix (TBD on how to allow access to it)
-    # Kmax: required argument for max number of friends
-    # netfun: name of the user-defined function that builds NetInd_k matrix, the function takes n as first argument, has to return a matrix with n rows and Kmax columns
+    # K: max number of friends
+    # netfun: name of the user-defined function that builds NetInd_k matrix, the function takes n as first argument, has to return a matrix with n rows and K columns
     # bslVar, nF: additional named arguments that will be passed on to netfun function
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generateNET", bslVar = W1, nF = nF.plus1 - 1)
+  D <- D + network("Net1", netfun = "genNET", K = K, bslVar = W1, nF = nF.plus1 - 1)
 
   # Define A[i] is a function W1[i] as well as the total sum of i's friends values for W1, W2 and W3:
   D <- D + node("A", distr = "rbern",
@@ -225,12 +222,12 @@ test.networkgen2 <- function() {
   #--------------------------------------------------
   # EXCTRACTING THE NETWORK FROM THE SIMULATED DATA:
   #--------------------------------------------------
-  cbind(attributes(dat)$netind_cl$NetInd_k,
+  net <- cbind(attributes(dat)$netind_cl$NetInd_k,
         nF = attributes(dat)$netind_cl$nF,
         datnF = dat$nF.plus1-1,
         diff_nF = attributes(dat)$netind_cl$nF - (dat$nF.plus1-1))
   # n Friends per obs:
-  attributes(dat)$netind_cl$nF
+  nFriends <- attributes(dat)$netind_cl$nF
 
 
   #-------------------------------------------

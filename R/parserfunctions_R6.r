@@ -339,6 +339,7 @@ eval.nodeform.out <- function(expr.idx, self, data.df) {
                         list(t = self$cur.node$t),
                         list(misXreplace = misXreplace), # replacement value for missing network covars
                         list(netind_cl = self$netind_cl),
+                        list(Kmax = self$netind_cl$Kmax),
                         list(nF = self$netind_cl$nF),
                         list(Nsamp = self$Nsamp)
                         )

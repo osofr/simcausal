@@ -432,7 +432,7 @@ check_expanded <- function(inputDAG) {
 #' @param DAG Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.
 #' @param vecfun A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
-#' @param n.test Simulation sample size used ONLY for testing the validity of this \code{DAG} object. A larger \code{n.test} may be useful for being able to determine issues with the data generating distribution code by \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
+#' @param n.test Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/RUnit/set.DAG.R

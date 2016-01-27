@@ -11,7 +11,7 @@ set.DAG(DAG, vecfun, n.test = 100, verbose = getOption("simcausal.verbose"))
 
 \item{vecfun}{A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.}
 
-\item{n.test}{Simulation sample size used ONLY for testing the validity of this \code{DAG} object. A larger \code{n.test} may be useful for being able to determine issues with the data generating distribution code by \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
+\item{n.test}{Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
 Turn this off by default using options(simcausal.verbose=FALSE).}
 
 \item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.}
