@@ -519,11 +519,6 @@ Define_sVar <- R6Class("Define_sVar",
           stop("\n...attempt to evaluate network indexing variable failed...")
         }
         
-
-        # print("var.val before vector: "); print(var.val)
-        # print("dim(var.val): "); print(dim(var.val))
-
-
         # if result is one column matrix -> convert to a vector, if matrix has >1 columns -> throw an error:
         if (length(dim(var.val)) > 1) {
           var.chr <- colnames(var.val)[1]

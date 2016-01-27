@@ -155,6 +155,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   EFUP.prev <- rep(FALSE, Nsamp)
   LTCF.prev <- rep(FALSE, Nsamp)
   obs.df <- data.frame(ID = seq(1:Nsamp))
+  
+  # obs.mat <- matrix(,nrow=Nsamp, ncol=length(DAG)+1)
+  # obs.mat[,1] <- seq(1:Nsamp)
+  # colnames(obs.mat) <- c("ID", names(DAG))
 
   #---------------------------------------------------------------------------------
   # CHECKS PERFORMED DURING EVALUTION:
@@ -177,8 +181,14 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     t <- cur.node$t # define variable for a current time point t
     t_new <- !(t %in% t_pts) # set to TRUE when switch to new time point t occurs otherwise FALSE
     t_pts <- c(t_pts, t)
-    t_pts <- as.integer(unique(t_pts)) # vector that keeps track of unique timepoints t
+
+    # getunique_ts <- system.time(
+      t_pts <- as.integer(unique(t_pts)) # vector that keeps track of unique timepoints t
+    # )
+    # print("getunique_ts: "); print(getunique_ts)
+    
     gnodename <- as.character(unlist(strsplit(cur.node$name, "_"))[1])
+
     # dprint("current t: "%+%t%+%"; t new: "%+%t_new); dprint("current time points: ");  dprint(t_pts);
     # dprint("obs.df"); dprint(head(obs.df))
     # dprint("is null t_pts"); dprint(is.null(t_pts)); dprint(is.null(t))
@@ -299,6 +309,11 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
         # if  (is.EFUP(cur.node)&(cur.outcome))
       # *** TODO: need to allow result to be a matrix (for multivar distributions) ***
       #------------------------------------------------------------------------
+    
+    # tadddat <- system.time(
+      # newcolidx <- which(colnames(obs.mat) %in% cur.node$name)
+      # if (length(newcolidx)!=1) stop("fatal error")
+      # obs.mat[,newcolidx] <- newVar
       obs.df <- within(obs.df, {assign(cur.node$name, newVar)})
       if (!is.null(cur.node$EFU)) {
       # if (is.EFUP(cur.node)) { # if cur.node is EFU=TRUE type set all observations that had value=1 to EFUP.prev[indx]=TRUE
@@ -315,13 +330,14 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
             LTCF.prev <- (LTCF.prev | EFUP.now)
           }
         }
-
       }
     }
   }
+  # obs.df <- data.frame(obs.mat)
 
   # Collect all attributes to be assigned to the obs data
   all_ts <- get_allts(obs.df) # calculate actual time values used in the simulated data
+
   if (sum(LTCF.prev)>0) {	# only change the LTCF attribute if outcome carry forward imputation was really carried out for at least one obs
     LTCF_flag <- LTCF
   } else {
@@ -329,7 +345,6 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   }
 
   newattrs <- FormAttributes(DAG = DAG, parents = NodeParentsNms, dataform = "wide", LTCF = LTCF_flag, tvals = all_ts, netind_cl = netind_cl)
-
   attributes(obs.df) <- c(attributes(obs.df), newattrs)
   dprint("sim data"); dprint(head(obs.df, 1))
 
