@@ -10,7 +10,7 @@ allNA = function(x) all(is.na(x))
 
 test.networkgen1 <- function() {
   #------------------------------------------------------------------------------------------------------------
-  # EXAMPLE 1. SIMULATING NETWORKS WITH igraph R package (generate.igraph.ER)
+  # EXAMPLE 1. SIMULATING NETWORKS WITH igraph R package (gen.ER)
   #------------------------------------------------------------------------------------------------------------
 
   #------------------------------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ test.networkgen1 <- function() {
   # p - Probability of making an edge between two observations
   # m_pn - above 0, a total number of edges in the network as a proportion of n (sample size)
   # m_psquare - define m argument to igraph::sample_gnm as sqrt(n)
-  generate.igraph.ER <- function(n, p, m_pn, m_psquare, ...) {
+  gen.ER <- function(n, p, m_pn, m_psquare, ...) {
     if (!missing(p)) {
       igraph.ER <- igraph::sample_gnp(n = n, p = p[1], directed = TRUE)
     } else if (!missing(m_pn)) {
@@ -47,19 +47,18 @@ test.networkgen1 <- function() {
     return(NetInd_out$NetInd_k)
   }
 
-  p.set <- 0.05
   D <- DAG.empty()
-
   # ------------------------------------------------------------------------------------
   # PUT THIS IN A FUNCTION....
   # Sample ER model network using igraph::sample_gnp with p argument:
-  D <- D + network("Net.sample", netfun = "generate.igraph.ER", p = p.set)
+  p.set <- 0.05
+  D <- D + network("Net.sample", netfun = "gen.ER", p = p.set)
   D1 <- set.DAG(D)
   # Sample ER model network using igraph::sample_gnm with m_pn argument:
-  D <- D + network("Net.sample", Kmax = Kmax, netfun = "generate.igraph.ER", m_pn = 50)
+  D <- D + network("Net.sample", netfun = "gen.ER", m_pn = 50)
   D2 <- set.DAG(D)
   # Sample ER model network using igraph::sample_gnm with m_psquare argument (m is sqrt(n)):
-  D <- D + network("Net.sample", Kmax = Kmax, netfun = "generate.igraph.ER", m_psquare = TRUE)
+  D <- D + network("Net.sample", netfun = "gen.ER", m_psquare = TRUE)
   D3 <- set.DAG(D)
 # ------------------------------------------------------------------------------------
 
@@ -104,57 +103,56 @@ test.networkgen1 <- function() {
 #------------------------------------------------------------------------------------------------------------
 test.networkgen_time <- function() {
   #------------------------------------------------------------------------------------------------------------
-  # EXAMPLE. SIMULATING NETWORKS WITH igraph R package (generate.igraph.k.regular)
+  # EXAMPLE. SIMULATING NETWORKS WITH igraph R package (gen.k.regular)
   #------------------------------------------------------------------------------------------------------------
-  generate.igraph.k.regular <- function(n, Kmax, ...) {
-      if (n < 20) Kmax <- 5
+  gen.k.regular <- function(n, K, ...) {
+      if (n < 20) K <- 5
       igraph.reg <- igraph::sample_k_regular(no.of.nodes = n,
-                                          k = Kmax,
+                                          k = K,
                                           directed = TRUE,
                                           multiple = FALSE)
       sparse_AdjMat <- simcausal::igraph.to.sparseAdjMat(igraph.reg)
       NetInd_out <- simcausal::sparseAdjMat.to.NetInd(sparse_AdjMat)
       return(NetInd_out$NetInd_k)
   }
-  Kmax <- 10
 
+  K <- 10
   #------------------------------------------------------------------------------------------------------------
   # Test for error when net referrencing non-existing var
   #------------------------------------------------------------------------------------------------------------
   W2 <- rnorm(100)
   D <- DAG.empty()
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.k.regular")
+  D <- D + network("Net1", netfun = "gen.k.regular", K = K)
   D <- D +
       node("W1", distr = "rbern", prob = 0.5) +
-      node("F.sA", distr = "rconst", t = 0, const = W2[[0]])
+      node("F.W2", distr = "rconst", t = 0, const = W2[[0]])
   checkException(Dset <- set.DAG(D))
 
   #------------------------------------------------------------------------------------------------------------
   # Test for error when net referrencing gets matrix with >1 columns to eval
   #------------------------------------------------------------------------------------------------------------
   D <- DAG.empty()
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.k.regular")
+  D <- D + network("Net1", netfun = "gen.k.regular", K = K)
   D <- D +
       node("W1", distr = "rbern", prob = 0.5) +
-      node("F.sA", distr = "rconst", t = 0:1, const = W1[[0]]) +
-      node("F.sA", distr = "rconst", t = 2, const = F.sA[0:1][[0]])
+      node("F.W1", distr = "rconst", t = 0:1, const = W1[[0]]) +
+      node("F.W1", distr = "rconst", t = 2, const = F.W1[0:1][[0]])
   checkException(Dset <- set.DAG(D))
 
   #------------------------------------------------------------------------------------------------------------
   # First references the time-point -> then the network var of that time-point
   #------------------------------------------------------------------------------------------------------------
-  Kmax <- 10
   D <- DAG.empty()
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.k.regular")
+  D <- D + network("Net1", netfun = "gen.k.regular", K = K)
   D <- D +
       node("W1", distr = "rbern", prob = 0.5) +
       node("W2", distr = "rbern", prob = 0.3) +
       node("W3", distr = "rbern", prob = 0.3) +
-      node("sA.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
-      node("sA", distr = "rnorm", mean = sA.mu, sd = 1) +
-      node("F.sA", distr = "rconst", t = 0, const = sA[[0]]) +
-      # reference previous value of F.sA, then reference the first friend:
-      node("F.sA", distr = "rconst", t = 1:5, const = F.sA[t-1][[1]])
+      node("A.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
+      node("A", distr = "rnorm", mean = A.mu, sd = 1) +
+      node("F.A", distr = "rconst", t = 0, const = A[[0]]) +
+      # reference previous value of F.A, then reference the first friend:
+      node("F.A", distr = "rconst", t = 1:5, const = F.A[t-1][[1]])
   Dset <- set.DAG(D)
   dat <- sim(Dset, n = 500, rndseed = 543)
   # To examine the network:
@@ -165,18 +163,17 @@ test.networkgen_time <- function() {
   #------------------------------------------------------------------------------------------------------------
   # References several time-points -> create 1dim summary meaure -> then the network var value of that summary for one friend
   #------------------------------------------------------------------------------------------------------------
-  Kmax <- 10
   D <- DAG.empty()
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.k.regular")
+  D <- D + network("Net1", netfun = "gen.k.regular", K = K)
   D <- D +
       node("W1", distr = "rbern", prob = 0.5) +
       node("W2", distr = "rbern", prob = 0.3) +
       node("W3", distr = "rbern", prob = 0.3) +
-      node("sA.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
-      node("sA", distr = "rnorm", mean = sA.mu, sd = 1) +
-      node("F.sA", distr = "rconst", t = 0, const = sA[[0]]) +
-      # reference previous value of F.sA, then reference the first friend:
-      node("F.sA", distr = "rconst", t = 1:5, const = sum(F.sA[0:(t-1)])[[0]])
+      node("A.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
+      node("A", distr = "rnorm", mean = A.mu, sd = 1) +
+      node("F.A", distr = "rconst", t = 0, const = A[[0]]) +
+      # reference previous value of F.A, then reference the first friend:
+      node("F.A", distr = "rconst", t = 1:5, const = sum(F.A[0:(t-1)])[[0]])
   Dset <- set.DAG(D)
   dat <- sim(Dset, n = 500, rndseed = 543)
   # To examine the network:
@@ -192,20 +189,19 @@ test.networkgen_time <- function() {
 
   #------------------------------------------------------------------------------------------------------------
   # References several time-points -> create 1dim summary meaure -> reference several friend values of that summary
-  # -> create 1 sim summary measure of those time-point summaries
+  # -> create 1 dim summary measure of those time-point summaries
   #------------------------------------------------------------------------------------------------------------
-  Kmax <- 10
   D <- DAG.empty()
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.k.regular")
+  D <- D + network("Net1", netfun = "gen.k.regular", K = K)
   D <- D +
       node("W1", distr = "rbern", prob = 0.5) +
       node("W2", distr = "rbern", prob = 0.3) +
       node("W3", distr = "rbern", prob = 0.3) +
-      node("sA.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
-      node("sA", distr = "rnorm", mean = sA.mu, sd = 1) +
-      node("F.sA", distr = "rconst", t = 0, const = sA[[0]]) +
-      # reference previous value of F.sA, then reference the first friend:
-      node("F.sA", distr = "rconst", t = 1:5, const = mean(sum(F.sA[0:(t-1)])[[0:Kmax]]))
+      node("A.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
+      node("A", distr = "rnorm", mean = A.mu, sd = 1) +
+      node("F.A", distr = "rconst", t = 0, const = A[[0]]) +
+      # reference previous value of F.A, then reference the first friend:
+      node("F.A", distr = "rconst", t = 1:5, const = mean(sum(F.A[0:(t-1)])[[0:Kmax]]))
   Dset <- set.DAG(D)
   dat <- sim(Dset, n = 500, rndseed = 543)
   head(dat)
@@ -222,18 +218,18 @@ test.networkgen_time <- function() {
   # Breaks down because time indexing is implemented in a completely different way,
   # Every expression w/ t, s.a., "Var[t]" is converted to "Var_t", which must already exist in the data.frame
   #------------------------------------------------------------------------------------------------------------
-  Kmax <- 10
+  K <- 10
   D <- DAG.empty()
-  D <- D + network("NetInd_k", Kmax = Kmax, netfun = "generate.igraph.k.regular")
+  D <- D + network("Net1", netfun = "gen.k.regular", K = K)
   D <- D +
       node("W1", distr = "rbern", prob = 0.5) +
       node("W2", distr = "rbern", prob = 0.3) +
       node("W3", distr = "rbern", prob = 0.3) +
-      node("sA.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
-      node("sA", distr = "rnorm", mean = sA.mu, sd = 1) +
-      node("F.sA", distr = "rconst", t = 0, const = sA[[0]]) +
-      # reference previous value of F.sA, then reference the first friend:
-      node("F.sA", distr = "rconst", t = 1:5, const = (F.sA[[1]])[t-1])
+      node("A.mu", distr = "rconst", const = (0.98 * W1 + 0.58 * W2 + 0.33 * W3)) +
+      node("A", distr = "rnorm", mean = A.mu, sd = 1) +
+      node("F.A", distr = "rconst", t = 0, const = A[[0]]) +
+      # reference previous value of F.A, then reference the first friend:
+      node("F.A", distr = "rconst", t = 1:5, const = (F.A[[1]])[t-1])
   checkException(Dset <- set.DAG(D))
 }
 
@@ -366,7 +362,6 @@ test.networkgen2 <- function() {
         diff_nF = attributes(dat)$netind_cl$nF - (dat$nF.plus1-1))
   # n Friends per obs:
   nFriends <- attributes(dat)$netind_cl$nF
-
 
   #-------------------------------------------
   # TO MATCH WITH PREV RESULTS GENERATED MANUALLY:
