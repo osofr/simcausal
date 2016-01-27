@@ -78,13 +78,20 @@ rconst <- function(n, const) {
 #'Dset <- set.DAG(D)
 #'simdat <- simobs(Dset, n=200, rndseed=1)
 #' @export
-# rcategor = function(n, probs, labels) {
 rcategor <- function(n, probs) {
 	if (is.vector(probs)) {
 		probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
 	}
 	probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
-	pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
+	pover1_idx <- which(probs[,ncol(probs)] < -(10^-6)) # which rows of probs need to be normalized
+	# pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
+
+	# reset last category to zero if its with numeric epsilon error away from 0:
+	restto0 <- which(abs(probs[,ncol(probs)]) <= 10^-6 & abs(probs[,ncol(probs)]) > 0L)
+	if (length(restto0)>0) {
+		probs[restto0, ncol(probs)] <- 0L
+	}
+
 	if (length(pover1_idx)>0) {
 		warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
 		probs[pover1_idx, ncol(probs)] <- 0
@@ -111,11 +118,19 @@ rcategor.int <- function(n, probs) {
 		probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
 	}
 	probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
-	pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
+	pover1_idx <- which(probs[,ncol(probs)] < -(10^-6)) # which rows of probs need to be normalized
+	# pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
+
+	# reset last category to zero if its with numeric epsilon error away from 0:
+	restto0 <- which(abs(probs[,ncol(probs)]) <= 10^-6 & abs(probs[,ncol(probs)]) > 0L)
+	if (length(restto0)>0) {
+		probs[restto0, ncol(probs)] <- 0L
+	}
+
 	if (length(pover1_idx)>0) {
 		warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
 		probs[pover1_idx, ncol(probs)] <- 0
-		probs[pover1_idx, ] <- probs[pover1_idx, ] / rowSums(probs[pover1_idx, ]) # normalize
+		probs[pover1_idx, ] <- probs[pover1_idx, ,drop = FALSE] / rowSums(probs[pover1_idx, ,drop = FALSE]) # normalize
 	}
 	probs_cum <- matrix(nrow = nrow(probs), ncol = ncol(probs))
 	probs_cum[,1] <- probs[,1]
