@@ -532,6 +532,11 @@ set.DAG <- function(DAG, vecfun, n.test = 100, verbose = getOption("simcausal.ve
   attr(inputDAG, "user.env") <- user.env
 
   #---------------------------------------------------------------------------------
+  # Adding the simulation test sample size (n.test), to be used on actions
+  #---------------------------------------------------------------------------------
+  attr(inputDAG, "n.test") <- n.test
+
+  #---------------------------------------------------------------------------------
   # Checking for correct DAG specification by simulating one observation
   #---------------------------------------------------------------------------------
   obs.df <- try(simobs(inputDAG, n = n.test, rndseed = rndseed))
@@ -594,6 +599,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 	if (!is.DAG(inputDAG)) stop("inputDAG argument is not of class DAG, run set.DAG function first")
 
 	modDAG.full <- inputDAG # This is either observed data DAG (locked) or already existing DAG.action
+  n.test <- attr(inputDAG, "n.test") # the testing sample size used in original DAG
   dagattrs_saved <- attributes(inputDAG) # save existing attributes
   dagattrs_saved$parents <- NULL  # remove all parents
   dagattrs_saved$actions <- NULL  # and actions
@@ -679,7 +685,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
   dprint("attributes(modDAG.full) in setAction(): "); dprint(attributes(modDAG.full))
 
   # check data can be simulated from modified DAG:
-  full.df <- try(simobs(modDAG.full, n=10, rndseed=rndseed))
+  full.df <- try(simobs(modDAG.full, n=n.test, rndseed=rndseed))
   if(inherits(full.df, "try-error")) {
     stop("\n...attempt to simulate data from action DAG failed...")
   }
