@@ -202,14 +202,15 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
     plot(x=xindx, y=surv[[d.j]][xindx], col=counter, type='b', cex=ptsize, ylab=ylab, xlab=xlab, ylim=ylim, ...)
     par(new=TRUE)
   }
-  # alternative (coord used by vignette): 
+  # alternative (coord used by vignette):
   # legend.xyloc = list(x=12,y=0.96)
   legend(legend.xyloc, legend=names(surv), col=c(1:length(names(surv))), cex=ptsize, pch=1)
 }
 
 #' Plot DAG
 #'
-#' Plot a DAG object using functions from \code{igraph} package.
+#' Plot DAG object using functions from \code{igraph} package. The default setting is to keep the regular (observed) DAG nodes with \code{shape} set to "none", which can be over-ridden by the user. 
+#' For latent (hidden) DAG nodes the default is to: 1) set the node color as grey; 2) enclose the node by a circle; and 3) all directed edges coming out of the latent node are plotted as dashed.
 #' @param DAG A DAG object that was specified by calling \code{\link{set.DAG}}
 #' @param tmax Maximum time-point to plot for time-varying DAG objects
 #' @param xjitter Amount of random jitter for node x-axis plotting coordinates
@@ -219,11 +220,11 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @param edge_attrs A named list of \code{igraph} graphical parameters for plotting DAG edges. These parameters are passed on to \code{add.edges} \code{igraph} function.
 #' @param customvlabs A named vector of custom DAG node labels (replaces node names from the DAG object).
 #' @param excludeattrs A character vector for DAG nodes that should be excluded from the plot
-#' @param latentv A character vector of latent (unobserved) DAG nodes which: 1) will be colored in grey; 2) will be enclosed in a circle; and 3) have dashed directed edges.
+# @param latentv A character vector of latent (unobserved) DAG nodes which: 1) will be colored in grey; 2) will be enclosed in a circle; and 3) have dashed directed edges.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @export
-plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, latentv, verbose = getOption("simcausal.verbose")) {
+plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, verbose = getOption("simcausal.verbose")) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
     stop("igraph package is required for this function to work. Please install igraph.",
       call. = FALSE)
@@ -232,6 +233,7 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
   DAG_orig <- DAG
   # Get a list of parent nodes
   par_nodes <- attr(DAG, "parents")
+  latent.v <- attr(DAG, "latent.v")
   # Get a list of attributes
   # attrs <- attr(DAG, "attrs")
   # print("par_nodes"); print(par_nodes)
@@ -350,8 +352,6 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
     stop("please specify name for each attribute in edge_attrs")
   }
   vertex_attrs_default <- list(color=NA, label.color = "darkblue", shape="none", size=vertsize, label.cex=0.5, label.dist=0)
-  # vertex_attrs_default <- list(color=NA, shape="square", size=vertsize, label.cex=0.5, label.dist=0)
-  # vertex_attrs_default <- list(color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
   edge_attrs_default <- list(color="black", width=0.2, lty=1, arrow.width=arrow.width, arrow.size=arrow.size)
   vertex_attrs <- append(vertex_attrs, vertex_attrs_default[!(names(vertex_attrs_default)%in%attnames_ver)])
   edge_attrs <- append(edge_attrs, edge_attrs_default[!(names(edge_attrs_default)%in%attnames_edge)])
@@ -389,23 +389,13 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
   if ("DAG.action"%in%class(DAG_orig)) {
     actnodenames <- attr(DAG_orig, "actnodes")
     if (missing(node.action.color)) node.action.color <- "red"
-    # V(g)[name%in%actnodenames]$color <-"red"
     igraph::V(g)[igraph::V(g)$name%in%actnodenames]$label.color <- node.action.color
   }
-  if (!missing(latentv)) {
-    igraph::V(g)[igraph::V(g)$name%in%latentv]$label.color <- "grey"
-    igraph::V(g)[igraph::V(g)$name%in%latentv]$shape <- "circle"
-    igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])]$lty <- 2
-    # print(class(igraph::V(g)[igraph::V(g)$name%in%latentv]))
-    # print(igraph::V(g)[igraph::V(g)$name%in%latentv])
-    # print("inc:")
-    # print(igraph::E(g)[inc(igraph::V(g)[igraph::V(g)$name%in%latentv])])
-    # print("from:")
-    # print(igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])])
-    # fromEdges <- igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])]
-    # fromEdges$lty <- 2
-    # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])]$color <- "red"
-    # igraph::E(g)[inc(igraph::V(g)[igraph::V(g)$name%in%latentv])]$type <- "dashed"
+  if (!is.null(latent.v)) {
+    igraph::V(g)[igraph::V(g)$name%in%latent.v]$label.color <- "grey"
+    igraph::V(g)[igraph::V(g)$name%in%latent.v]$shape <- "circle"
+    # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 2 # dashed
+    igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5 # longdash
   }
   if (!missing(customvlabs)) {  # use user-supplied custom labels for DAG nodes
     igraph::V(g)$name <- customvlabs
@@ -460,18 +450,15 @@ check_expanded <- function(inputDAG) {
 #' @param DAG Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.
 #' @param vecfun A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#' @param latent.v The names of the unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.
 #' @param n.test Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/RUnit/set.DAG.R
 #' @export
-set.DAG <- function(DAG, vecfun, n.test = 100, verbose = getOption("simcausal.verbose")) {
-
-  # ************
-  # Adding parent env. for future evaluation of node formulas.
-  # Will be saved as a DAG attribute and then passed to form parser for evaluation as: eval(form, envir = df, enclos = env)
+set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("simcausal.verbose")) {
+  # Parent environment is saved as a DAG attribute and then passed to formula parser for evaluation as: eval(form, envir = df, enclos = env)
   user.env <- parent.frame()
-  # ************
 
   rndseed <- NULL
   # set of allowed named arguments:
@@ -513,7 +500,7 @@ set.DAG <- function(DAG, vecfun, n.test = 100, verbose = getOption("simcausal.ve
   # *) check each node contains required named arguments
   checknames.req <- unlist(lapply(DAG, function(node) {
                               if ("DAG.node" %in% class(node)) {
-                                all(node_args_req%in%names(node))  
+                                all(node_args_req%in%names(node))
                               } else {
                                 TRUE
                               }
@@ -558,12 +545,14 @@ set.DAG <- function(DAG, vecfun, n.test = 100, verbose = getOption("simcausal.ve
   # Adding the user calling environment for evaluation of node formulas
   #---------------------------------------------------------------------------------
   attr(inputDAG, "user.env") <- user.env
-
+  #---------------------------------------------------------------------------------
+  # Adding the names of the latent.v (hidden) nodes
+  #---------------------------------------------------------------------------------
+  if (!missing(latent.v)) attr(inputDAG, "latent.v") <- latent.v
   #---------------------------------------------------------------------------------
   # Adding the simulation test sample size (n.test), to be used on actions
   #---------------------------------------------------------------------------------
   attr(inputDAG, "n.test") <- n.test
-
   #---------------------------------------------------------------------------------
   # Checking for correct DAG specification by simulating one observation
   #---------------------------------------------------------------------------------

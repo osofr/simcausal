@@ -344,6 +344,17 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     LTCF_flag <- NULL
   }
 
+  # -----------------------------------------------------------------------------------
+  # Remove latent variables from the simulated dataset (if any were declared as latent)
+  # -----------------------------------------------------------------------------------
+  latent.v <- attr(DAG, "latent.v")
+  if (!is.null(latent.v)) {
+    excl.cols <- colnames(obs.df)%in%latent.v
+    if (sum(excl.cols) > 0) {
+      obs.df <- obs.df[,!excl.cols]
+    }
+  }
+
   newattrs <- FormAttributes(DAG = DAG, parents = NodeParentsNms, dataform = "wide", LTCF = LTCF_flag, tvals = all_ts, netind_cl = netind_cl)
   attributes(obs.df) <- c(attributes(obs.df), newattrs)
   dprint("sim data"); dprint(head(obs.df, 1))

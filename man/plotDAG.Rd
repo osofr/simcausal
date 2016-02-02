@@ -6,7 +6,7 @@
 \usage{
 plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
   vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs,
-  latentv, verbose = getOption("simcausal.verbose"))
+  verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{A DAG object that was specified by calling \code{\link{set.DAG}}}
@@ -27,12 +27,11 @@ plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
 
 \item{customvlabs}{A named vector of custom DAG node labels (replaces node names from the DAG object).}
 
-\item{latentv}{A character vector of latent (unobserved) DAG nodes which: 1) will be colored in grey; 2) will be enclosed in a circle; and 3) have dashed directed edges.}
-
 \item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
 Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \description{
-Plot a DAG object using functions from \code{igraph} package.
+Plot DAG object using functions from \code{igraph} package. The default setting is to keep the regular (observed) DAG nodes with \code{shape} set to "none", which can be over-ridden by the user.
+For latent (hidden) DAG nodes the default is to: 1) set the node color as grey; 2) enclose the node by a circle; and 3) all directed edges coming out of the latent node are plotted as dashed.
 }
 
