@@ -218,11 +218,12 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 #' @param vertex_attrs A named list of \code{igraph} graphical parameters for plotting DAG vertices. These parameters are passed on to \code{add.vertices} \code{igraph} function.
 #' @param edge_attrs A named list of \code{igraph} graphical parameters for plotting DAG edges. These parameters are passed on to \code{add.edges} \code{igraph} function.
 #' @param customvlabs A named vector of custom DAG node labels (replaces node names from the DAG object).
-#' @param excludeattrs A character vector of attribute DAG nodes that shouldn't be plotted
+#' @param excludeattrs A character vector for DAG nodes that should be excluded from the plot
+#' @param latentv A character vector of latent (unobserved) DAG nodes which: 1) will be colored in grey; 2) will be enclosed in a circle; and 3) have dashed directed edges.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @export
-plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, verbose = getOption("simcausal.verbose")) {
+plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, latentv, verbose = getOption("simcausal.verbose")) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
     stop("igraph package is required for this function to work. Please install igraph.",
       call. = FALSE)
@@ -255,6 +256,16 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
      DAG <- DAG[1:max(idx_tmax)]
      par_nodes <- par_nodes[1:max(idx_tmax)]
      class(DAG) <- "DAG"
+    }
+  }
+
+  # Remove nodes that are part of vector "excludeattrs":
+  if (!missing(excludeattrs)) {
+    excl.nodes <- names(par_nodes)%in%excludeattrs
+    if (sum(excl.nodes)>0) {
+      par_nodes <- par_nodes[!excl.nodes]
+      DAG <- DAG[!excl.nodes]
+      class(DAG) <- "DAG"
     }
   }
 
@@ -338,13 +349,15 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
   if (length(edge_attrs) != 0 && (is.null(attnames_edge) || any(attnames_edge==""))) {
     stop("please specify name for each attribute in edge_attrs")
   }
-  vertex_attrs_default <- list(color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
-  edge_attrs_default <- list(color="black", width=0.2, arrow.width=arrow.width, arrow.size=arrow.size)
+  vertex_attrs_default <- list(color=NA, label.color = "darkblue", shape="none", size=vertsize, label.cex=0.5, label.dist=0)
+  # vertex_attrs_default <- list(color=NA, shape="square", size=vertsize, label.cex=0.5, label.dist=0)
+  # vertex_attrs_default <- list(color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
+  edge_attrs_default <- list(color="black", width=0.2, lty=1, arrow.width=arrow.width, arrow.size=arrow.size)
   vertex_attrs <- append(vertex_attrs, vertex_attrs_default[!(names(vertex_attrs_default)%in%attnames_ver)])
   edge_attrs <- append(edge_attrs, edge_attrs_default[!(names(edge_attrs_default)%in%attnames_edge)])
   if (verbose) {
     message("using the following vertex attributes: "); message(vertex_attrs)
-    message("using the following edge attributes: "); message(edge_attrs)    
+    message("using the following edge attributes: "); message(edge_attrs)
   }
 
   g <- igraph::graph.empty()
@@ -378,6 +391,21 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
     if (missing(node.action.color)) node.action.color <- "red"
     # V(g)[name%in%actnodenames]$color <-"red"
     igraph::V(g)[igraph::V(g)$name%in%actnodenames]$label.color <- node.action.color
+  }
+  if (!missing(latentv)) {
+    igraph::V(g)[igraph::V(g)$name%in%latentv]$label.color <- "grey"
+    igraph::V(g)[igraph::V(g)$name%in%latentv]$shape <- "circle"
+    igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])]$lty <- 2
+    # print(class(igraph::V(g)[igraph::V(g)$name%in%latentv]))
+    # print(igraph::V(g)[igraph::V(g)$name%in%latentv])
+    # print("inc:")
+    # print(igraph::E(g)[inc(igraph::V(g)[igraph::V(g)$name%in%latentv])])
+    # print("from:")
+    # print(igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])])
+    # fromEdges <- igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])]
+    # fromEdges$lty <- 2
+    # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latentv])]$color <- "red"
+    # igraph::E(g)[inc(igraph::V(g)[igraph::V(g)$name%in%latentv])]$type <- "dashed"
   }
   if (!missing(customvlabs)) {  # use user-supplied custom labels for DAG nodes
     igraph::V(g)$name <- customvlabs

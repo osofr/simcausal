@@ -6,7 +6,7 @@
 \usage{
 plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
   vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs,
-  verbose = getOption("simcausal.verbose"))
+  latentv, verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{A DAG object that was specified by calling \code{\link{set.DAG}}}
@@ -23,9 +23,11 @@ plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
 
 \item{edge_attrs}{A named list of \code{igraph} graphical parameters for plotting DAG edges. These parameters are passed on to \code{add.edges} \code{igraph} function.}
 
-\item{excludeattrs}{A character vector of attribute DAG nodes that shouldn't be plotted}
+\item{excludeattrs}{A character vector for DAG nodes that should be excluded from the plot}
 
 \item{customvlabs}{A named vector of custom DAG node labels (replaces node names from the DAG object).}
+
+\item{latentv}{A character vector of latent (unobserved) DAG nodes which: 1) will be colored in grey; 2) will be enclosed in a circle; and 3) have dashed directed edges.}
 
 \item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
 Turn this off by default using options(simcausal.verbose=FALSE).}
