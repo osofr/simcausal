@@ -392,7 +392,7 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
     igraph::V(g)[igraph::V(g)$name%in%actnodenames]$label.color <- node.action.color
   }
   if (!is.null(latent.v)) {
-    igraph::V(g)[igraph::V(g)$name%in%latent.v]$label.color <- "grey"
+    igraph::V(g)[igraph::V(g)$name%in%latent.v]$label.color <- "black"
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$shape <- "circle"
     # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 2 # dashed
     igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5 # longdash

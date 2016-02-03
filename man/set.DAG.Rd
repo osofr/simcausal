@@ -15,7 +15,7 @@ set.DAG(DAG, vecfun, n.test = 100, latent.v,
 \item{n.test}{Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
 Turn this off by default using options(simcausal.verbose=FALSE).}
 
-\item{latent.v}{Pass the names of unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.}
+\item{latent.v}{The names of the unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.}
 
 \item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.}
 }
