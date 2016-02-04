@@ -98,6 +98,39 @@ sample_checks <- function() {   # doesn't run, this is just to show what test fu
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
+# Adding test for latent vars
+test.latent <- function() {
+  D <- DAG.empty()
+  D <- D +
+  node("I",
+    distr = "rcategor.int",
+    probs = c(0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1)) +
+  node("W1",
+    distr = "rnorm",
+    mean = ifelse(I == 1, 0, ifelse(I == 2, 3, 10)) + 0.6 * I,
+    sd = 1) +
+  node("W2",
+    distr = "runif",
+    min = 0.025*I, max = 0.7*I) +
+  node("W3",
+    distr = "rbern",
+    prob = plogis(-0.5 + 0.7*W1 + 0.3*W2 - 0.2*I)) +
+  node("A",
+    distr = "rbern",
+    prob = plogis(+4.2 - 0.5*W1 + 0.2*W2/2 + 0.2*W3)) +
+  node("U.Y", distr = "rnorm", mean = 0, sd = 1) +
+  node("Y",
+    distr = "rconst",
+    const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
+  Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
+  Odatsim <- simobs(Dset1, n = 200, rndseed = 1)
+  Dset1 <- Dset1 + action("A1", nodes = node("A", distr = "rbern", prob = 1))
+  Fdatsim <- sim(DAG = Dset1, actions = c("A1"), n = 200, rndseed = 123)
+  checkException(
+    Dset1 <- Dset1 + action("A1.latent", nodes = node("I", distr = "rbern", prob = 1))
+    )
+}
+
 # Adding test for custom distr funs and an error message for non-existing distribution functions:
 test.noexistdistr <- function() {
   # TEST 1: No longer rroduces an error, since a separate user.env is now captured by each node, not just set.DAG

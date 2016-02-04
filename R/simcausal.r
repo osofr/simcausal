@@ -289,9 +289,9 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
 
   	tmax <- 0
     num_bsl <- length(par_nodes)
-    # num_bsl <- length(DAG)
     num_tv <- 0
-    y_bsl <- rep(c(0,1), length.out = num_bsl) + rnorm(num_bsl)     # y placement for bsl nodes
+    # y_bsl <- rep(c(0,1), length.out = num_bsl) + rnorm(n = num_bsl)     # y placement for bsl nodes
+    y_bsl <- rep(c(0,1), length.out = num_bsl)     # y placement for bsl nodes
     y_layout <- y_bsl
 
   # Plot when t nodes are present:
@@ -385,21 +385,31 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
       }
     }
   }
-  # mark intervention node labels with another color
+  # mark intervention node labels with another color:
   if ("DAG.action"%in%class(DAG_orig)) {
     actnodenames <- attr(DAG_orig, "actnodes")
     if (missing(node.action.color)) node.action.color <- "red"
     igraph::V(g)[igraph::V(g)$name%in%actnodenames]$label.color <- node.action.color
   }
+  # setting attributes for latent variables
   if (!is.null(latent.v)) {
+    latent.idx <- which(names(par_nodes)%in%latent.v)
+
+    # shift the y.grid for latent vars (U) by -0.25 of the minimum y value:
+    min.y <- min(layoutcustom_2[, 2])
+    max.y <- max(layoutcustom_2[, 2])
+    layoutcustom_2[latent.idx, 2] <- min.y-0.25
+
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$label.color <- "black"
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$shape <- "circle"
     # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 2 # dashed
     igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5 # longdash
   }
-  if (!missing(customvlabs)) {  # use user-supplied custom labels for DAG nodes
+  # use user-supplied custom labels for DAG nodes:
+  if (!missing(customvlabs)) {
     igraph::V(g)$name <- customvlabs
   }
+  # print("layoutcustom_2: "); print(layoutcustom_2)
   g <- igraph::set.graph.attribute(g,'layout',layoutcustom_2)
   igraph::plot.igraph(g, asp=0.5)
 }
@@ -617,17 +627,22 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 
 	modDAG.full <- inputDAG # This is either observed data DAG (locked) or already existing DAG.action
   n.test <- attr(inputDAG, "n.test") # the testing sample size used in original DAG
+  latent.v <- attr(inputDAG, "latent.v") # check that not intervening on latent nodes
   dagattrs_saved <- attributes(inputDAG) # save existing attributes
   dagattrs_saved$parents <- NULL  # remove all parents
   dagattrs_saved$actions <- NULL  # and actions
-
   class(actnodes) <- "DAG.nodelist"
   mod_names <- unlist(Nattr(actnodes, "name")) # get intervention node names
   DAG_names <- unlist(Nattr(inputDAG, "name"))  # get DAG node names
-
 	checkintnames <- mod_names %in% DAG_names
-	if (!all(checkintnames)) stop(paste0("setActions(): some intervention node names do not exist in the original DAG: ", paste0(mod_names[!checkintnames], collapse=",")))
-	DAG_chgnodes <- match(mod_names, DAG_names)	# nodes indices in DAG that need to be modified
+	if (!all(checkintnames)) stop(paste0("setActions(): some intervention node(s) do not exist in the original DAG: ", paste0(mod_names[!checkintnames], collapse=",")))
+	if (!is.null(latent.v)) {
+    if (any(mod_names %in% latent.v)) {
+      stop(paste0("setActions(): cannot intervene on latent node(s): "%+%paste0(mod_names[mod_names %in% latent.v], collapse=",")))
+    }
+  }
+
+  DAG_chgnodes <- match(mod_names, DAG_names)	# nodes indices in DAG that need to be modified
 	if (length(DAG_chgnodes)!=length(mod_names)) stop("setActions(): action node and DAG node names do not make a unique pair match")
 	for (inode in (1:length(mod_names))) {	# MODIFY DAG NODES w/ action nodes
 		modDAG.full <- modDAGnode(modDAG.full, actnodes[[inode]]) # launch a function for each pair (DAG_node <-> Intervention Node) that modifies DAG_node
@@ -652,7 +667,6 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
       gattr_nm <- attnames[i] # generic attribute name (without t)
 
 			attr_nodes <- expandattr(attnames[i], attr[[attnames[i]]], mod_tvals)
-			# mod_names_attr <- sapply(attr_nodes, function(node) node$name)
       mod_names_attr <- unlist(Nattr(attr_nodes, "name"))
   
 			checkattrexist <- (mod_names_attr%in%DAG_names)
