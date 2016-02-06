@@ -458,7 +458,7 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbos
 #' @return If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.
 #' @family simulation functions
 #' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
-#' @example tests/RUnit/sim.impute.examples12.R
+#' @example tests/examples/sim.impute.examples12.R
 #' @export
 sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbose = getOption("simcausal.verbose")) {
   # *) check if actions argument is missing -> simulate observed data from the DAG
@@ -502,7 +502,7 @@ sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbo
 #' @return Modified \code{data.frame}, all time-varying missing variables after the \code{EFU} outcome specified in \code{LTCF} are forward imputed with their last available non-missing value.
 #' @family data manipulation functions
 #' @seealso \code{\link{sim}}, \code{\link{simobs}} and \code{\link{simfull}} for simulating data with and without carry forward imputation.
-#' @example tests/RUnit/sim.impute.examples12.R
+#' @example tests/examples/sim.impute.examples12.R
 #' @export
 doLTCF <- function(data, LTCF) {
   DAG <- attr(data, "DAG")

@@ -193,11 +193,40 @@ customfun <- function(arg, lambda) {
   res
 }
 D <- DAG.empty()
-D <- D + 
-node("W1", distr = "rbern", prob = 0.05) + 
-node("W2", distr = "rbern", prob = customfun(W1, 0.5)) + 
+D <- D +
+node("W1", distr = "rbern", prob = 0.05) +
+node("W2", distr = "rbern", prob = customfun(W1, 0.5)) +
 node("W3", distr = "rbern", prob = ifelse(W1 == 1, 0.5, 0.1))
 D1d <- set.DAG(D, vecfun = c("customfun"))
 sim1d <- simobs(D1d, n = 200, rndseed = 1)
+
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 6: Defining latent variables I and U.Y (will be hidden from simulated data)
+#---------------------------------------------------------------------------------------
+D <- DAG.empty()
+D <- D +
+  node("I",
+    distr = "rcategor.int",
+    probs = c(0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1)) +
+  node("W1",
+    distr = "rnorm",
+    mean = ifelse(I == 1, 0, ifelse(I == 2, 3, 10)) + 0.6 * I,
+    sd = 1) +
+  node("W2",
+    distr = "runif",
+    min = 0.025*I, max = 0.7*I) +
+  node("W3",
+    distr = "rbern",
+    prob = plogis(-0.5 + 0.7*W1 + 0.3*W2 - 0.2*I)) +
+  node("A",
+    distr = "rbern",
+    prob = plogis(+4.2 - 0.5*W1 + 0.2*W2/2 + 0.2*W3)) +
+	node("U.Y", distr = "rnorm", mean = 0, sd = 1) +
+  node("Y",
+    distr = "rconst",
+    const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
+Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
+simobs(Dset1, n = 200, rndseed = 1)
 }
 

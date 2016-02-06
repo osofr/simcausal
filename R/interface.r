@@ -103,7 +103,7 @@ add.nodes <- function(DAG, nodes) {
 #' @param ... Additional named attributes defining / indexing the action
 #' @param attr Additional named attributes defining / indexing the action
 #' @return A modified \code{DAG} object with the added action
-#' @example tests/RUnit/add.action.R
+#' @example tests/examples/add.action.R
 #' @export
 add.action <- function(DAG, name, nodes, ..., attr=list()) {
   if (!is.DAG(DAG)) {

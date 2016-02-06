@@ -63,7 +63,7 @@ bquote2 <- function (x, where = parent.frame()) {
 #' @param asis.params (ADVANCED USE ONLY) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list. 
 #' There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}). Time varying nodes should be refernced by their names as they appear in the simulated data, as in \code{TVar_t}.
 #' @return A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
-#' @example tests/RUnit/set.DAG.R
+#' @example tests/examples/set.DAG.R
 #' @export
 # Constructor for node objects, uses standard R distribution functions, 
 # added optional attributes that are saved with the node (such as custom distribution functions, etc)

@@ -464,7 +464,7 @@ check_expanded <- function(inputDAG) {
 #' @param n.test Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
-#' @example tests/RUnit/set.DAG.R
+#' @example tests/examples/set.DAG.R
 #' @export
 set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("simcausal.verbose")) {
   # Parent environment is saved as a DAG attribute and then passed to formula parser for evaluation as: eval(form, envir = df, enclos = env)

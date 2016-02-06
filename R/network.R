@@ -75,7 +75,7 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' @param params A list of additional named parameters to be passed on to the \code{netfun} function. 
 #' The parameters have to be either constants or character strings of R expressions of the past node names.
 #' @return A list containing the network object(s) of type \code{DAG.net}, this will be utilized when data is simulated with \code{sim} function.
-#' @example tests/RUnit/example.simnets.R
+#' @example tests/examples/example.simnets.R
 # @family network functions
 #' @seealso \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}
 #' @export
