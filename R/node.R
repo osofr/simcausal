@@ -139,7 +139,7 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
 
   node_dist_params <- list(distr = distr, dist_params = dist_params, EFU = EFU)
 
-  # If the name arg is a vector of names, this node will be a multivariate random variable
+  # If the name arg is a vector of names, this node is a multivar RV
   # Make sure one character string is used for naming the list object:
   if (length(name)>1) {
     node.name <- paste0(name, collapse=".")
