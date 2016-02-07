@@ -81,7 +81,7 @@ msm.form <- "Y ~ theta + t + I(theta*t)"
 D <- set.targetMSM(D, outcome="Y", t=0:5, formula=msm.form, family="binomial",
 hazard=FALSE)
 MSMres <- eval.target(D, n=1000)
-MSMres$beta
+MSMres$coef
 
 #---------------------------------------------------------------------------------------
 # MSM EXAMPLE 2: Modeling survival over time with exposure-based summary measures
@@ -94,6 +94,6 @@ msm.form_sum <- "Y ~ theta + t + I(theta*t) + S(mean(A1[0:t]))"
 D <- set.targetMSM(D, outcome="Y", t=0:5, formula=msm.form_sum, family="binomial",
 hazard=FALSE)
 MSMres <- eval.target(D, n=1000)
-MSMres$beta
+MSMres$coef
 }
 

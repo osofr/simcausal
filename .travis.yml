@@ -32,6 +32,9 @@ r_binary_packages:
   - igraph
   - ggplot2
   - Hmisc
+  - mvtnorm
+  - copula
+  - bindata
 
 # r_packages:
 #   - ltmle

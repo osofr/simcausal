@@ -1,6 +1,6 @@
 Package: simcausal
 Type: Package
-Version: 0.4.1
+Version: 0.4.2
 Title: Simulating Longitudinal Data with Causal Inference Applications
 Authors@R: c(
     person("Oleg", "Sofrygin", role=c("aut", "cre"), email="oleg.sofrygin@gmail.com"),
@@ -21,6 +21,7 @@ Depends:
     R (>= 3.2.0)
 Imports:
     data.table,
+    igraph,
     stringr,
     R6,
     assertthat,
@@ -31,8 +32,10 @@ Suggests:
     tmlenet,
     RUnit,
     knitr,
-    igraph,
     ggplot2,
-    Hmisc
+    Hmisc,
+    copula,
+    mvtnorm,
+    bindata
 VignetteBuilder: knitr
 License: GPL-2

@@ -160,3 +160,59 @@ D <- D +
     const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
 Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
 simobs(Dset1, n = 200, rndseed = 1)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 7: Multivariate random variables
+#---------------------------------------------------------------------------------------
+require("mvtnorm")
+D <- DAG.empty()
+
+# 3 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
+D <- D +
+  node(c("X1","X2","X3"), distr = "rmvnorm", mean = c(0,1,2))
+
+# Bivariate normal (correlation coef 0.75):
+D <- D +
+  node(c("Y1","Y2"), distr = "rmvnorm",
+    mean = c(0,1),
+    sigma = matrix(c(1,0.75,0.75,1), ncol=2))
+
+# Can use any component of such multivariate nodes when defining future nodes:
+D <- D + node("A", distr = "rconst", const = 1 - X1)
+Dset1 <- set.DAG(D, verbose = TRUE)
+dat1 <- sim(Dset1, n = 200)
+
+# Bivariate uniform copula using copula package (correlation coef 0.75):
+require("copula")
+D <- DAG.empty()
+D <- D +
+  node(c("Y1","Y2"), distr = "rCopula",
+    copula = normalCopula(0.75, dim = 2))
+Dset2 <- set.DAG(D)
+dat2 <- sim(Dset2, n = 200)
+
+# Bivariate binomial from previous copula, with same correlation:
+vecfun.add("qbinom")
+D <- D + node("A.Bin1", distr = "rconst", const = qbinom(Y1, 10, 0.5))
+D <- D + node("A.Bin2", distr = "rconst", const = qbinom(Y2, 15, 0.7))
+Dset3 <- set.DAG(D)
+dat3 <- sim(Dset3, n = 200)
+
+# Same as "A.Bin1" and "A.Bin2", but directly using rmvbin function in bindata package:
+require("bindata")
+D <- DAG.empty()
+D <- D +
+  node(c("B.Bin1","B.Bin2"), distr = "rmvbin",
+    margprob = c(0.5, 0.5),
+    bincorr = matrix(c(1,0.75,0.75,1), ncol=2))
+Dset4 <- set.DAG(D)
+dat4 <- sim(Dset4, n = 200)
+
+# Time-varying multivar node (3 time-points, 3 dimensional normal):
+D <- DAG.empty()
+D <- D +
+  node(c("X1", "X2"), t = 0:2, distr = "rmvnorm",
+    mean = c(0,1),
+    sigma = matrix(rep(0.75,4), ncol=2))
+Dset5 <- set.DAG(D)
+dat5 <- sim(Dset5, n = 200)

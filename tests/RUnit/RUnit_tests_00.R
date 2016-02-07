@@ -123,12 +123,13 @@ test.latent <- function() {
     distr = "rconst",
     const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
   Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
+  plotDAG(Dset1)
   Odatsim <- simobs(Dset1, n = 200, rndseed = 1)
   Dset1 <- Dset1 + action("A1", nodes = node("A", distr = "rbern", prob = 1))
   Fdatsim <- sim(DAG = Dset1, actions = c("A1"), n = 200, rndseed = 123)
   checkException(
     Dset1 <- Dset1 + action("A1.latent", nodes = node("I", distr = "rbern", prob = 1))
-    )
+  )
 }
 
 # Adding test for custom distr funs and an error message for non-existing distribution functions:
@@ -447,12 +448,26 @@ test.set.DAG_DAG2b_newactions <- function() {
     # Simulating data (observed and counterfactual (full))
     #-------------------------------------------------------------
     # Simulate observed data
-    O_dat <- simobs(D, n=500, rndseed = 123)
-    # O_dat <- simobs(D, n=10000, rndseed = 123)
-    # head(O_dat)
-    O_dat_long <- simobs(D, n=500, wide=FALSE, rndseed = 123) # observed long format:
-    # O_dat_long <- simobs(D, n=10000, wide=FALSE, rndseed = 123) # observed long format:
-    # head(O_dat_long, 50)
+    t1 <- system.time(O_dat <- simobs(D, n=500, rndseed = 123))
+    print(t1)
+    # for 50K
+    #  user  system elapsed 
+    # 2.740   0.521   3.250
+
+    t1.long <- system.time({
+      O_dat <- simobs(D, n = 500, rndseed = 123)
+      dat.long1 <- DF.to.long(O_dat)
+    })
+    print(t1.long)
+    # for 50K
+    #  user  system elapsed
+    # 8.932   1.058   9.954
+
+    t2.long <- system.time(O_dat_long <- simobs(D, n=500, wide=FALSE, rndseed = 123)) # observed long format:)
+    print(t2.long)
+    # for 50K:
+    #  user  system elapsed
+    # 3.606   0.798   4.397
 
     # Simulate full data for given actions (A(D))
     X_dat <- simfull(A(D), n=500, rndseed = 123)

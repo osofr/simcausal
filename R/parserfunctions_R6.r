@@ -444,14 +444,6 @@ Define_sVar <- R6Class("Define_sVar",
         var <- substitute(var)
         var.chr <- as.character(var)
 
-
-        # message("inside `[` call: ")
-        # print("t: " %+% t)
-        # print("var: " %+% var)
-        # print("var.chr: " %+% var.chr)
-        # print("indx: " %+% indx)
-
-
         if (missing(indx)) stop("missing tindex when using Var[tindex] inside the node formula")
         if (identical(class(indx),"logical")) indx <- which(indx)
         if (is.null(t)) stop("references, s.a. Var[t] are not allowed when t is undefined")
@@ -474,6 +466,7 @@ Define_sVar <- R6Class("Define_sVar",
         if (!all(check_exist)) stop("undefined time-dependent variable(s): "%+%TDvars[which(!check_exist)])
         # THIS STEP COULD BE MORE MEMORY EFFICIENT IF WAS SUBSETTING INSTEAD (BY COLS) ON EXISTING data MATRIX:
         TDvars_eval <- eval(parse(text=paste0("cbind(",paste0(TDvars, collapse=","),")")), envir = env)
+
         return(TDvars_eval)
       },
 
@@ -489,17 +482,6 @@ Define_sVar <- R6Class("Define_sVar",
         netind_cl <- env$netind_cl
         if (is.null(netind_cl)) stop("Network must be defined (with simcausal::network(...)) prior to using Var[[netidx]] node syntax")
         Kmax <- netind_cl$Kmax
-
-        # message("inside `[[` call: ")
-        # print("var: "); print(var)
-        # print("var.chr: " %+% var.chr)
-        # print("t: " %+% t)
-        # print("netidx: " %+% netidx)
-        # print("Kmax: " %+% Kmax)
-        # print("is.call(var): " %+% is.call(var))
-        # print("is.name(var): " %+% is.name(var))
-        # print("env$misXreplace: " %+% env$misXreplace);
-        # print("netind_cl: "); print(netind_cl)
 
         # if (!is.null(t)) stop("simultaneous time varying node references Var[t] and network references Var[[netidx]] are currently not supported")
         if (missing(netidx)) stop("missing netidx when using Var[[netidx]] inside the node formula")
@@ -526,10 +508,6 @@ Define_sVar <- R6Class("Define_sVar",
         }
         if (length(var.chr)>1) var.chr <- "X"
         n <- length(var.val)
-
-        # print("var.val as vector: "); print(var.val)
-        # print("var.chr: " %+% var.chr)
-        # print("n: " %+% n)
 
         if (identical(class(netidx),"logical")) netidx <- which(netidx)
         netVars_eval <- matrix(0L, nrow = n, ncol = length(netidx))
@@ -651,12 +629,6 @@ Define_sVar <- R6Class("Define_sVar",
       assert_that(is.environment(user.env))
       self$user.env <- user.env
     }
-    # ,
-    # set.netind_cl = function(netind_cl) {
-    #   assert_that(!is.null(netind_cl))
-    #   assert_that("NetIndClass" %in% class(netind_cl))
-    #   self$netind_cl <- netind_cl
-    # }
   ),
 
   active = list(

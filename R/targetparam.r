@@ -349,7 +349,7 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
 #'D <- set.targetMSM(D, outcome="Y", t=0:5, formula=msm.form, family="binomial", 
 #'hazard=FALSE)
 #'MSMres <- eval.target(D, n=1000)
-#'MSMres$beta
+#'MSMres$coef
 #'
 #'#---------------------------------------------------------------------------------------
 #'# MSM EXAMPLE 2: Modeling survival over time with exposure-based summary measures
@@ -362,7 +362,7 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
 #'D <- set.targetMSM(D, outcome="Y", t=0:5, formula=msm.form_sum, family="binomial",
 #'hazard=FALSE)
 #'MSMres <- eval.target(D, n=1000)
-#'MSMres$beta
+#'MSMres$coef
 #'
 #' @export
 # function to set MSM as the target, saves target obj in DAG until evaluation

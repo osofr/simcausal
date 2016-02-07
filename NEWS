@@ -46,3 +46,17 @@ simcausal 0.4.0
 * Fixing an issue with NetIndClass not calling self$make.nF() when outside network matrix is assigned;
 
 * Making nF (vector of the number of friends across observations) available as a special variable that can be used inside node expressions (as distributional parameters);
+
+simcausal 0.5.0
+==============
+
+* Major changes since last version 0.4.0.
+
+* Adding support for time-varying nodes over network: can index friend nodes with Node[[F_indx]] even when Node is time varying by adding indexing over t first, i.e., Node[t], then indexing friend values at t time-point by using the syntax Node[t][[F_indx]]. See the forthcoming vignette on networks.
+
+* Adding support for multivariate nodes, such as multivariate normal, copulas, etc. See new Section and Example 7 in ?node
+
+* Adding support for latent variables, set.DAG has a new argument v.latent, any node names specified to this argument will be hidden from the simulated data. This allows one to explicitly define errors (U’s) for each node. This will be also plotted differently by plotDAG.
+
+* Changing the format of plotDAG output. The internal (endogenous) nodes are no longer surrounded by circles. All latent nodes are surrounded by circles, all children of latent nodes are shown with dashed arrow.
+

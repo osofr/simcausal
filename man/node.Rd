@@ -7,7 +7,7 @@
 node(name, t, distr, EFU, order, ..., params = list(), asis.params = list())
 }
 \arguments{
-\item{name}{Character node name, for time-dependent nodes the names will be automatically expanded to a scheme "name_t" for each t provided specified}
+\item{name}{Character node name or a vector of names when specifying a multivariate node. For time-dependent nodes the names will be automatically expanded to a scheme "name_t" for each t provided specified.}
 
 \item{t}{Node time-point(s). Allows specification of several time-points when t is a vector of positive integers, in which case the output will consist of a named list of length(t) nodes, corresponding to each value in t.}
 
@@ -23,33 +23,33 @@ This can only be set to \code{TRUE} and should be omitted otherwise.}
 
 \item{params}{A list of additional named parameters to be passed on to the \code{distr} function. The parameters have to be either constants or character strings of R expressions of the past node names.}
 
-\item{asis.params}{(ADVANCED USE ONLY) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
+\item{asis.params}{(ADVANCED USE) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
 There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}). Time varying nodes should be refernced by their names as they appear in the simulated data, as in \code{TVar_t}.}
 }
 \value{
 A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
 }
 \description{
-This function provides a convenient way to define a node and its distribution in a time-varying format without unnecessary code repetition.
-The node distribution is allowed to vary as a function of time (\code{t}), with subsetting of the past nodes accomplished via \code{NodeName[t]}.
-Intended for use in conjunction with functions \code{\link{set.DAG}}, a DAG object constructor, and \code{\link{add.action}}, an action (intervention) constructor.
+Define a single DAG node and its distribution or define many repeated-measure/time-varying nodes by using argument \code{t}.
+The node distribution is allowed to vary as a function of time (\code{t}). Conditionaing on past nodes is accomplished by using the syntactic sugar, such as, \code{NodeName[t]}.
+After all the nodes have been added to the DAG, call \code{\link{set.DAG}}, a DAG object constructor, and \code{\link{add.action}}, an action (intervention) constructor.
 }
-\details{
-The combination of a generic name \code{name} and time point \code{t} must be unique in the sense that no other user-specified input node can result in the same
-combination of \code{name} and time point \code{t}.
-In other words, the combination of \code{name} and \code{t} must uniquely identify each node in the DAG.
-The user should use the same \code{name} to identify measurements of the same attribute (e.g. 'A1c') at various time points.
+\section{Details}{
 
-All nodes indexed by the same time point \code{t} value must have consecutive \code{order} values.
-The \code{order} values of all nodes indexed by the same \code{t} value must have their \code{order} values:
-1) strictly greater than the \code{order} values of all nodes indexed by a strictly lower \code{t} value and
-2) strictly lower than the \code{order} values of all nodes indexed by a strictly higher \code{t} value.
-All nodes of a DAG must have consecutive \code{order} values starting at one.
-The collection of unique \code{t} values of all nodes of a DAG must be consecutive values starting at 0.
+
+The combination of \code{name} and \code{t} must uniquely identify each node in the DAG. Use argument \code{t} to identify measurements of the same attribute (e.g. 'A1c') at various time points.
+The collection of all unique \code{t} values, across all nodes, should consist of non-negative integers (i.e., starting at 0).
+
+The optional \code{order} argument can be specified, used for determining the sampling order of each node.
+When \code{order} not specified, it is automatically inferred based on the actual order in which the nodes were added to the DAG (earlier added nodes get lower \code{order} value and are sampled first)
 
 All node calls that share the same generic name \code{name} must also share the same \code{EFU} value (if any is specified in at least one of them).
 A value of \code{TRUE} for the \code{EFU} indicates that if a simulated value for a measurement of the attribute represented by node is 1
 then all the following nodes with that measurement (in terms of higher \code{t} values) in the DAG will be unobserved (i.e., their simulated value will be set to NA).
+}
+
+\section{Node formulas (parameters of the distribution)}{
+
 
 Each formula of an input node is an evaluable R expression. All formulas are delayed in the evaluation until the simulation time.
 Formulas can refer to standard or user-specified R functions that must only apply to the values of parent nodes,
@@ -62,8 +62,32 @@ to each node indexed by a given time point denoted by \code{t}. This generic exp
 different set of parent nodes for each time point as illustrated below. Note that the parents of each node represented by a given \code{node} object are implicitly defined
 by the nodes referenced in formulas of that \code{node} call.
 
-(ADVANCED USE ONLY) All distribution parameters (e.g., \code{mean}, \code{probs}, \code{sd}, \code{unifmin} and \code{unifmax}) are always interpreted with delayed evaluation,
+(ADVANCED USE) All distribution parameters (e.g., \code{mean}, \code{probs}, \code{sd}, \code{unifmin} and \code{unifmax}) are interpreted by delayed evaluation,
 to force immediate evaluation of a variable \code{Var} wrap the variable inside \code{.()} function, as in \code{.(Var)}. See Example 2 for a working example that evaluates \code{.(t_end)} variable.
+}
+
+\section{Multivariate random variables (multivariate nodes)}{
+
+
+Starting from v.0.5, a single \code{node} call can be used for defining a multivariate (and possibly correlated) random vector.
+To define a random vector that has more than 1 dimension, use the argument \code{name} to specify a vector with names for each dimension, e.g.,
+
+\code{node(c("X1","X2"), distr = "rmvnorm", mean = c(0,1)), sigma = matrix(c(1,0.75,0.75,1), ncol=2)}
+
+will define a bi-variate (correlated) normally distributed node,
+the simulated data set will contain this bi-variately distributed random variable in columns "X1" and "X2".
+Note that the multivariate sampling distribution function (such as function \code{rmvnorm} from the package \code{mvtnorm}) must return a matrix of
+\code{n} rows (number of observations) and \code{length(name)} columns (dimensionality). See additional examples below.
+
+Note that one can also define time-varying multivariate nodes, e.g.,
+
+\code{node(c("X1","X2"), t=0:5, distr = "rmvnorm", mean = c(0,1))}.
+
+However, time-varying indexing of parent nodes is not allowed in any multivariate node formulas, e.g., using expressions like
+
+\code{node(c("X1","X2"), t=6, distr = "rmvnorm", mean = c(X1[t-1],1))},
+
+is not possible and will not return any sensible results.
 }
 \examples{
 #---------------------------------------------------------------------------------------
@@ -228,5 +252,61 @@ D <- D +
     const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
 Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
 simobs(Dset1, n = 200, rndseed = 1)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 7: Multivariate random variables
+#---------------------------------------------------------------------------------------
+require("mvtnorm")
+D <- DAG.empty()
+
+# 3 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
+D <- D +
+  node(c("X1","X2","X3"), distr = "rmvnorm", mean = c(0,1,2))
+
+# Bivariate normal (correlation coef 0.75):
+D <- D +
+  node(c("Y1","Y2"), distr = "rmvnorm",
+    mean = c(0,1),
+    sigma = matrix(c(1,0.75,0.75,1), ncol=2))
+
+# Can use any component of such multivariate nodes when defining future nodes:
+D <- D + node("A", distr = "rconst", const = 1 - X1)
+Dset1 <- set.DAG(D, verbose = TRUE)
+dat1 <- sim(Dset1, n = 200)
+
+# Bivariate uniform copula using copula package (correlation coef 0.75):
+require("copula")
+D <- DAG.empty()
+D <- D +
+  node(c("Y1","Y2"), distr = "rCopula",
+    copula = normalCopula(0.75, dim = 2))
+Dset2 <- set.DAG(D)
+dat2 <- sim(Dset2, n = 200)
+
+# Bivariate binomial from previous copula, with same correlation:
+vecfun.add("qbinom")
+D <- D + node("A.Bin1", distr = "rconst", const = qbinom(Y1, 10, 0.5))
+D <- D + node("A.Bin2", distr = "rconst", const = qbinom(Y2, 15, 0.7))
+Dset3 <- set.DAG(D)
+dat3 <- sim(Dset3, n = 200)
+
+# Same as "A.Bin1" and "A.Bin2", but directly using rmvbin function in bindata package:
+require("bindata")
+D <- DAG.empty()
+D <- D +
+  node(c("B.Bin1","B.Bin2"), distr = "rmvbin",
+    margprob = c(0.5, 0.5),
+    bincorr = matrix(c(1,0.75,0.75,1), ncol=2))
+Dset4 <- set.DAG(D)
+dat4 <- sim(Dset4, n = 200)
+
+# Time-varying multivar node (3 time-points, 3 dimensional normal):
+D <- DAG.empty()
+D <- D +
+  node(c("X1", "X2"), t = 0:2, distr = "rmvnorm",
+    mean = c(0,1),
+    sigma = matrix(rep(0.75,4), ncol=2))
+Dset5 <- set.DAG(D)
+dat5 <- sim(Dset5, n = 200)
 }
 

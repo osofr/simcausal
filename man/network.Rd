@@ -251,6 +251,7 @@ net_object <- attributes(datnet)$netind_cl
 net_object$Kmax
 # Network matrix
 head(attributes(datnet)$netind_cl$NetInd)
+plotDAG(Dset)
 }
 \seealso{
 \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}

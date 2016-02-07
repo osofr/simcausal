@@ -1,3 +1,4 @@
+#' @import igraph
 
 `%+%` <- function(a, b) paste0(a, b)	# custom cat function
 `%/%` <- function(a, b) paste0(a, paste0(b, collapse=","))  # custom collapse with "," function
@@ -362,15 +363,17 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
 
   g <- igraph::graph.empty()
   # g <- igraph::add.vertices(g, nv=length(names(par_nodes)), color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
+  # browser()
 
   vlabs <- names(par_nodes)
   g <- igraph::add.vertices(g, nv=length(vlabs), attr=vertex_attrs)
   igraph::V(g)$name <- vlabs
   for (i in c(1:length(names(par_nodes)))) {
     if (length(par_nodes[[i]])>0) {
-      # check that parent nodes actually exist and already have been defined:
+      # check that parent nodes exist and already have been defined:
       parents_i <- par_nodes[[i]]
-      ind_parexist <- parents_i%in%(names(par_nodes)[1:i])
+      # ind_parexist <- parents_i%in%(names(par_nodes)[1:i])
+      ind_parexist <- parents_i%in%(names(par_nodes))
       if (!all(ind_parexist)) {
         par_outvec <- parents_i[!ind_parexist]
         if (length(par_outvec)>1) par_outvec <- paste0(par_outvec, collapse=",")
@@ -403,7 +406,16 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$label.color <- "black"
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$shape <- "circle"
     # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 2 # dashed
-    igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5 # longdash
+    # to prevent a NOTE for undeclared global "from" in igraph indexing
+    Eg.sel <- eval(parse(text="igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5")) # long dash
+    # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5 # longdash
+    # class(Eg.sel)
+    # Eg.sel$lty <- 5
+    # attributes(Eg.sel)
+    # ()
+    # browser()    
+    # attributes(igraph::E(g))
+    # attributes(igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])])
   }
   # use user-supplied custom labels for DAG nodes:
   if (!missing(customvlabs)) {
@@ -441,7 +453,8 @@ parents <- function(DAG, nodesChr) {
 
 # Internal function that checks all DAG node objects have unique name attributes
 check_namesunique <- function(inputDAG) {
-	node_names <- sapply(inputDAG, "[[", "name")
+	# node_names <- sapply(inputDAG, "[[", "name")
+  node_names <- names(inputDAG)
 	(length(unique(node_names))==length(inputDAG))
 }
 
@@ -472,11 +485,11 @@ set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("si
 
   rndseed <- NULL
   # set of allowed named arguments:
-  node_args_all <- c("name", "t", "distr", "dist_params", "EFU", "order", "node.env")
+  node_args_all <- c("name", "mv.names", "t", "distr", "dist_params", "EFU", "order", "node.env")
   # set of required named arguments:
   node_args_req <- c("name", "distr", "order")
   # set of optional named arguments:
-  node_args_opt <- c("t", "dist_params", "EFU", "node.env")
+  node_args_opt <- c("t", "mv.names", "dist_params", "EFU", "node.env")
 
   #---------------------------------------------------------------------------------
   # DAG specification errors checks
@@ -493,6 +506,7 @@ set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("si
 
   if (!(all(sapply(DAG, is.list)))) stop("each of DAG items must be a list specifying DAG node(s)")
   class(DAG) <- "DAG"
+  
   # *) check all DAG have order attribute defined, if not, assign the order based on the node location in the list
   check.order <- sapply(Nattr(DAG, "order"), is.null)
   # print("check.order"); print(check.order)
@@ -566,6 +580,7 @@ set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("si
   #---------------------------------------------------------------------------------
   # Checking for correct DAG specification by simulating one observation
   #---------------------------------------------------------------------------------
+
   obs.df <- try(simobs(inputDAG, n = n.test, rndseed = rndseed))
   if(inherits(obs.df, "try-error")) {
     stop("\n...attempt to simulate data from DAG failed...")
@@ -754,8 +769,10 @@ createNodeObj <- function(input.node, node_args_all) {
 sortbyorder <- function(DAG) {
   node_names_L <- names(DAG)
   node_names_attr <- sapply(DAG, '[[', "name")
-  if (length(node_names_L)!=length(node_names_attr)) stop("DAG list names of node objects and node name arguments do not match in length...")
-  if (!all(node_names_L==node_names_attr)) stop("DAG list names of node objects and node name arguments don't match")
+
+  # if (length(node_names_L)!=length(node_names_attr)) stop("DAG list names of node objects and node name arguments do not match in length...")
+  # if (!all(node_names_L==node_names_attr)) stop("DAG list names of node objects and node name arguments don't match")
+
   order_vals <- sapply(DAG, '[[', "order")
   if ((length(order_vals)!=length(DAG)) | any(is.null(order_vals))) stop("node order argument is either incorrectly specified or missing")
   if (length(unique(order_vals))!=length(order_vals)) stop("some nodes have identical order values - all order values must be unique")
