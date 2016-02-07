@@ -2300,15 +2300,16 @@ test.set.DAG_DAG1 <- function() {
     # testing one intervention (named nested list with each item = one intervention)
     # newactions1 <-  list(AW2set1 = list(W2=list(name="W2", distr="rbern", prob=1), 
     #                                         A=list(name="A", distr="rbern", prob=1)))
-    newaction1 <-  list(W2=list(name="W2", distr="rbern", dist_params=list(prob=1)), A=list(name="A", distr="rbern", dist_params=list(prob=1)))
+    newaction1 <-  c(node("W2", distr="rbern", prob=1), node("A", distr="rbern", prob=1))
+
 
     # returns a named list of DAGs, where each item = one counterfactual DAG
 
     action1_DAG_1 <- list(simcausal:::setAction(actname="action1_DAG_1", inputDAG=datgendist_DAG1, actnodes=newaction1))
     checkTrue(class(action1_DAG_1)%in%"list")
     checkTrue(length(action1_DAG_1)==1)
-    checkEquals(action1_DAG_1[[1]]$W2$dist_params$prob,1)
-    checkEquals(action1_DAG_1[[1]]$A$dist_params$prob,1)
+    checkEquals(action1_DAG_1[[1]]$W2$dist_params$prob,"1")
+    checkEquals(action1_DAG_1[[1]]$A$dist_params$prob,"1")
 
     fulldf_ac1 <- simfull(action1_DAG_1, n=n, rndseed = 123)
     # nrow(fulldf_ac1[[1]])
@@ -2323,8 +2324,8 @@ test.set.DAG_DAG1 <- function() {
     # DAG 1 - action 2: simcausal:::setAction & simfull
     #--------------------------------------------------------
     # testing two interventions - each intervention results in a separate DAG
-    newaction1 <-  list(W2=list(name="W2", distr="rbern", dist_params=list(prob=1)), A=list(name="A", distr="rbern", dist_params=list(prob=1)))
-    newaction2 <-  list(A=list(name="A", distr="rbern", dist_params=list(prob=0)))
+    newaction1 <-  c(node("W2", distr="rbern", prob=1), node("A", distr="rbern", prob=1))
+    newaction2 <-  node(name="A", distr="rbern", prob=0)
     # returns a named list of DAGs, where each item = one counterfactual DAG
     action1_DAG_1 <- list(simcausal:::setAction(actname="AW2set1", inputDAG=datgendist_DAG1, actnodes=newaction1))
     action2_DAG_1 <- list(simcausal:::setAction(actname="Aset0", inputDAG=datgendist_DAG1, actnodes=newaction2))
@@ -2334,9 +2335,9 @@ test.set.DAG_DAG1 <- function() {
 
     checkTrue(class(actions_DAG_1)=="list")
     checkTrue(length(actions_DAG_1)==2)
-    checkEquals(actions_DAG_1[[1]]$W2$dist_params$prob,1)
-    checkEquals(actions_DAG_1[[1]]$A$dist_params$prob,1)
-    checkEquals(actions_DAG_1[[2]]$A$dist_params$prob,0)
+    checkEquals(actions_DAG_1[[1]]$W2$dist_params$prob,"1")
+    checkEquals(actions_DAG_1[[1]]$A$dist_params$prob,"1")
+    checkEquals(actions_DAG_1[[2]]$A$dist_params$prob,"0")
 
     fulldf_ac2 <- simfull(actions_DAG_1, n=n, rndseed = 123)
     checkTrue(class(fulldf_ac2)=="list")
