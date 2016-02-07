@@ -415,10 +415,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   }
 
   newattrs <- FormAttributes(DAG = DAG, parents = NodeParentsNms, dataform = "wide", LTCF = LTCF_flag, tvals = all_ts, netind_cl = netind_cl)
-  # attributes(obs.df) <- c(attributes(obs.df), newattrs)
-  attributes(obs.dt) <- c(attributes(obs.dt), newattrs)
-  # dprint("sim data"); dprint(head(obs.df, 1))
-  # dprint("sim data"); dprint(head(obs.dt, 1))
+  newattrs_names <- names(newattrs)
+  for (attr_name in newattrs_names) {
+    setattr(x = obs.dt, name = attr_name, value = newattrs[[attr_name]])
+  }
 
   if (!wide) {
     if (length(all_ts)>1) {		# only perform conversion when there is more than one t in the simulated data
@@ -428,8 +428,9 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       warning("Simulated data returned in wide format. Can't convert to long format, since only one time-point was detected.")
     }
   }
-  # return(obs.df)
+
   class(obs.dt) <- "data.frame"
+  # return(obs.df)
   return(obs.dt)
 }
 
@@ -624,7 +625,7 @@ doLTCF <- function(data, LTCF) {
 #'
 #' @param df_wide A \code{data.frame} in wide format
 #' @return A \code{data.frame} object in long format
-#' @seealso \code{\link{DF.to.longDT}} - a faster version of \code{DF.to.long} that produces a \code{data.table} object as an output.
+#' @seealso \code{\link{DF.to.longDT}} - a faster version of \code{DF.to.long} that uses \code{data.table} package
 #' @family data manipulation functions
 #' @export
 DF.to.long <- function(df_wide) {
@@ -695,10 +696,10 @@ DF.to.long <- function(df_wide) {
 # @importFrom reshape2 melt
 #' @import data.table
 NULL
-#' Convert Data from Wide to Long Format Using \code{dcast.data.table}
+#' Faster Conversion of Data from Wide to Long Format Using \code{dcast.data.table}
 #'
-#' This utility function takes a simulated data.frame in wide format as an input and converts it into a long format 
-#' using \pkg{data.table} package functions \code{melt.data.table} and \code{dcast.data.table}.
+#' Faster utility function for converting wide-format \code{data.frame} into a long format.
+#' Internally uses \pkg{data.table} package functions \code{melt.data.table} and \code{dcast.data.table}.
 #'
 #' Keeps all covariates that appear only once and at the first time-point constant (carry-forward).
 #'
@@ -708,11 +709,14 @@ NULL
 #' 
 #' When removing NA's the time-varying covariates that are attributes (attnames) are not considered.
 #'
-#' @param df_wide A \code{data.frame} in wide format
-#' @return A \code{data.table} object in long format
+#' @param df_wide A \code{data.frame} or \code{data.table} in wide format
+#' @param return_DF \code{TRUE} (default) to return a \code{data.frame}, \code{FALSE} returns a \code{data.table}
+#' @return A \code{data.frame} in long format
 #' @family data manipulation functions
 #' @export
-DF.to.longDT <- function(df_wide) {
+DF.to.longDT <- function(df_wide, return_DF = TRUE) {
+  assertthat::assert_that(assertthat::is.flag(return_DF))
+  assertthat::assert_that(data.table::is.data.table(df_wide)||is.data.frame(df_wide))
   # wrapping any call inside this function call will suppress all warnings:
   SuppressAllWarnings <- function(expr) {
     h <- function (w) {
@@ -735,7 +739,6 @@ DF.to.longDT <- function(df_wide) {
 
   dprint("all_ts"); dprint(all_ts)
   dprint("node_nms"); dprint(node_nms)
-  # dprint("head(df_wide)"); dprint(head(df_wide))
 
   # if there are no time-points (t) attributes, then the long vs. wide format is undefined.
   if (length(all_ts)==0) return(df_wide)
@@ -816,9 +819,18 @@ DF.to.longDT <- function(df_wide) {
   if (length(attnames)>0) v.names <- v.names[!v.names%in%attnames]
   dprint("v.names after rem attrs"); dprint(v.names)
   simDT_long <- simDT_long[rowSums(is.na(simDT_long[,v.names, with=FALSE]))<length(v.names),] # 3) remove last NA rows (after censoring or EFUP)
-  attributes(simDT_long) <- c(attributes(simDT_long), newattrs)
-  attr(simDT_long, "v.names") <- v.names
-  simDT_long
+
+  # attributes(simDT_long) <- c(attributes(simDT_long), newattrs)
+  newattrs_names <- names(newattrs)
+  for (attr_name in newattrs_names) {
+    setattr(x = simDT_long, name = attr_name, value = newattrs[[attr_name]])
+  }
+  # attr(simDT_long, "v.names") <- v.names
+  setattr(x = simDT_long, name = "v.names", value = v.names)
+
+  if (return_DF) class(simDT_long) <- "data.frame"
+
+  return(simDT_long)
 }
 
 # NOT IMPLEMENTED

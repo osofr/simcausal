@@ -608,7 +608,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, ver
                         })
     }
     # SuppressGivenWarnings(df_full <- lapply(df_full, DF.to.longDT), GetWarningsToSuppress())
-    df_full <- lapply(df_full, DF.to.longDT)
+    df_full <- lapply(df_full, DF.to.longDT, return_DF = FALSE)
     names(df_full) <- act_names
     # * Subset all data.frame variables by t once its in long format
     if(!is.null(t_vec)) df_full <- lapply(df_full, subset_dat_long, t_vec) #this should include the indicators

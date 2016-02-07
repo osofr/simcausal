@@ -406,16 +406,8 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$label.color <- "black"
     igraph::V(g)[igraph::V(g)$name%in%latent.v]$shape <- "circle"
     # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 2 # dashed
-    # to prevent a NOTE for undeclared global "from" in igraph indexing
+    # to prevent a NOTE from using undeclared global "from" in igraph indexing
     Eg.sel <- eval(parse(text="igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5")) # long dash
-    # igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])]$lty <- 5 # longdash
-    # class(Eg.sel)
-    # Eg.sel$lty <- 5
-    # attributes(Eg.sel)
-    # ()
-    # browser()    
-    # attributes(igraph::E(g))
-    # attributes(igraph::E(g)[from(igraph::V(g)[igraph::V(g)$name%in%latent.v])])
   }
   # use user-supplied custom labels for DAG nodes:
   if (!missing(customvlabs)) {

@@ -2,19 +2,21 @@
 % Please edit documentation in R/simulation.r
 \name{DF.to.longDT}
 \alias{DF.to.longDT}
-\title{Convert Data from Wide to Long Format Using \code{dcast.data.table}}
+\title{Faster Conversion of Data from Wide to Long Format Using \code{dcast.data.table}}
 \usage{
-DF.to.longDT(df_wide)
+DF.to.longDT(df_wide, return_DF = TRUE)
 }
 \arguments{
-\item{df_wide}{A \code{data.frame} in wide format}
+\item{df_wide}{A \code{data.frame} or \code{data.table} in wide format}
+
+\item{return_DF}{\code{TRUE} (default) to return a \code{data.frame}, \code{FALSE} returns a \code{data.table}}
 }
 \value{
-A \code{data.table} object in long format
+A \code{data.frame} in long format
 }
 \description{
-This utility function takes a simulated data.frame in wide format as an input and converts it into a long format
-using \pkg{data.table} package functions \code{melt.data.table} and \code{dcast.data.table}.
+Faster utility function for converting wide-format \code{data.frame} into a long format.
+Internally uses \pkg{data.table} package functions \code{melt.data.table} and \code{dcast.data.table}.
 }
 \details{
 Keeps all covariates that appear only once and at the first time-point constant (carry-forward).
