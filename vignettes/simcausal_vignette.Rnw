@@ -1784,7 +1784,7 @@ head(lXdyn[["A1_th0"]], 5)
 @
 
 The following example demonstrates how the function \code{DF.to.longDT} can be used to convert simulated (full or
-observed) data stored in wide format to long format (Note that \code{DF.to.longDT} internally uses the \code{data.table} package, but returns a \code{data.frame} by default):
+observed) data stored in wide format to long format (note that \code{DF.to.longDT} internally uses the \code{data.table} package, but returns a \code{data.frame} by default):
 
 <<message=FALSE>>=
 Odat.long2 <- DF.to.longDT(Odat.wide)
@@ -2415,7 +2415,7 @@ sim50K.stratQg.notrunc.missg <- foreach(sim = seq(Nsims), .combine = 'rbind')%do
             }
 save(list = "sim50K.stratQg.notrunc.missg", file = "vignette_dat/sim50K.stratQg.notrunc.missg.Rdata")
 @
-<<message=FALSE, echo=FALSE>>=
+<<message=FALSE, warning=FALSE, echo=FALSE>>=
 library("Hmisc")
 load(file = "vignette_dat/repstudy1_psi0.t0.MSM.Rdata")
 load(file = "vignette_dat/sim50K.stratQg.notrunc.g.Rdata")
@@ -2514,7 +2514,7 @@ for (Lname in Lnames) {
     node(Lname%+%".norm2", distr = "rnorm", mean = 0, sd = 1)
 }
 
-D <- D + 
+D <- D +
   node("LO1", t = 0:1, distr = "rbivNorm", whichbiv = t + 1, 
         norms = c(LO1.norm1, LO1.norm2), 
         mu = 0) + 

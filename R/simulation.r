@@ -693,7 +693,6 @@ DF.to.long <- function(df_wide) {
   simdf_long
 }
 
-# @importFrom reshape2 melt
 #' @import data.table
 NULL
 #' Faster Conversion of Data from Wide to Long Format Using \code{dcast.data.table}
@@ -706,7 +705,7 @@ NULL
 #' All covariates that appear fewer than range(t) times are imputed with NA for missing time-points.
 #'
 #' Observations with all NA's for all time-varying covariates are removed.
-#' 
+#'
 #' When removing NA's the time-varying covariates that are attributes (attnames) are not considered.
 #'
 #' @param df_wide A \code{data.frame} or \code{data.table} in wide format
