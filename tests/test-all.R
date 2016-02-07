@@ -1,7 +1,7 @@
-# setwd("/home/p694382/Projects/simcausal_Rpackage/simcausal/tests")
-
-
 ## unit tests will not be done if RUnit is not available
+# setwd("..")
+# getwd()
+# library(RUnit)
 if(require("RUnit", quietly=TRUE)) {
     ## --- Setup ---
 
@@ -37,7 +37,7 @@ if(require("RUnit", quietly=TRUE)) {
     test.suite <- defineTestSuite(name=paste(pkg, "unit testing"),
                                         # dirs="./RUnit",
                                         dirs=path,
-                                        testFileRegexp = "^RUnit_tests_+\\.[rR]$",
+                                        testFileRegexp = "^RUnit_tests_+",
                                         testFuncRegexp = "^test.+",
                                         rngKind = "Marsaglia-Multicarry",
                                         rngNormalKind = "Kinderman-Ramage")
