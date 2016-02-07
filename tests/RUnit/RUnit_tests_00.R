@@ -24,6 +24,7 @@ if(FALSE) {
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
   setwd("..")
+  
   system("R CMD check --as-cran simcausal_0.4.0.tar.gz") # check R package tar ball prior to CRAN submission
       ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
       ## system("R CMD build simcausal --no-build-vignettes")
