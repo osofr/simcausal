@@ -300,7 +300,7 @@ D <- D +
 Dset4 <- set.DAG(D)
 dat4 <- sim(Dset4, n = 200)
 
-# Time-varying multivar node (3 time-points, 3 dimensional normal):
+# Time-varying multivar node (3 time-points, 2 dimensional normal):
 D <- DAG.empty()
 D <- D +
   node(c("X1", "X2"), t = 0:2, distr = "rmvnorm",
