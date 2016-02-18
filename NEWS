@@ -56,7 +56,7 @@ simcausal 0.5.0
 
 * Added support for latent variables, set.DAG has a new argument v.latent, any node names specified to this argument will be hidden from the simulated data. This allows one to explicitly define errors (U’s) for each node. This will be also plotted differently by plotDAG.
 
-* set.DAG has a new argument n.test, used for changing the default sample size of the simulation test performed by set.DAG (default n.test=100). Set n
+* set.DAG has a new argument n.test, used for changing the default sample size of the simulation test performed by set.DAG (default n.test=100). Set n.test=0 to skip the DAG object test completely.
 
 * Node argument EFU can be a logical expression (any function of previously defined node names), which must evaluate to TRUE/FALSE. Right-censoring for a specific observation then occurs only if: 1) The node value evaluated to 1 & 2) EFU evaluates to TRUE
 
