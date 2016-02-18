@@ -8,22 +8,28 @@ set.DAG(DAG, vecfun, n.test = 100, latent.v,
   verbose = getOption("simcausal.verbose"))
 }
 \arguments{
-\item{DAG}{Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.}
+\item{DAG}{Named list of node objects that together will form a DAG.
+Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface)
+or with an optional "order" argument to \code{node()}.}
 
 \item{vecfun}{A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.}
 
-\item{n.test}{Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
-Turn this off by default using options(simcausal.verbose=FALSE).}
+\item{n.test}{Non-negative simulation sample size used for testing the consistency of the \code{DAG} object.
+A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when testing \code{DAG} for rare-event errors.
+A smaller \code{n.test} can be better for performance (faster validation of the \code{DAG}).
+Set \code{n.test=0} to completely skip the simulation test (use at your own risk, since calling \code{sim()} on such un-tested \code{DAG} may lead to uninterpretable errors).
+Note that when using \code{n.test=0}, the \code{plotDAG} function \emph{will not} draw \emph{any} child-parent relationships, since the formula parsing is not performed.}
 
 \item{latent.v}{The names of the unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.}
 
-\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.}
+\item{verbose}{Set to \code{TRUE} to print messages on status and information to the console. Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \value{
 A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 }
 \description{
-Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution. Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.
+Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution.
+Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.
 }
 \examples{
 #---------------------------------------------------------------------------------------

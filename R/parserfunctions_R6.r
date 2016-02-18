@@ -164,7 +164,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       if (is.name(x)) dprint("name: "%+%x)
       x	# Leave unchanged
     } else if (is.call(x)) {
-      if (identical(x[[1]], quote(`[`)) && is.name(x[[2]])) {	# reached '[' function, don't need to parse any deeper, return this subtree intact
+      if (identical(x[[1]], quote(`[`)) && is.name(x[[2]])) {	# reached '[' function, don`t need to parse any deeper, return this subtree intact
         x
       } else if (identical(x[[1]], quote(`[[`)) && is.name(x[[2]])) { # reached '[[' function, same as above
         x
@@ -263,7 +263,7 @@ eval.nodeform.full <- function(expr_call, expr_str, self, data.env) {
     modified_call_nocurl <- modified_call[-1]
     evaled_expr <- try(lapply(X = modified_call_nocurl, FUN = eval, envir = data.env, enclos = self$user.env))
   } else {
-    evaled_expr <- try(eval(modified_call, envir = data.env, enclos = self$user.env)) # eval'ing expr in the envir of data.df
+    evaled_expr <- try(eval(modified_call, envir = data.env, enclos = self$user.env)) # evaling expr in the envir of data.df
   }
 
   if(inherits(evaled_expr, "try-error")) {
@@ -291,7 +291,7 @@ eval.nodeform.full <- function(expr_call, expr_str, self, data.env) {
 
 eval.nodeform.asis <- function(expr_call, expr_str, self, data.env) {
   # print("AS IS EVALUTION FOR: "); print(expr_str)
-  evaled_expr <- try(eval(expr_call, envir = data.env, enclos = self$user.env)) # eval'ing expr in the envir of data.df
+  evaled_expr <- try(eval(expr_call, envir = data.env, enclos = self$user.env)) # evaling expr in the envir of data.df
   if(inherits(evaled_expr, "try-error")) {
     stop("error while evaluating node "%+% self$cur.node$name %+%" formula: \n"%+%parse(text = expr_str)%+%".\nCheck syntax specification.", call. = FALSE)
   }
@@ -427,8 +427,11 @@ Define_sVar <- R6Class("Define_sVar",
           Nsamp <- env$self$Nsamp
           dprint("env$self$Nsamp:"); dprint(env$self$Nsamp)
           assert_that(!is.null(Nsamp))
-
-          cbind_res <- matrix(cbind_res, nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)
+          if (Nsamp > 0) {
+            cbind_res <- matrix(cbind_res, nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)  
+          } else {
+            cbind_res <- matrix(nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)
+          } 
         }
         dprint("cbind_res"); dprint(cbind_res)
         cbind_res
@@ -440,7 +443,7 @@ Define_sVar <- R6Class("Define_sVar",
       # ***NOTE: current '[' cannot evalute subsetting that is based on values of other covariates such as A1C[ifelse(BMI<5, 1, 2)]
       `[` = function(var, indx, ...) {
         env <- parent.frame()
-        t <- env$t # t <- get("t", envir = env)
+        t <- env$t
         var <- substitute(var)
         var.chr <- as.character(var)
 
@@ -466,7 +469,6 @@ Define_sVar <- R6Class("Define_sVar",
         if (!all(check_exist)) stop("undefined time-dependent variable(s): "%+%TDvars[which(!check_exist)])
         # THIS STEP COULD BE MORE MEMORY EFFICIENT IF WAS SUBSETTING INSTEAD (BY COLS) ON EXISTING data MATRIX:
         TDvars_eval <- eval(parse(text=paste0("cbind(",paste0(TDvars, collapse=","),")")), envir = env)
-
         return(TDvars_eval)
       },
 
@@ -475,7 +477,7 @@ Define_sVar <- R6Class("Define_sVar",
       # NetInd_k <- cbind(c(1:n), NetInd_k) and then netidx <- netidx + 1
       `[[` = function(var, netidx, ...) {
         env <- parent.frame()
-        t <- env$t # t <- get("t", envir = env)
+        t <- env$t
         var <- substitute(var)
         var.chr <- as.character(var)
 

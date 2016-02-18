@@ -260,7 +260,7 @@ test.networkgen2 <- function() {
     nFriendTot <- rep(0L, n)
     for (index in (1:n)) {
       FriendSampSet <- setdiff( c(1:n), index)  #set of possible friends to sample, anyone but itself
-      nFriendSamp <- max(nF[index] - nFriendTot[index], 0L) #check i's network is not already filled to max
+      nFriendSamp <- max(nF[index] - nFriendTot[index], 0L) #check i`s network is not already filled to max
       if (nFriendSamp>0) {
         if (length(FriendSampSet)==1)  {  # To handle the case with |FriendSampSet| = 1
           friends_i <- FriendSampSet

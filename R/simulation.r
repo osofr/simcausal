@@ -65,6 +65,7 @@ getactions <- function(DAG, actions) {
 # Internal function for simulation data from any DAG
 # If prev.data is not NULL all the nodes in DAG will be evaluated in the environment of prev.data alone
 simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, prev.data = NULL, verbose = getOption("simcausal.verbose")) {
+  assertthat::assert_that(assertthat::is.count(Nsamp) || as.integer(Nsamp)==0L)
   if (!is.null(rndseed)) {
     set.seed(rndseed)
   }
@@ -173,15 +174,11 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   #---------------------------------------------------------------------------------
   EFUP.prev <- rep(FALSE, Nsamp)
   LTCF.prev <- rep(FALSE, Nsamp)
-  obs.df <- data.frame(ID = seq(1:Nsamp))
+
+  obs.df <- data.frame(ID = seq(vector(length = Nsamp))) # obs.df <- data.frame(ID = seq(1:Nsamp))
   obs.dt <- data.table(obs.df)
 
   alloc.col(obs.dt, max(min(length(DAG)+1, 1000), 200)) # need to allocate columns in DT to maximum number of variables
-  # print("truelength(obs.dt)"); print(truelength(obs.dt))
-  
-  # obs.mat <- matrix(,nrow=Nsamp, ncol=length(DAG)+1)
-  # obs.mat[,1] <- seq(1:Nsamp)
-  # colnames(obs.mat) <- c("ID", names(DAG))
 
   #---------------------------------------------------------------------------------
   # CHECKS PERFORMED DURING EVALUTION:
@@ -206,13 +203,10 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
   names(MVvarMapNode) <- MVvars
 
   # NodeParentsNms <- vector("list", length = totalNvars)
-  NodeParentsNms <- vector("list", length = length(DAG))	# list that will  have parents' names for each node
+  NodeParentsNms <- vector("list", length = length(DAG))	# list that will  have parents names for each node
   # names(NodeParentsNms) <- varNames
   names(NodeParentsNms) <- names(DAG)
 
-  # browser()
-  # print(unlist(lapply(DAG, '[[', "name")))
-  # print(sapply(DAG, '[[', "name"))
   
   netind_cl <- NULL
   node_evaluator <- Define_sVar$new(netind_cl = netind_cl)

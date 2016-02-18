@@ -35,7 +35,7 @@ add.nodes <- function(DAG, nodes) {
     checkexist <- (node_nm%in%DAG_names) # check if the node under the same name already exists
     checkexistgen <- (gnode_nm%in%DAG_names) # check if the generic node under the same name already exists
 
-    if ((!checkexist) & checkexistgen) { # the TV node doesn't exist yet but the generic (nonTV) already does
+    if ((!checkexist) & checkexistgen) { # the TV node doesn`t exist yet but the generic (nonTV) already does
     # give warning and delete old node, add new ones
       gnode_idx <- which(DAG_names%in%gnode_nm)
       modDAG <- modDAG[-gnode_idx]
@@ -43,7 +43,7 @@ add.nodes <- function(DAG, nodes) {
       warning("existing non-time-varying node "%+% gnode_nm %+% " was overwritten with a time-varying node")
     }
 
-    if (!checkexist) {  # this node doesn't exist yet in the DAG, new node has to be added
+    if (!checkexist) {  # this node doesn`t exist yet in the DAG, new node has to be added
       node_insert <- nodes[node_idx]
       t_insert <- nodes[[node_idx]]$t
       t_idx_all <- Nattr(modDAG, "t") # a list of t values from current DAG (including NULLs)

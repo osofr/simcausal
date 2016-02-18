@@ -13,6 +13,11 @@ vecfun.add(vecfun_names)
 An old vector of user-defined vectorized function names
 }
 \description{
-Add user-defined function names to a global list of custom vectorized functions. The functions in \code{vecfun_names} are intended for use inside the node formulas. Adding functions to this list will generally greatly expedite the simulation run time. Any node formula calling a function on this list will be evaluated "as is", the function should be written to accept arguments as either vectors of length \code{n} or as matrices with \code{n} rows. Adding function to this list will effects simulation from all DAG objects that call this function. See vignette for more details.
+Add user-defined function names to a global list of custom vectorized functions.
+The functions in \code{vecfun_names} are intended for use inside the node formulas.
+Adding functions to this list will generally greatly expedite the simulation run time.
+Any node formula calling a function on this list will be evaluated "as is", the function should
+be written to accept arguments as either vectors of length \code{n} or as matrices with \code{n} rows.
+Adding function to this list will effects simulation from all DAG objects that call this function. See vignette for more details.
 }
 

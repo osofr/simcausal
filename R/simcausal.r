@@ -49,7 +49,12 @@ vecfun.all.print <- function() {
 }
 #' Add Custom Vectorized Functions
 #'
-#' Add user-defined function names to a global list of custom vectorized functions. The functions in \code{vecfun_names} are intended for use inside the node formulas. Adding functions to this list will generally greatly expedite the simulation run time. Any node formula calling a function on this list will be evaluated "as is", the function should be written to accept arguments as either vectors of length \code{n} or as matrices with \code{n} rows. Adding function to this list will effects simulation from all DAG objects that call this function. See vignette for more details.
+#' Add user-defined function names to a global list of custom vectorized functions. 
+#' The functions in \code{vecfun_names} are intended for use inside the node formulas. 
+#' Adding functions to this list will generally greatly expedite the simulation run time. 
+#' Any node formula calling a function on this list will be evaluated "as is", the function should 
+#' be written to accept arguments as either vectors of length \code{n} or as matrices with \code{n} rows. 
+#' Adding function to this list will effects simulation from all DAG objects that call this function. See vignette for more details.
 #' @param vecfun_names A character vector of function names that will be treated as "vectorized" by the node formula R parser
 #' @return An old vector of user-defined vectorized function names
 #' @export
@@ -191,7 +196,8 @@ print.DAG.node <- function(x, ...) str(x)
 #' @param ylab An optional title for y axis, passed to \code{\link{plot}}.
 #' @param xlab An optional title for x axis, passed to \code{\link{plot}}.
 #' @param ylim Optional y limits for the plot, passed to \code{\link{plot}}.
-#' @param legend.xyloc Optional x and y co-ordinates to be used to position the legend. Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{graphics::xy.coords}.
+#' @param legend.xyloc Optional x and y co-ordinates to be used to position the legend. 
+#' Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{graphics::xy.coords}.
 #' @param ... Additional arguments passed to \code{\link{plot}}.
 #' @export
 plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim = c(0.0, 1.0), legend.xyloc = "topright", ...) {
@@ -210,8 +216,12 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 
 #' Plot DAG
 #'
-#' Plot DAG object using functions from \code{igraph} package. The default setting is to keep the regular (observed) DAG nodes with \code{shape} set to "none", which can be over-ridden by the user. 
-#' For latent (hidden) DAG nodes the default is to: 1) set the node color as grey; 2) enclose the node by a circle; and 3) all directed edges coming out of the latent node are plotted as dashed.
+#' Plot DAG object using functions from \code{igraph} package. 
+#' The default setting is to keep the regular (observed) DAG nodes with \code{shape} set to "none", which can be over-ridden by the user. 
+#' For latent (hidden) DAG nodes the default is to: 
+#' 1) set the node color as grey; 
+#' 2) enclose the node by a circle; and 
+#' 3) all directed edges coming out of the latent node are plotted as dashed.
 #' @param DAG A DAG object that was specified by calling \code{\link{set.DAG}}
 #' @param tmax Maximum time-point to plot for time-varying DAG objects
 #' @param xjitter Amount of random jitter for node x-axis plotting coordinates
@@ -363,7 +373,6 @@ plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, verte
 
   g <- igraph::graph.empty()
   # g <- igraph::add.vertices(g, nv=length(names(par_nodes)), color=NA, shape="circle", size=vertsize, label.cex=0.5, label.dist=0)
-  # browser()
 
   vlabs <- names(par_nodes)
   g <- igraph::add.vertices(g, nv=length(vlabs), attr=vertex_attrs)
@@ -461,20 +470,26 @@ check_expanded <- function(inputDAG) {
 
 #' Create and Lock DAG Object
 #'
-#' Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution. Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.
-#' @param DAG Named list of node objects that together will form a DAG. Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) or with an optional "order" argument to \code{node()}.
+#' Check current DAG (created with \code{node}) for errors and consistency of its node distributions, set the observed data generating distribution. 
+#' Attempts to simulates several observations to catch any errors in DAG definition. New nodes cannot be added after function set.DAG has been applied.
+#' @param DAG Named list of node objects that together will form a DAG. 
+#' Temporal ordering of nodes is either determined by the order in which the nodes were added to the DAG (using \code{+node(...)} interface) 
+#' or with an optional "order" argument to \code{node()}.
 #' @param vecfun A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.
-#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
 #' @param latent.v The names of the unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.
-#' @param n.test Simulation sample size used ONLY for testing the validity of the \code{DAG} object. A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when attempting to identify rare-event issues with the current \code{DAG}. A smaller \code{n.test} can be better for performance (faster check time).
-#'  Turn this off by default using options(simcausal.verbose=FALSE).
+#' @param n.test Non-negative simulation sample size used for testing the consistency of the \code{DAG} object.
+#' A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when testing \code{DAG} for rare-event errors.
+#' A smaller \code{n.test} can be better for performance (faster validation of the \code{DAG}).
+#' Set \code{n.test=0} to completely skip the simulation test (use at your own risk, since calling \code{sim()} on such un-tested \code{DAG} may lead to uninterpretable errors).
+#' Note that when using \code{n.test=0}, the \code{plotDAG} function \emph{will not} draw \emph{any} child-parent relationships, since the formula parsing is not performed.
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/examples/set.DAG.R
 #' @export
 set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("simcausal.verbose")) {
+  assertthat::assert_that(assertthat::is.count(n.test) || as.integer(n.test)==0L)
   # Parent environment is saved as a DAG attribute and then passed to formula parser for evaluation as: eval(form, envir = df, enclos = env)
   user.env <- parent.frame()
-
   rndseed <- NULL
   # set of allowed named arguments:
   node_args_all <- c("name", "mv.names", "t", "distr", "dist_params", "EFU", "order", "node.env")
@@ -486,7 +501,6 @@ set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("si
   #---------------------------------------------------------------------------------
   # DAG specification errors checks
   #---------------------------------------------------------------------------------
-
   # *) check DAG is a list and all of its items are also lists
   if (!(is.list(DAG))) stop("DAG must be a list")
   # *) if DAG is a empty create a wanring and return empty DAG
@@ -570,14 +584,19 @@ set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("si
   #---------------------------------------------------------------------------------
   attr(inputDAG, "n.test") <- n.test
   #---------------------------------------------------------------------------------
-  # Checking for correct DAG specification by simulating one observation
+  # Checking for correct DAG specification by simulating n.test observation if n.test>0
   #---------------------------------------------------------------------------------
-
-  obs.df <- try(simobs(inputDAG, n = n.test, rndseed = rndseed))
-  if(inherits(obs.df, "try-error")) {
-    stop("\n...attempt to simulate data from DAG failed...")
+  if (n.test > 0L) {
+    obs.df <- try(simobs(inputDAG, n = n.test, rndseed = rndseed))
+    if(inherits(obs.df, "try-error")) {
+      stop("\n...attempt to simulate data from DAG failed...")
+    }
+    attr(inputDAG, "parents") <- attr(obs.df, "parents")
+  } else {
+    parents <- lapply(seq(inputDAG), function(x) vector(mode="character", length=0))
+    names(parents) <- names(inputDAG)
+    attr(inputDAG, "parents") <- parents
   }
-  attr(inputDAG, "parents") <- attr(obs.df, "parents")
   attr(inputDAG, "locked") <- TRUE
   return(inputDAG)
 }
@@ -688,7 +707,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
         # warning("\nNon-time-varying attribute ("%+% gattr_nm %+% ") was overwritten by time-varying attribute values")
       }
       # for generic node being added (theta), need to check that no TV nodes under the same name already exist (theta_i)
-      if (!checkgenexist) { # the generic (nonTV) node doesn't exist yet but the TV node already does
+      if (!checkgenexist) { # the generic (nonTV) node doesn`t exist yet but the TV node already does
         if ((length(attr_nodes)==1) && (mod_names_attr==gattr_nm) && any(gennamesall%in%gattr_nm)) { # check its a non-TV attribute that is being added:
           # give warning and delete old node, add new ones
           gnode_idx <- which(gennamesall%in%gattr_nm)
@@ -723,13 +742,14 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
   dprint("attributes(modDAG.full) in setAction(): "); dprint(attributes(modDAG.full))
 
   # check data can be simulated from modified DAG:
-  full.df <- try(simobs(modDAG.full, n=n.test, rndseed=rndseed))
-  if(inherits(full.df, "try-error")) {
-    stop("\n...attempt to simulate data from action DAG failed...")
+  if (n.test > 0) {
+    full.df <- try(simobs(modDAG.full, n=n.test, rndseed=rndseed))
+    if(inherits(full.df, "try-error")) {
+      stop("\n...attempt to simulate data from action DAG failed...")
+    }
+    attr(modDAG.full, "parents") <- attr(full.df, "parents")
   }
-
   # attributes(modDAG.full) <- c(attributes(modDAG.full)["names"], dagattrs_saved)
-	attr(modDAG.full, "parents") <- attr(full.df, "parents")
   attr(modDAG.full, "actname") <- actname
 	attr(modDAG.full, "actnodes") <- unique(c(attr(modDAG.full, "actnodes"), mod_names))
 	attr(modDAG.full, "acttimes") <- unique(c(attr(modDAG.full, "acttimes"), mod_tvals))
@@ -746,7 +766,7 @@ setAction <- function(actname, inputDAG, actnodes, attr=list()) {
 # node_args_all - all node arguments
 createNodeObj <- function(input.node, node_args_all) {
   indx_missargs <- which(!(node_args_all %in% names(input.node)))
-  temp <- list()	# temp list with NULL args that weren't defined yet
+  temp <- list()	# temp list with NULL args that weren`t defined yet
   length(temp) <- length(indx_missargs)
   names(temp) <- node_args_all[indx_missargs]
   input.node <- c(input.node, temp)	# add NULL named items to action node

@@ -31,7 +31,11 @@ plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
 Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \description{
-Plot DAG object using functions from \code{igraph} package. The default setting is to keep the regular (observed) DAG nodes with \code{shape} set to "none", which can be over-ridden by the user.
-For latent (hidden) DAG nodes the default is to: 1) set the node color as grey; 2) enclose the node by a circle; and 3) all directed edges coming out of the latent node are plotted as dashed.
+Plot DAG object using functions from \code{igraph} package.
+The default setting is to keep the regular (observed) DAG nodes with \code{shape} set to "none", which can be over-ridden by the user.
+For latent (hidden) DAG nodes the default is to:
+1) set the node color as grey;
+2) enclose the node by a circle; and
+3) all directed edges coming out of the latent node are plotted as dashed.
 }
 

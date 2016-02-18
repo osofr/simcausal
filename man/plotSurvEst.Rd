@@ -18,7 +18,8 @@ plotSurvEst(surv = list(), xindx = NULL, ylab = "", xlab = "t",
 
 \item{ylim}{Optional y limits for the plot, passed to \code{\link{plot}}.}
 
-\item{legend.xyloc}{Optional x and y co-ordinates to be used to position the legend. Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{graphics::xy.coords}.}
+\item{legend.xyloc}{Optional x and y co-ordinates to be used to position the legend.
+Can be specified by keyword or as a named list with (x,y), uses the same convention as in \code{graphics::xy.coords}.}
 
 \item{...}{Additional arguments passed to \code{\link{plot}}.}
 }

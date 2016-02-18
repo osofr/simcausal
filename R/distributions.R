@@ -41,11 +41,13 @@ rbern <- function(n, prob) {
 #'Dset <- set.DAG(D)
 #'simdat <- simobs(Dset, n=200, rndseed=1)
 #' @export
-rconst <- function(n, const) { 
-	if (length(const)==1) {
-		rep.int(const,n)
+rconst <- function(n, const) {
+	if (n==0) {
+		return(vector(length = n))
+	} else if (length(const) == 1) {
+		return(rep.int(const, n))
 	} else {
-		const[1:n]
+		return(const[1:n])
 	}
 }
 
@@ -79,31 +81,32 @@ rconst <- function(n, const) {
 #'simdat <- simobs(Dset, n=200, rndseed=1)
 #' @export
 rcategor <- function(n, probs) {
-	if (is.vector(probs)) {
-		probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
-	}
-	probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
-	pover1_idx <- which(probs[,ncol(probs)] < -(10^-6)) # which rows of probs need to be normalized
-	# pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
+	# if (is.vector(probs)) {
+	# 	probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
+	# }
+	# probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
+	# pover1_idx <- which(probs[,ncol(probs)] < -(10^-6)) # which rows of probs need to be normalized
+	# # pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
 
-	# reset last category to zero if its with numeric epsilon error away from 0:
-	restto0 <- which(abs(probs[,ncol(probs)]) <= 10^-6 & abs(probs[,ncol(probs)]) > 0L)
-	if (length(restto0)>0) {
-		probs[restto0, ncol(probs)] <- 0L
-	}
+	# # reset last category to zero if its with numeric epsilon error away from 0:
+	# restto0 <- which(abs(probs[,ncol(probs)]) <= 10^-6 & abs(probs[,ncol(probs)]) > 0L)
+	# if (length(restto0)>0) {
+	# 	probs[restto0, ncol(probs)] <- 0L
+	# }
 
-	if (length(pover1_idx)>0) {
-		warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
-		probs[pover1_idx, ncol(probs)] <- 0
-		probs[pover1_idx, ] <- probs[pover1_idx, ,drop = FALSE] / rowSums(probs[pover1_idx, ,drop = FALSE]) # normalize
-	}
-	probs_cum <- matrix(nrow=nrow(probs), ncol=ncol(probs))
-	probs_cum[,1] <- probs[,1]
-	for (i in seq(ncol(probs))[-1]) {
-		probs_cum[,i] <- rowSums(probs[,c(1:i)])
-	}
-	samples <- rowSums(probs_cum - runif(nrow(probs_cum)) < 0) + 1
-	as.factor(samples)
+	# if (length(pover1_idx)>0) {
+	# 	warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
+	# 	probs[pover1_idx, ncol(probs)] <- 0
+	# 	probs[pover1_idx, ] <- probs[pover1_idx, ,drop = FALSE] / rowSums(probs[pover1_idx, ,drop = FALSE]) # normalize
+	# }
+	# probs_cum <- matrix(nrow=nrow(probs), ncol=ncol(probs))
+	# probs_cum[,1] <- probs[,1]
+	# for (i in seq(ncol(probs))[-1]) {
+	# 	probs_cum[,i] <- rowSums(probs[,c(1:i)])
+	# }
+	# samples <- rowSums(probs_cum - runif(nrow(probs_cum)) < 0) + 1
+	# as.factor(samples)
+	as.factor(rcategor.int(n = n, probs = probs))
 }
 
 #' Categorical Node Distribution (Integer)
@@ -114,19 +117,19 @@ rcategor <- function(n, probs) {
 #' @return An integer vector of length \code{n} with values: \code{1,2, ...,ncol(probs)+1}.
 #' @export
 rcategor.int <- function(n, probs) {
-	if (is.vector(probs)) {
+	if (n==0) {
+		probs <- matrix(nrow = n, ncol = length(probs), byrow = TRUE)
+	}
+	if (is.vector(probs) && n>0) {
 		probs <- matrix(data = probs, nrow = n, ncol = length(probs), byrow = TRUE)
 	}
 	probs <- cbind(probs, 1 - rowSums(probs))	# sum each row and check if some need to be normalized
 	pover1_idx <- which(probs[,ncol(probs)] < -(10^-6)) # which rows of probs need to be normalized
-	# pover1_idx <- which(probs[,ncol(probs)] < 0) # which rows of probs need to be normalized
-
 	# reset last category to zero if its with numeric epsilon error away from 0:
 	restto0 <- which(abs(probs[,ncol(probs)]) <= 10^-6 & abs(probs[,ncol(probs)]) > 0L)
 	if (length(restto0)>0) {
 		probs[restto0, ncol(probs)] <- 0L
 	}
-
 	if (length(pover1_idx)>0) {
 		warning("some categorical probabilities add up to more than 1, normalizing to add to 1")
 		probs[pover1_idx, ncol(probs)] <- 0
@@ -135,9 +138,14 @@ rcategor.int <- function(n, probs) {
 	probs_cum <- matrix(nrow = nrow(probs), ncol = ncol(probs))
 	probs_cum[,1] <- probs[,1]
 	for (i in seq(ncol(probs))[-1]) {
-		probs_cum[,i] <- rowSums(probs[,c(1:i)])
+		probs_cum[,i] <- rowSums(probs[,c(1:i),drop = FALSE])
 	}
-	samples <- rowSums(probs_cum - runif(nrow(probs_cum)) < 0) + 1
+	cat_sample <- probs_cum - runif(nrow(probs_cum)) < 0
+	if (is.matrix(cat_sample)) {
+		samples <- rowSums(cat_sample) + 1
+	} else {
+		samples <- cat_sample
+	}
 	as.integer(samples)
 }
 

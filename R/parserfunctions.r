@@ -106,7 +106,7 @@ nodeform_parsers.depr <- function(node_form_call) {
       # if (is.name(x)) dprint("name: "%+%x)
       x	# Leave unchanged
     } else if (is.call(x)) {
-      if (identical(x[[1]], quote(`[`)) && is.name(x[[2]])) {	# reached '[' function, don't need to parse any deeper, return this subtree intact
+      if (identical(x[[1]], quote(`[`)) && is.name(x[[2]])) {	# reached '[' function, don`t need to parse any deeper, return this subtree intact
         x
       } else if (as.character(x[[1]])%in%vector_fcns_all)  {  # these functions are already vectorized (if given a vector, will return a vector)
         # dprint(paste0("vectorized func: ",as.character(x[[1]])))

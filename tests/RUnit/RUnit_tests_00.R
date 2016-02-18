@@ -18,7 +18,8 @@ if(FALSE) {
   # CHECK AND BUILD PACKAGE:
   getwd()
   # setwd("./simcausal"); setwd(".."); getwd()
-  devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs check with devtools
+  devtools::check() # runs full check
+  devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs faster
   devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
   devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
@@ -100,16 +101,26 @@ as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
 
+# testing n.test arg to set.DAG(), including when n.test=0L
 test.Nsamp.n.test <- function() {
+  # testing categorical for no errors and no warnings with empty returns (n=0)
+  checkEquals(length(rcategor.int(n=0, probs = c(0.3,0.3,0.4))),0)
+  checkEquals(length(rcategor(n=0, probs = c(0.3,0.3,0.4))),0)
+  checkEquals(length(rcategor.int(n=0, probs = matrix(data=c(0.3,0.3,0.4), nrow=5,ncol=3))),0)
+  checkEquals(length(rcategor(n=0, probs = matrix(data=c(0.3,0.3,0.4), nrow=5,ncol=3))),0)
+
   D <- DAG.empty()
   D <- D + node("A", distr = "rbern", prob=0.5) + 
     node("N", distr = "rconst", const=Nsamp)
   Dset <- set.DAG(D)
-  sim(Dset, n = 100)
+  dat1 <- sim(Dset, n = 100)
 
   Dset.ntest <- set.DAG(D, n.test = 200)
 
-  Dset.fail <- set.DAG(D, n.test = 0L)
+  # simulate empty dataset:
+  empty.dat1 <- sim(Dset, n = 0)
+
+  Dset.0obs <- set.DAG(D, n.test = 0L)
 }
 
 
@@ -117,29 +128,36 @@ test.Nsamp.n.test <- function() {
 test.latent <- function() {
   D <- DAG.empty()
   D <- D +
-  node("I",
-    distr = "rcategor.int",
+  node("I", distr = "rcategor.int",
     probs = c(0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1)) +
-  node("W1",
-    distr = "rnorm",
-    mean = ifelse(I == 1, 0, ifelse(I == 2, 3, 10)) + 0.6 * I,
-    sd = 1) +
-  node("W2",
-    distr = "runif",
+  node("W1", distr = "rnorm",
+    mean = ifelse(I == 1, 0, ifelse(I == 2, 3, 10)) + 0.6 * I, sd = 1) +
+  node("W2", distr = "runif",
     min = 0.025*I, max = 0.7*I) +
-  node("W3",
-    distr = "rbern",
+  node("W3", distr = "rbern",
     prob = plogis(-0.5 + 0.7*W1 + 0.3*W2 - 0.2*I)) +
-  node("A",
-    distr = "rbern",
+  node("A", distr = "rbern",
     prob = plogis(+4.2 - 0.5*W1 + 0.2*W2/2 + 0.2*W3)) +
   node("U.Y", distr = "rnorm", mean = 0, sd = 1) +
-  node("Y",
-    distr = "rconst",
+  node("Y", distr = "rconst",
     const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
   Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
   plotDAG(Dset1)
-  Odatsim <- simobs(Dset1, n = 200, rndseed = 1)
+
+  # testing n.test=0 data sim for empty returns:
+  Dset1.n0 <- set.DAG(D, latent.v = c("I", "U.Y"), n.test=0)
+  plotDAG(Dset1.n0)
+
+  # testing data sim for empty returns:
+  Odatsim.empty <- simobs(Dset1, n = 0, rndseed = 1)
+  checkEquals(nrow(Odatsim.empty),0)
+
+  # testing data sim with 1 obs:
+  Odatsim.1obs <- simobs(Dset1, n = 1, rndseed = 1)
+  checkEquals(nrow(Odatsim.1obs),1)
+
+  Odatsim <- simobs(Dset1, n = 200, rndseed = 1)  
+
   Dset1 <- Dset1 + action("A1", nodes = node("A", distr = "rbern", prob = 1))
   Fdatsim <- sim(DAG = Dset1, actions = c("A1"), n = 200, rndseed = 123)
   checkException(
@@ -183,7 +201,7 @@ test.noexistdistr <- function() {
   D <- DAG.empty()
   D <- D + node("W1", distr = "rbern", prob = 0.5)
   Dset <- set.DAG(D)
-  sim(Dset, n = 20)
+  dat <- sim(Dset, n = 20)
 }
 
 # ADDING FUNCTIONALITY THAT ALLOWS EFU ARG TO BE ANY LOGICAL R EXPRESSION (allows for conditional right-censoring)
@@ -195,13 +213,25 @@ test.EFUeval <- function(){
     node("D", t = 0:5, distr = "rbern", prob = 0.2, EFU = TRUE) # another outcome that is always a censoring variable
   D <- set.DAG(Drm)
   dat <- sim(D, n=100)
+
+  # testing n.test=0 sim for empty returns:
+  D.n0 <- set.DAG(Drm, n.test=0)
+  plotDAG(D.n0)
+
+  # testing data sim for empty returns:
+  Odatsim.empty <- simobs(D, n = 0, rndseed = 1)
+  checkEquals(nrow(Odatsim.empty),0)
+  checkIdentical(names(dat), names(Odatsim.empty))
+  
+  # testing data sim with 1 obs:
+  Odatsim.1obs <- simobs(D, n = 1, rndseed = 1)
+  checkEquals(nrow(Odatsim.1obs),1)
 }
 
 
 # DAG2 (from tech specs): defining actions with a new constructor and passing attributes
 test.set.DAG_DAG2b_newactions <- function() {
     library(simcausal)
-
     #-------------------------------------------------------------
     # EXAMPLE 1: lets start with a simple example of a (W,A,Y) DAG
     #-------------------------------------------------------------
@@ -214,6 +244,7 @@ test.set.DAG_DAG2b_newactions <- function() {
             node("A",  distr = "rbern", prob = plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3)) + 
             node("Y",  distr = "rbern", prob = plogis(-0.1 + rconst + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3), EFU=TRUE)
     D_WAY <- set.DAG(D)
+    D_WAY_0obs <- set.DAG(D, n.test=0)
 
 
     # Allowing user.env vectors to be used in node formulas and be indexed by t:
@@ -231,10 +262,11 @@ test.set.DAG_DAG2b_newactions <- function() {
             # Error in rconst[0L] : undefined time-dependent variable(s): rconst_0
             # node("Y",  t=0:1, distr = "rbern", prob = plogis(-0.1 + rconst[t] + 1.2*A[0] + 0.3*W1[0] + 0.3*W2[0] + 0.2*W3[0]), EFU=TRUE)
     D_WAY <- set.DAG(D)
-    sim(D_WAY, n=50)
+    D_WAY_0obs <- set.DAG(D, n.test=0)
+    datn50 <- sim(D_WAY, n=50)
 
     #-------------------------------------------------------------
-    # EXAMPLE 1: lets start with a simple example of a (W,A,Y) DAG
+    # EXAMPLE 1: simple example of a (W,A,Y) DAG
     #-------------------------------------------------------------
     # new interface:
     D <- DAG.empty()
@@ -244,6 +276,7 @@ test.set.DAG_DAG2b_newactions <- function() {
             node("A",  distr = "rbern", prob = plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3), order = 4) + 
             node("Y",  distr = "rbern", prob = plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W2 + 0.2*W3), order = 5, EFU = TRUE)
     D_WAY <- set.DAG(D)
+    D_WAY_0obs <- set.DAG(D, n.test=0)
 
     #-------------------------------------------------------------
     # Plot this DAG
@@ -253,8 +286,8 @@ test.set.DAG_DAG2b_newactions <- function() {
     # simulate observed data data from this DAG
     O_dat_WAY <- simobs(D_WAY, n=500, rndseed = 123)
     O_dat_WAY_sim <- sim(D_WAY, n=500, rndseed = 123)
-    head(O_dat_WAY, 10)
-    head(O_dat_WAY_sim, 10)
+    head(O_dat_WAY, 2)
+    head(O_dat_WAY_sim, 2)
     all.equal(O_dat_WAY, O_dat_WAY_sim)
 
     #-------------------------------------------------------------
@@ -263,10 +296,12 @@ test.set.DAG_DAG2b_newactions <- function() {
     # lets define an action setting treatment to 1
     A1 <- node("A",distr="rbern", prob=1)
     D_WAY <- D_WAY + action("A1", nodes=A1)
+    D_WAY_0obs <- D_WAY_0obs + action("A1", nodes=A1)
 
     # lets define another action setting treatment to 0
     A0 <- node("A",distr="rbern", prob=0)
     D_WAY <- D_WAY + action("A0", nodes=A0)
+    D_WAY_0obs <- D_WAY_0obs + action("A0", nodes=A0)
 
     # selecting actions - its just an intervened DAG
     class(A(D_WAY))
@@ -278,37 +313,44 @@ test.set.DAG_DAG2b_newactions <- function() {
     #-------------------------------------------------------------
     # Simulate full data for all available actions (A(D))
     X_dat1 <- simfull(A(D_WAY), n=500, rndseed = 123)
-    head(X_dat1[[1]]); head(X_dat1[[2]])
+    head(X_dat1[[1]], 2); head(X_dat1[[2]], 2)
+
+    X_dat1_0obs <- simfull(A(D_WAY), n=0, rndseed = 123)
+    X_dat1_0obs
 
     X_dat1_sim1 <- sim(DAG=D_WAY, actions=c("A1","A0"), n=500, rndseed = 123)
     X_dat1_sim2 <- sim(DAG=D_WAY, actions=A(D_WAY), n=500, rndseed = 123)
-    head(X_dat1_sim1[[1]]); head(X_dat1_sim1[[2]])
-    head(X_dat1_sim2[[1]]); head(X_dat1_sim2[[2]])
+    head(X_dat1_sim1[[1]],2); head(X_dat1_sim1[[2]],2)
+    head(X_dat1_sim2[[1]],2); head(X_dat1_sim2[[2]],2)
 
     # Simulate full data for some actions
     X_datA1 <- simfull(A(D_WAY)["A1"], n=500, rndseed = 123)
     X_datA1_sim <- sim(DAG=D_WAY, actions="A1", n=500, rndseed = 123)
     checkIdentical(X_datA1, X_datA1_sim)
 
-    head(X_datA1[[1]]); 
+    head(X_datA1[[1]],2); 
 
     #-------------------------------------------------------------
     # Calculating the target parameter: counterfactual expectations
     #-------------------------------------------------------------
     # Counterfactual mean survival at time-point
     D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1")
-    eval.target(D_WAY, data=X_dat1)     # using previously simulated full data
-    eval.target(D_WAY, n=500, rndseed = 123)  # simulate full data first then evaluate param
+    res <- eval.target(D_WAY, data=X_dat1)     # using previously simulated full data
+    
+    # fail when full data was sampled with n=0:
+    checkException(eval.target(D_WAY, data=X_dat1_0obs))
+
+    res <- eval.target(D_WAY, n=500, rndseed = 123)  # simulate full data first then evaluate param
 
     # Contrasts
     D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1-A0")
-    eval.target(D_WAY, data=X_dat1)
-    eval.target(D_WAY, n=500, rndseed = 123)
+    res <- eval.target(D_WAY, data=X_dat1)
+    res <- eval.target(D_WAY, n=500, rndseed = 123)
 
     # Ratios
     D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
-    eval.target(D_WAY, data=X_dat1)
-    eval.target(D_WAY, n=500, rndseed = 123)
+    res <- eval.target(D_WAY, data=X_dat1)
+    res <- eval.target(D_WAY, n=500, rndseed = 123)
 
     #-------------------------------------------------------------
     # categorical node tests 1, 2 & 3
@@ -360,10 +402,15 @@ test.set.DAG_DAG2b_newactions <- function() {
     D_cat_3 <- D_unif + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
 
     D_unif <- set.DAG(D_unif)
+    D_unif_0obs <- set.DAG(D_unif, n.test=0)
     D_cat_1 <- set.DAG(D_cat_1)
+    D_cat_1_0obs <- set.DAG(D_cat_1, n.test=0)
     D_cat_2 <- set.DAG(D_cat_2)
+    D_cat_2_0obs <- set.DAG(D_cat_2, n.test=0)
     D_cat_3 <- set.DAG(D_cat_3)
- 
+    D_cat_3_0obs <- set.DAG(D_cat_3, n.test=0)
+
+
     A1 <- node("Anode",distr="rbern", prob=1)
     D_cat_1 <- D_cat_1 + action("A1", nodes=A1)
     # lets define another action setting treatment to 0
@@ -411,6 +458,16 @@ test.set.DAG_DAG2b_newactions <- function() {
             node( "Y",  t=1:t_end, distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
     lDAG2b <- set.DAG(D)
 
+    lDAG2b_0obs <- set.DAG(D, n.test = 0)
+    
+    # testing data sim for empty returns. Can't evalute this one, since the error has to do with the way rowSums is called
+    checkException(Odatsim.empty <- sim(lDAG2b, n = 0, rndseed = 1))
+    # checkEquals(nrow(Odatsim.empty),0)
+    # checkIdentical(names(dat), names(Odatsim.empty))
+  
+    # testing data sim with 1 obs:
+    Odatsim.1obs <- sim(lDAG2b, n = 1, rndseed = 1)
+    checkEquals(nrow(Odatsim.1obs),1)
     #-------------------------------------------------------------
     # Plot the observed DAG
     #-------------------------------------------------------------

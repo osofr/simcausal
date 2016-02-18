@@ -507,7 +507,7 @@ eval.target <- function(DAG, n, data, actions, rndseed = NULL, verbose = getOpti
   } else {
     stop("target parameter can be either E (expectation) or working MSM, other parameters are not implemented")
   }
-  attr(DAG, "target")$res <- res 	# save each node's parent set as an attribute of output data.frame
+  attr(DAG, "target")$res <- res 	# save each node`s parent set as an attribute of output data.frame
   res
 }
 
@@ -580,7 +580,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, ver
   #*******************************
   if (!is.longfmt(df_full[[1]])) {
     parse_form <- parse.MSMform(msm.form = form, t_vec = t_vec, old.DAG = DAG)
-    MSMtermsDAG <- parse_form$MSMtermsDAG	# DAG that defines the exposure summaries that need to be eval'ed
+    MSMtermsDAG <- parse_form$MSMtermsDAG	# DAG that defines the exposure summaries that need to be eval`ed
     term_maptab <- parse_form$term_maptab
 
     act_names <- names(df_full)
