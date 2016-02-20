@@ -24,6 +24,14 @@ if(FALSE) {
   devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
+  
+  # check reverse dependencies:
+  devtools::revdep(dependencies = c("Depends", "Imports", "Suggests", "LinkingTo"),
+                    recursive = FALSE, ignore = NULL)
+  res <- devtools::revdep_check()
+  devtools::revdep_check_summary(res)
+  # revdep_check_save_logs(res)
+
   setwd("..")
   
   system("R CMD check --as-cran simcausal_0.5.0.tar.gz") # check R package tar ball prior to CRAN submission
@@ -100,6 +108,13 @@ sample_checks <- function() {   # doesnt run, this is just to show what test fun
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
+
+# test that all new nodes added after time-var nodes have a t argument:
+test.t.error <- function() {
+  D <- DAG.empty()
+  D <- D + node("timevar", t=0:5, distr="rconst", const = 1)
+  checkException(D <- D + node("nottimevar", distr="rconst", const = 5))
+}
 
 # testing n.test arg to set.DAG(), including when n.test=0L
 test.Nsamp.n.test <- function() {
@@ -986,8 +1001,8 @@ test.condrcategor <- function() {
   dat2 <- simcausal:::simFromDAG(DAG = Dset2, Nsamp = 100, rndseed = 1234)
   all.equal(dat1a, dat2)
 
-  node_evaluator <- simcausal:::Define_sVar$new(netind_cl = NULL)
-  node_evaluator$set.user.env(attr(Dset2, "user.env"))
+  node_evaluator <- simcausal:::Define_sVar$new() # netind_cl = NULL
+  # node_evaluator$set.user.env(attr(Dset2, "user.env"))
   eval_expr_res <- node_evaluator$eval.nodeforms(cur.node = Dset2[["Cat3"]], data.df = dat2[,c("ID","W")])
   eval_expr_res[[1]]$par.nodes
   catprobs <- eval_expr_res[[1]]$evaled_expr

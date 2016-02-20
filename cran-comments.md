@@ -1,3 +1,15 @@
+simcausal 0.5.0
+==============
+
+## Test environments:
+* local OS X install, R 3.2.3
+* ubuntu 12.04 (on travis-ci), R 3.2.3
+* win-builder (devel and release)
+
+## R CMD check --as-cran results:
+* no ERRORs or WARNINGs.
+* no NOTEs.
+
 simcausal 0.4.0
 ==============
 

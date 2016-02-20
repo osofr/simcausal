@@ -65,8 +65,8 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
 
       # CHECK THAT ITS NOT A SPECIAL (RESERVED) VAR (nF)
       specialVar <- c("nF", "Kmax", "t", "Nsamp")
-      special <- as.character(x)%in%specialVar
-      dprint("x is special? " %+% special)
+      special <- as.character(x) %in% specialVar
+      dprint("is x special? " %+% special)
 
       if (notis.fun && !is.inDAG && !exists.x && !special) stop("Undefined variable: " %+% as.character(x), call. = FALSE)
 
@@ -84,7 +84,14 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
         if (vartype=="TD") {
           varnames <- as.character(x[[2]])
         } else if (vartype=="TD_t") {
-          varnames <- as.character(as.character(x[[2]]) %+% "_" %+% eval(x[[3]]))
+          res_t <- eval(x[[3]], envir = data.env, enclos = user.env)
+          # res_t <- eval(x[[3]])
+          res_t_chr <- try(as.character(res_t), silent = TRUE)
+          if (inherits(res_t_chr, "try-error")) {
+            warning("the argument inside [...] cannot be parsed: " %+% deparse(x))
+            res_t_chr <- deparse(x[[3]])
+          }
+          varnames <- as.character(as.character(x[[2]]) %+% "_" %+% res_t_chr)
         } else if (vartype=="non_TD") {
           varnames <- character()
           x[[2]] <- NULL
@@ -140,10 +147,6 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
     while ((i <= 10) & (!samecall)) {
       eval_atom_call <- eval_atomic(preveval_atom_call)
       samecall <- identical(eval_atom_call, preveval_atom_call)
-      # dprint("-------------");
-      # dprint(samecall); 
-      # dprint(eval_atom_call); 
-      # dprint("-------------")
       preveval_atom_call <- eval_atom_call
       i <- i + 1
     }
@@ -252,11 +255,7 @@ eval.nodeform.full <- function(expr_call, expr_str, self, data.env) {
     if (TDname%in%df_varnms) stop(paste0("reference ", TDname, "[...]", " at node ", self$cur.node$name, " is not allowed; node ", TDname," was defined as time-invariant"))
   }
 
-  # NO LONGER NEED, this check is now performed in find_FormVars
-  # for (Vname in Vnames) {
-  #   if (!(Vname%in%df_varnms)) stop(paste0("formula at node ", self$cur.node$name, " cannot be evaluated; node ", Vname," is undefined"))
-  # }
-
+  # add special node expression functions to the evaluation environment:
   data.env <- c(self$node_fun, data.env)
 
   if (is.call(modified_call) && identical(try(modified_call[[1]]), quote(`{`))) { # check for '{' as first function, if so, remove first func, turn call into a list of calls and do lapply on eval
@@ -289,8 +288,8 @@ eval.nodeform.full <- function(expr_call, expr_str, self, data.env) {
   return(list(evaled_expr = evaled_expr, par.nodes = c(Vnames, TD_t_vnames))) # return evaluated expression and parent node names
 }
 
+# evaluate the expression without special functions in self$node_fun ('[', '[[', vecapply, cbind_mod)
 eval.nodeform.asis <- function(expr_call, expr_str, self, data.env) {
-  # print("AS IS EVALUTION FOR: "); print(expr_str)
   evaled_expr <- try(eval(expr_call, envir = data.env, enclos = self$user.env)) # evaling expr in the envir of data.df
   if(inherits(evaled_expr, "try-error")) {
     stop("error while evaluating node "%+% self$cur.node$name %+%" formula: \n"%+%parse(text = expr_str)%+%".\nCheck syntax specification.", call. = FALSE)
@@ -329,21 +328,32 @@ eval.nodeform.out <- function(expr.idx, self, data.df) {
   } else {
     stop("node "%+%self$cur.node$name%+%": currently can't process node formulas that are not strings or calls")
   }
-  
-  # Replace (t, Kmax) in node formula by their actual values:
-  expr_call <- eval(substitute(substitute(e, list(t = eval(self$cur.node$t), Kmax = eval(self$netind_cl$Kmax))), list(e = expr_call)))
 
   # Removed self$node_fun from data.env as they interfere with R expressions parsing in nodeform_parsers:
+  # define the formula evaluation environment:
   eval.sVar.params <- c(list(self = self),
                         self$df.names(data.df), # special var "ANCHOR_ALLVARNMS_VECTOR_0" with names of already simulated vars
-                        list(t = self$cur.node$t),
                         list(misXreplace = misXreplace), # replacement value for missing network covars
-                        list(netind_cl = self$netind_cl),
-                        list(Kmax = self$netind_cl$Kmax),
-                        list(nF = self$netind_cl$nF),
-                        list(Nsamp = self$Nsamp)
-                        )
+                        # list(netind_cl = self$netind_cl),
+                        # list(t = self$cur.node$t),
+                        # list(Kmax = self$netind_cl$Kmax),
+                        list(Nsamp = self$Nsamp))
+  # add number of friends for each unit if there is a network:
+  if (!is.null(self$netind_cl) && ("NetIndClass" %in% class(self$netind_cl))) {
+    eval.sVar.params <- append(eval.sVar.params, list(nF = self$netind_cl$nF))
+  }
+  # add the data:
   data.env <- c(eval.sVar.params, data.df)
+
+  # If t is present (defined) for current node, replace all "t" in node formula by its actual value:
+  if (!is.null(self$cur.node$t)) {
+    expr_call <- eval(substitute(substitute(e, list(t = eval(self$cur.node$t))), list(e = expr_call)))
+  }
+
+  # If network is present replace all "Kmax" in the node formula by the actual network Kmax value:
+  if (!is.null(self$netind_cl) && ("NetIndClass" %in% class(self$netind_cl))) {
+    expr_call <- eval(substitute(substitute(e, list(Kmax = eval(self$netind_cl$Kmax))), list(e = expr_call)))
+  }
 
   if (eval.asis) {
     return(eval.nodeform.asis(expr_call = expr_call, expr_str = expr_str, self = self, data.env = data.env))
@@ -393,16 +403,18 @@ Define_sVar <- R6Class("Define_sVar",
   class = TRUE,
   portable = TRUE,
   public = list(
-    user.env = NULL,        # user environment to be used as enclos arg to eval(sVar)
+    Nsamp = NULL,                 # sample size (nrows) of the simulation dataset
+    user.env = NULL,              # user environment to be used as enclos arg to eval(sVar)
+    # Kmax = NULL,                  # special reserved variable for max number of friends
     cur.node = list(),            # current evaluation node (set by self$eval.nodeforms())
+    netind_cl = NULL,             # pointer to network R6 class
+    # netind_cl = NetIndClass$new(nobs = 0, Kmax = 0),
     asis.flags = list(),          # list of flags, TRUE for "as is" node expression evaluation
     ReplMisVal0 = FALSE,          # vector of indicators, for each TRUE sVar.expr[[idx]] will replace all NAs with gvars$misXreplace (0)
     sVar.misXreplace = NULL,      # replacement values for missing sVar, vector of length(exprs_list)
-    sVar.noname = FALSE,          # vector, for each TRUE sVar.expr[[idx]] ignores user-supplied name and generates names automatically
-    netind_cl = NULL,
-    Kmax = NULL,
-    Nsamp = NULL,				  # sample size (nrows) of the simulation dataset
-    exprs_list = list(),          #  sVar expressions as a list
+    sVar.noname = FALSE,          # vector, for each TRUE sVar.expr[[idx]] ignores user-supplied name and generates names automatically    
+
+    exprs_list = list(),          # sVar expressions as a list
     sVar.expr.names = character(),# user-provided name of each sVar.expr
     sVar.names.map = list(),
 
@@ -423,9 +435,7 @@ Define_sVar <- R6Class("Define_sVar",
         env <- parent.frame()
         cbind_res <- do.call("cbind", eval(substitute(alist(...)), envir = env) , envir = env)
         if (nrow(cbind_res)==1) {
-          # Nsamp <- get("Nsamp", envir = env)
           Nsamp <- env$self$Nsamp
-          dprint("env$self$Nsamp:"); dprint(env$self$Nsamp)
           assert_that(!is.null(Nsamp))
           if (Nsamp > 0) {
             cbind_res <- matrix(cbind_res, nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)  
@@ -443,14 +453,18 @@ Define_sVar <- R6Class("Define_sVar",
       # ***NOTE: current '[' cannot evalute subsetting that is based on values of other covariates such as A1C[ifelse(BMI<5, 1, 2)]
       `[` = function(var, indx, ...) {
         env <- parent.frame()
-        t <- env$t
+        # t <- env$t
+        t <- env$self$cur.node$t
+
         var <- substitute(var)
         var.chr <- as.character(var)
 
-        if (missing(indx)) stop("missing tindex when using Var[tindex] inside the node formula")
-        if (identical(class(indx),"logical")) indx <- which(indx)
         if (is.null(t)) stop("references, s.a. Var[t] are not allowed when t is undefined")
+
+        if (missing(indx)) stop("missing tindex when using Var[tindex] inside the node formula")
         if (max(indx)>t) stop(paste0(var, "[", max(indx),"] cannot be referenced in node formulas at t = ", t))  # check indx<= t
+
+        if (identical(class(indx),"logical")) indx <- which(indx)
 
         # ******* NOTE *******
         # Don't like the current implementation that defines TDvars as characters and then returns a matrix by cbinding 
@@ -459,7 +473,7 @@ Define_sVar <- R6Class("Define_sVar",
         # Checking the variables paste0(var, "_", indx) exist in simulated data.frame environment:
         dprint("ANCHOR_ALLVARNMS_VECTOR_0:"); dprint(env[["ANCHOR_ALLVARNMS_VECTOR_0"]])
 
-        # TO DO: **** 
+        # ******* TO DO ******* 
         # EXTEND TO CHECKING FOR TDvar IN ENCLOSING ENVIRONMENT (user.env) AS WELL IF TDvar_t doesn't exist in the data
         # IF TDvar exists check that its a vector of appropriate length, index it accordinly (using which(t%in%tvec))
         # will need to first eval such vector the variable as in: 
@@ -477,17 +491,19 @@ Define_sVar <- R6Class("Define_sVar",
       # NetInd_k <- cbind(c(1:n), NetInd_k) and then netidx <- netidx + 1
       `[[` = function(var, netidx, ...) {
         env <- parent.frame()
-        t <- env$t
+        # t <- env$t
+        t <- env$self$cur.node$t
         var <- substitute(var)
         var.chr <- as.character(var)
-
-        netind_cl <- env$netind_cl
-        if (is.null(netind_cl)) stop("Network must be defined (with simcausal::network(...)) prior to using Var[[netidx]] node syntax")
+        # netind_cl <- env$netind_cl
+        netind_cl <- env$self$netind_cl
         Kmax <- netind_cl$Kmax
 
-        # if (!is.null(t)) stop("simultaneous time varying node references Var[t] and network references Var[[netidx]] are currently not supported")
+        if (is.null(netind_cl) || is.null(Kmax)) stop("Network must be defined (with simcausal::network(...)) prior to using Var[[netidx]] node syntax")
         if (missing(netidx)) stop("missing netidx when using Var[[netidx]] inside the node formula")
+
         if (identical(class(netidx),"logical")) netidx <- which(netidx)
+
         # now checking if var has been previously defined only if its is.name()
         if (is.name(var)) {
           if (! (var.chr %in% env[["ANCHOR_ALLVARNMS_VECTOR_0"]])) {
@@ -533,10 +549,11 @@ Define_sVar <- R6Class("Define_sVar",
     # No longer capture the user environment here; capture node-specific/expression specific user.env instead in self$set.user.env()
     # this user.env is then used for eval'ing each sVar exprs (enclos = user.env)
     # initialize = function(user.env, netind_cl) {
-    initialize = function(netind_cl) {
+    # initialize = function(netind_cl) {
+    initialize = function() {
       # self$user.env <- user.env
-      self$netind_cl <- netind_cl
-      self$Kmax <- self$netind_cl$Kmax
+      # self$netind_cl <- netind_cl
+      # self$Kmax <- self$netind_cl$Kmax
       invisible(self)
     },
 
@@ -582,18 +599,12 @@ Define_sVar <- R6Class("Define_sVar",
     },
 
     eval.nodeforms = function(cur.node, data.df) {
-      assert_that(is.environment(self$user.env))
-      self$cur.node <- cur.node
+      self$setnode.setenv(cur.node)
       self$ReplMisVal0 <- FALSE
-      # print("initial asis.flags: "); print(attributes(cur.node$dist_params)[["asis.flags"]])
       # Parse the node formulas (parameters), set self$exprs_list, set new self$sVar.misXreplace and self$sVar.noname if found:
       self$set.new.exprs(exprs_list = cur.node$dist_params)
-
-      # print("pre-eval self$asis.flags: "); print(self$asis.flags)
-      # dprint("cur.node dist_params: "); dprint(cur.node$dist_params)
-      # dprint("self$exprs_list: "); dprint(self$exprs_list)
-
       self$Nsamp <- nrow(data.df)
+
       sVar.res_l <- lapply(seq_along(self$exprs_list), eval.nodeform.out, self = self, data.df = data.df)
       names(sVar.res_l) <- names(self$exprs_list)
 
@@ -606,14 +617,12 @@ Define_sVar <- R6Class("Define_sVar",
 
     # Parse the R expression for the EFU node arg (if not null)
     eval.EFU = function(cur.node, data.df) {
-      assert_that(is.environment(self$user.env))
-      self$cur.node <- cur.node
+      self$setnode.setenv(cur.node)
       self$ReplMisVal0 <- FALSE
       if (!is.null(cur.node$EFU)) {
         self$set.new.exprs(exprs_list = list(EFU = cur.node$EFU))
         EFU.res <- eval.nodeform.out(expr.idx = 1, self = self, data.df = data.df)$evaled_expr
         if (length(EFU.res)==1) EFU.res <- rep.int(EFU.res, self$Nsamp)
-        # print("EFU.res: "); print(EFU.res)
         assert_that(all(is.logical(EFU.res) || is.null(EFU.res)))
         return(EFU.res)
       } else {
@@ -621,16 +630,31 @@ Define_sVar <- R6Class("Define_sVar",
       }
     },
 
-    df.names = function(data.df) { # list of variable names from data.df with special var name (ANCHOR_ALLVARNMS_VECTOR_0)
+    # list of variable names from data.df with special var name (ANCHOR_ALLVARNMS_VECTOR_0)
+    df.names = function(data.df) {
       return(list(ANCHOR_ALLVARNMS_VECTOR_0 = colnames(data.df)))
     },
 
+    # Set the current node and set the node environment
     # This user.env is used for eval'ing each sVar exprs (enclos = user.env)
-    set.user.env = function(user.env) {
+    setnode.setenv = function(cur.node) {
+    # set.user.env = function(user.env) {
+      assert_that(is.node(cur.node) || is.Netnode(cur.node))
+
+      user.env <- cur.node$node.env
       assert_that(!is.null(user.env))
       assert_that(is.environment(user.env))
+
+      self$cur.node <- cur.node
       self$user.env <- user.env
-    }
+      invisible(self)
+    },
+
+    set.net = function(netind_cl) {
+      assert_that("NetIndClass" %in% class(netind_cl))
+      self$netind_cl <- netind_cl
+      invisible(self)
+    }    
   ),
 
   active = list(

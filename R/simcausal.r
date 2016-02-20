@@ -119,6 +119,7 @@ is.DAG <- function(DAG) (("DAG" %in% class(DAG)) || ("DAG.action" %in% class(DAG
 is.DAG.action <- function(DAG) ("DAG.action" %in% class(DAG)) # check its a DAG.action object
 is.DAGnodelist <- function(DAG) "DAG.nodelist" %in% class(DAG) # check its a DAG object
 is.node <- function(node) "DAG.node" %in% class(node) # check its a DAG.node object
+is.Netnode <- function(node) "DAG.net" %in% class(node) # check its a DAG.net object (network node)
 
 is.EFUP <- function(node) (!is.null(node$EFU)) # if the node is end follow-up when value = 1 (EFUP)
 # is.EFUP <- function(node) (!is.null(node$EFU))&&(node$EFU) # if the node is end follow-up when value = 1 (EFUP)
@@ -486,7 +487,7 @@ check_expanded <- function(inputDAG) {
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/examples/set.DAG.R
 #' @export
-set.DAG <- function(DAG, vecfun, n.test = 100, latent.v, verbose = getOption("simcausal.verbose")) {
+set.DAG <- function(DAG, vecfun, latent.v, n.test = 10, verbose = getOption("simcausal.verbose")) {
   assertthat::assert_that(assertthat::is.count(n.test) || as.integer(n.test)==0L)
   # Parent environment is saved as a DAG attribute and then passed to formula parser for evaluation as: eval(form, envir = df, enclos = env)
   user.env <- parent.frame()

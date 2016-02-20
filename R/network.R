@@ -364,6 +364,7 @@ NetIndClass <- R6Class("NetIndClass",
         assert_that(ncol(NetInd_k) == self$Kmax)
         self$NetInd_k[, ] <- NetInd_k
         self$make.nF()
+        invisible(self)
       }
     },
 

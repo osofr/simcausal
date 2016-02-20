@@ -8,6 +8,122 @@ as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
 allNA = function(x) all(is.na(x))
 
 
+# (1) Previously t was set to null when no time-varying nodes were defined (even if user defined t in the user environment)
+# (2) Previously special vars Kmax,nF were set to NULL if no network (even if user defined Kmax or nF in user environment)
+test.tKmaxnet = function() {
+  # ------------------------------------------------------------------
+  # THIS NOW WORKS:
+  t <- 5
+  D.t <- DAG.empty()
+  D.t <- D.t + node("t.null", distr = "rconst", const = t)
+  D.t <- D.t + node("t", distr = "rconst", const = t)
+  Dset0 <- set.DAG(D.t)
+  (dat0 <- sim(Dset0, n=20))
+  # ------------------------------------------------------------------
+  # WORKS AS BEFORE (i.e, t<100 IS IGNORED)
+  t <- 100
+  D.t <- DAG.empty()
+  D.t <- D.t + node("A", t=0:1, distr = "rconst", const = t)
+  D.t <- D.t + node("B", t=0:1, distr = "rconst", const = A[t]+1)
+  Dset0 <- set.DAG(D.t)
+  (dat0 <- sim(Dset0, n=20))
+  # ------------------------------------------------------------------
+  # GIVES AN ERROR AS BEFORE:
+  t <- 1
+  D.t <- DAG.empty()
+  D.t <- D.t + node("A",t=0:5, distr = "rconst", const = t)
+  D.t <- D.t + node("B", distr = "rconst", const = A[t]+1)
+  checkException(Dset0 <- set.DAG(D.t))
+  # ------------------------------------------------------------------
+  # GIVES AN ERROR - CAN'T FIND THE VAR:
+  t <- 1
+  D.t <- DAG.empty()
+  D.t <- D.t + node("A", distr = "rconst", const = t)
+  D.t <- D.t + node("B", distr = "rconst", const = A[xyz]+1)
+  checkException(Dset0 <- set.DAG(D.t))
+  # THE INDEXING VAR IS A FUNCTION -> GIVES A WARNING AND AN ERROR:
+  D.t <- DAG.empty()
+  D.t <- D.t + node("A", distr = "rconst", const = t)
+  D.t <- D.t + node("B", distr = "rconst", const = A[rnorm]+1)
+  checkException(Dset0 <- set.DAG(D.t))
+  # ------------------------------------------------------------------
+  # USING nF WITHOUT NETWORK:
+  nF <- 20
+  D.nF <- DAG.empty()
+  D.nF <- D.nF + node("nF.null", distr = "rconst", const = nF)
+  Dset0 <- set.DAG(D.nF)
+  (dat0 <- sim(Dset0, n=20))
+  # ------------------------------------------------------------------
+  # USING Kmax WITHOUT THE NETWORK, DEFINING Kmax node AND THEN RE-USING IT AGAIN
+  # (uses the node "Kmax" value first, if found, if not found, goes to user defined value)
+  Kmax <- 5
+  D.Kmax <- DAG.empty()
+  D.Kmax <- D.Kmax + node("Kmax0", distr = "rconst", const = Kmax)
+  D.Kmax <- D.Kmax + node("Kmax", distr = "rconst", const = Kmax+1)
+  D.Kmax <- D.Kmax + node("Kmax2", distr = "rconst", const = Kmax+1)
+  Dset0 <- set.DAG(D.Kmax)
+  (dat0 <- sim(Dset0, n=20))
+  # ------------------------------------------------------------------
+  # USING Nsamp (always uses the internal Nsamp and ignores the user defined Nsamp):
+  Nsamp <- 5
+  D.Nsamp <- DAG.empty()
+  D.Nsamp <- D.Nsamp +
+    node("Nsamp.null", distr = "rconst", const = Nsamp) +
+    node("Nsamp", distr = "rconst", const = Nsamp)
+  Dset0 <- set.DAG(D.Nsamp)
+  (dat0 <- sim(Dset0, n=20))
+  checkEquals(dat0$Nsamp[1], 20L)
+
+  # ------------------------------------------------------------------
+  # EXAMPLE 1 WITH REGULAR NETWORK:
+  # PASSING USER DEFINED KMAX TO THE NETWORK FUNCTION,
+  # DEFINING Kmax IT AS A NODE -> SHOULD BE USING THE TRUE Kmax value
+  generate.igraph.k.regular <- function(n, Kmax, ...) {
+    if (n < 20) Kmax <- 5
+    igraph.reg <- igraph::sample_k_regular(no.of.nodes = n, k = Kmax, directed = TRUE, multiple = FALSE)
+    sparse_AdjMat <- simcausal::igraph.to.sparseAdjMat(igraph.reg)
+    NetInd_out <- simcausal::sparseAdjMat.to.NetInd(sparse_AdjMat)
+    return(NetInd_out$NetInd_k)
+  }
+  Kmax <- 20
+  D <- DAG.empty()
+  D <- D + network("NetInd", netfun = "generate.igraph.k.regular", Kmax = Kmax)
+  D <- D +
+    node("Kmax", distr = "rconst", const = Kmax) +
+    node("nF", distr = "rconst", const = nF) +
+    node("W", distr = "rbern", prob = 0.3) +
+    node("netsumW", distr = "rconst", const = sum(W[[1:Kmax]]), replaceNAw0 = TRUE)
+  Dset.net1 <- set.DAG(D, n.test = 200)
+  (dat.net1 <- sim(Dset.net1, n=50))
+
+  # ------------------------------------------------------------------
+  # EXAMPLE 2 WITH SMALL WORLD NETWORK (ARGUMENT Kmax to generate.igraph.smallwld doesn't do anything)
+  # PASSING USER DEFINED KMAX TO THE NETWORK FUNCTION,
+  # DEFINING Kmax IT AS A NODE -> SHOULD BE USING THE TRUE Kmax value
+  generate.igraph.smallwld <- function(n, Kmax, dim, nei, p, ...) {
+    g <- igraph::sample_smallworld(dim = 1, size = n, nei = nei, p = p, loops = FALSE, multiple = FALSE)
+    g <- igraph::as.directed(g, mode = c("mutual"))
+    sparse_AdjMat <- simcausal::igraph.to.sparseAdjMat(g)
+    NetInd_out <- simcausal::sparseAdjMat.to.NetInd(sparse_AdjMat)
+    return(NetInd_out$NetInd_k)
+  }
+  Kmax <- 20
+  D <- DAG.empty()
+  D <- D +
+    network("NetInd", netfun = "generate.igraph.smallwld", Kmax = Kmax, dim = 1, nei = 9, p = 0.1)
+    # network("NetInd", netfun = "generate.igraph.smallwld", Kmax = Kmax, dim = 1, nei = 4, p = 0.05)
+  D <- D +
+    node("Kmax", distr = "rconst", const = Kmax) +
+    node("nF", distr = "rconst", const = nF) +
+    node("W", distr = "rbern", prob = 0.3) +
+    node("netsumW", distr = "rconst", const = sum(W[[1:Kmax]]), replaceNAw0 = TRUE)
+  Dset.net2 <- set.DAG(D, n.test = 200)
+  (dat.net2 <- sim(Dset.net2, n=50))
+
+}
+
+
+
 test.networkgen1 <- function() {
   #------------------------------------------------------------------------------------------------------------
   # EXAMPLE 1. SIMULATING NETWORKS WITH igraph R package (gen.ER)

@@ -4,7 +4,7 @@
 \alias{set.DAG}
 \title{Create and Lock DAG Object}
 \usage{
-set.DAG(DAG, vecfun, n.test = 100, latent.v,
+set.DAG(DAG, vecfun, latent.v, n.test = 10,
   verbose = getOption("simcausal.verbose"))
 }
 \arguments{
@@ -14,13 +14,13 @@ or with an optional "order" argument to \code{node()}.}
 
 \item{vecfun}{A character vector with names of the vectorized user-defined node formula functions. See examples and the vignette for more information.}
 
+\item{latent.v}{The names of the unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.}
+
 \item{n.test}{Non-negative simulation sample size used for testing the consistency of the \code{DAG} object.
 A larger \code{n.test} may be useful when simulating a network of a fixed size (see \code{?network}) or when testing \code{DAG} for rare-event errors.
 A smaller \code{n.test} can be better for performance (faster validation of the \code{DAG}).
 Set \code{n.test=0} to completely skip the simulation test (use at your own risk, since calling \code{sim()} on such un-tested \code{DAG} may lead to uninterpretable errors).
 Note that when using \code{n.test=0}, the \code{plotDAG} function \emph{will not} draw \emph{any} child-parent relationships, since the formula parsing is not performed.}
-
-\item{latent.v}{The names of the unobserved (latent) DAG node names. These variables will be hidden from the observed simulated data and will be marked differently on the DAG plot.}
 
 \item{verbose}{Set to \code{TRUE} to print messages on status and information to the console. Turn this off by default using options(simcausal.verbose=FALSE).}
 }
