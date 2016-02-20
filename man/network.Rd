@@ -152,10 +152,10 @@ D <- D + node("Y", distr = "rbern",
                             0.25 * sum(W2[[1:Kmax]])
                             ),
               replaceNAw0 = TRUE)
-Dset <- set.DAG(D)
+Dset <- set.DAG(D, n.test = 100)
 # Simulating data from the above sem:
 datnet <- sim(Dset, n = 1000, rndseed = 543)
-head(datnet, 100)
+head(datnet)
 # Obtaining the network object from simulated data:
 net_object <- attributes(datnet)$netind_cl
 # Max number of friends:
@@ -177,10 +177,7 @@ head(attributes(datnet)$netind_cl$NetInd)
   # - nF[i]: total number of friends that need to be sampled for observation i
 #--------------------------------------------------------------------------------------------------
 genNET <- function(n, K, bslVar, nF, ...) {
-  print("K: "); print(K)
   prob_F <- plogis(-4.5 + 2.5*c(1:K)/2) / sum(plogis(-4.5 + 2.5*c(1:K)/2))
-  print("prob_F"); print(prob_F)
-
   NetInd_k <- matrix(NA_integer_, nrow = n, ncol = K)
   nFriendTot <- rep(0L, n)
   for (index in (1:n)) {
@@ -218,7 +215,6 @@ set.seed(12345)
 normprob <- function(x) x / sum(x)
 p_nF_W1_mat <- apply(matrix(runif((K+1)*6), ncol = 6, nrow = (K+1)), 2, normprob)
 colnames(p_nF_W1_mat) <- paste0("p_nF_W1_", c(0:5))
-colSums(p_nF_W1_mat)
 create_probs_nF <- function(W1) t(p_nF_W1_mat[,W1+1])
 vecfun.add("create_probs_nF")
 D <- D + node("def.nF", distr = "rcategor.int.base0", probs = create_probs_nF(W1))
@@ -240,11 +236,11 @@ D <- D + node("pYRisk", distr = "rconst",
               replaceNAw0 = TRUE)
 
 D <- D + node("Y", distr = "rbern", prob = pYRisk)
-Dset <- set.DAG(D)
+Dset <- set.DAG(D, n.test = 100)
 
 # Simulating data from the above sem:
 datnet <- sim(Dset, n = 1000, rndseed = 543)
-head(datnet, 100)
+head(datnet, 10)
 # Obtaining the network object from simulated data:
 net_object <- attributes(datnet)$netind_cl
 # Max number of friends:

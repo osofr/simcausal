@@ -18,7 +18,7 @@ test.tKmaxnet = function() {
   D.t <- D.t + node("t.null", distr = "rconst", const = t)
   D.t <- D.t + node("t", distr = "rconst", const = t)
   Dset0 <- set.DAG(D.t)
-  (dat0 <- sim(Dset0, n=20))
+  dat0 <- sim(Dset0, n=20)
   # ------------------------------------------------------------------
   # WORKS AS BEFORE (i.e, t<100 IS IGNORED)
   t <- 100
@@ -26,12 +26,12 @@ test.tKmaxnet = function() {
   D.t <- D.t + node("A", t=0:1, distr = "rconst", const = t)
   D.t <- D.t + node("B", t=0:1, distr = "rconst", const = A[t]+1)
   Dset0 <- set.DAG(D.t)
-  (dat0 <- sim(Dset0, n=20))
+  dat0 <- sim(Dset0, n=20)
   # ------------------------------------------------------------------
   # GIVES AN ERROR AS BEFORE:
   t <- 1
   D.t <- DAG.empty()
-  D.t <- D.t + node("A",t=0:5, distr = "rconst", const = t)
+  D.t <- D.t + node("A", distr = "rconst", const = t)
   D.t <- D.t + node("B", distr = "rconst", const = A[t]+1)
   checkException(Dset0 <- set.DAG(D.t))
   # ------------------------------------------------------------------
@@ -52,7 +52,7 @@ test.tKmaxnet = function() {
   D.nF <- DAG.empty()
   D.nF <- D.nF + node("nF.null", distr = "rconst", const = nF)
   Dset0 <- set.DAG(D.nF)
-  (dat0 <- sim(Dset0, n=20))
+  dat0 <- sim(Dset0, n=20)
   # ------------------------------------------------------------------
   # USING Kmax WITHOUT THE NETWORK, DEFINING Kmax node AND THEN RE-USING IT AGAIN
   # (uses the node "Kmax" value first, if found, if not found, goes to user defined value)
@@ -62,7 +62,7 @@ test.tKmaxnet = function() {
   D.Kmax <- D.Kmax + node("Kmax", distr = "rconst", const = Kmax+1)
   D.Kmax <- D.Kmax + node("Kmax2", distr = "rconst", const = Kmax+1)
   Dset0 <- set.DAG(D.Kmax)
-  (dat0 <- sim(Dset0, n=20))
+  dat0 <- sim(Dset0, n=20)
   # ------------------------------------------------------------------
   # USING Nsamp (always uses the internal Nsamp and ignores the user defined Nsamp):
   Nsamp <- 5
@@ -71,7 +71,7 @@ test.tKmaxnet = function() {
     node("Nsamp.null", distr = "rconst", const = Nsamp) +
     node("Nsamp", distr = "rconst", const = Nsamp)
   Dset0 <- set.DAG(D.Nsamp)
-  (dat0 <- sim(Dset0, n=20))
+  dat0 <- sim(Dset0, n=20)
   checkEquals(dat0$Nsamp[1], 20L)
 
   # ------------------------------------------------------------------
@@ -94,7 +94,7 @@ test.tKmaxnet = function() {
     node("W", distr = "rbern", prob = 0.3) +
     node("netsumW", distr = "rconst", const = sum(W[[1:Kmax]]), replaceNAw0 = TRUE)
   Dset.net1 <- set.DAG(D, n.test = 200)
-  (dat.net1 <- sim(Dset.net1, n=50))
+  dat.net1 <- sim(Dset.net1, n=50)
 
   # ------------------------------------------------------------------
   # EXAMPLE 2 WITH SMALL WORLD NETWORK (ARGUMENT Kmax to generate.igraph.smallwld doesn't do anything)
@@ -118,7 +118,7 @@ test.tKmaxnet = function() {
     node("W", distr = "rbern", prob = 0.3) +
     node("netsumW", distr = "rconst", const = sum(W[[1:Kmax]]), replaceNAw0 = TRUE)
   Dset.net2 <- set.DAG(D, n.test = 200)
-  (dat.net2 <- sim(Dset.net2, n=50))
+  dat.net2 <- sim(Dset.net2, n=50)
 
 }
 
