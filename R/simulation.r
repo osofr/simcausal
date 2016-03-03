@@ -64,7 +64,7 @@ getactions <- function(DAG, actions) {
 
 # Internal function for simulation data from any DAG
 # If prev.data is not NULL all the nodes in DAG will be evaluated in the environment of prev.data alone
-simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, prev.data = NULL, verbose = getOption("simcausal.verbose")) {
+simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rndseed.reset.node = NULL, prev.data = NULL, verbose = getOption("simcausal.verbose")) {
   assertthat::assert_that(assertthat::is.count(Nsamp) || as.integer(Nsamp)==0L)
   if (!is.null(rndseed)) {
     set.seed(rndseed)
@@ -244,6 +244,12 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
     #------------------------------------------------------------------------
     # SAMPLE NEW COVARIATE BASED ON DISTR PARAMS
     #------------------------------------------------------------------------
+
+    # reset the seed if the current node matches argument rndseed.reset.node
+    if (!is.null(rndseed) && !is.null(rndseed.reset.node)) {
+      if (rndseed.reset.node %in% cur.node$name) set.seed(NULL)
+    }
+
     distr <- cur.node$distr
     if ("DAG.net" %in% class(cur.node)) {
 
@@ -398,8 +404,11 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
       warning("Simulated data returned in wide format. Can't convert to long format, since only one time-point was detected.")
     }
   }
-
   class(obs.dt) <- "data.frame"
+  # reset the seed to NULL if it was previously set
+  if (!is.null(rndseed)) {
+    set.seed(NULL)
+  }
   # return(obs.df)
   return(obs.dt)
 }
@@ -412,15 +421,18 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, pre
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.
 #' @param rndseed Seed for the random number generator.
+#' @param rndseed.reset.node When \code{rndseed} is specified, use this argument to specify the name of the \code{DAG} node at which the random number generator seed is reset back to \code{NULL} (simulation function will call \code{set.seed(NULL)}).
+#' Can be useful if one wishes to simulate data using the set seed \code{rndseed} only for the first K nodes of the DAG and use an entirely random sample when simulating the rest of the nodes starting at K+1 and on.
+#' The name of such (K+1)th order \code{DAG} node should be then specified with this argument.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A \code{data.frame} where each column is sampled from the conditional distribution specified by the corresponding \code{DAG} object node.
 #' @family simulation functions
 #' @seealso \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @export
-simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbose = getOption("simcausal.verbose")) {
+simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose")) {
   if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
-  simFromDAG(DAG=DAG, Nsamp=n, wide=wide, LTCF=LTCF, rndseed=rndseed, verbose=verbose)
+  simFromDAG(DAG=DAG, Nsamp=n, wide=wide, LTCF=LTCF, rndseed=rndseed, rndseed.reset.node=rndseed.reset.node, verbose=verbose)
 }
 
 #' Simulate Full Data (From Action DAG(s))
@@ -431,13 +443,16 @@ simobs <- function(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbose = g
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.
 #' @param rndseed Seed for the random number generator.
+#' @param rndseed.reset.node When \code{rndseed} is specified, use this argument to specify the name of the \code{DAG} node at which the random number generator seed is reset back to \code{NULL} (simulation function will call \code{set.seed(NULL)}).
+#' Can be useful if one wishes to simulate data using the set seed \code{rndseed} only for the first K nodes of the DAG and use an entirely random sample when simulating the rest of the nodes starting at K+1 and on.
+#' The name of such (K+1)th order \code{DAG} node should be then specified with this argument.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A named list, each item is a \code{data.frame} corresponding to an action specified by the actions argument, action names are used for naming these list items.
 #' @family simulation functions
 #' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @export
-simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbose = getOption("simcausal.verbose")) {
+simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose")) {
   if (!is.null(rndseed)) {
     set.seed(rndseed)
   }
@@ -456,7 +471,7 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbos
   for (idx_act in c(1:length(actions))) {	# loop over each action/intervention/regimen DAG
     actname <- names(actions)[idx_act]
     actDAG <- actions[[idx_act]]
-    fulldf <- try(simFromDAG(DAG=actDAG, Nsamp=n, wide=wide, LTCF=LTCF, rndseed=rndseed, verbose=verbose))
+    fulldf <- try(simFromDAG(DAG=actDAG, Nsamp=n, wide=wide, LTCF=LTCF, rndseed=rndseed, rndseed.reset.node=rndseed.reset.node, verbose=verbose))
     if(inherits(fulldf, "try-error")) {
     	stop("simulating full data for action '"%+%actname%+%"' resulted in error...", call. = FALSE)
     }
@@ -488,6 +503,9 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbos
 #' @param wide A logical, if TRUE the output data is generated in wide format, if FALSE, the output longitudinal data in generated in long format
 #' @param LTCF If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. 
 #' @param rndseed Seed for the random number generator.
+#' @param rndseed.reset.node When \code{rndseed} is specified, use this argument to specify the name of the \code{DAG} node at which the random number generator seed is reset back to \code{NULL} (simulation function will call \code{set.seed(NULL)}).
+#' Can be useful if one wishes to simulate data using the set seed \code{rndseed} only for the first K nodes of the DAG and use an entirely random sample when simulating the rest of the nodes starting at K+1 and on.
+#' The name of such (K+1)th order \code{DAG} node should be then specified with this argument.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return If actions argument is missing a simulated data.frame is returned, otherwise the function returns a named list of action-specific simulated data.frames with action names giving names to corresponding list items.
@@ -495,7 +513,7 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbos
 #' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @example tests/examples/sim.impute.examples12.R
 #' @export
-sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbose = getOption("simcausal.verbose")) {
+sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose")) {
   # *) check if actions argument is missing -> simulate observed data from the DAG
   # *) if actions consist of characters, try to extract those actions from the DAG and simulate full data
   # SIMULATE OBSERVED DATA FROM DAG (if no actions)
@@ -503,7 +521,7 @@ sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbo
     if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
     if (!is.DAGlocked(DAG)) stop("call set.DAG() before attempting to simulate data from DAG")
     if (verbose) message("simulating observed dataset from the DAG object")
-    return(simobs(DAG = DAG, n = n, wide = wide, LTCF = LTCF, rndseed = rndseed, verbose = verbose))
+    return(simobs(DAG = DAG, n = n, wide = wide, LTCF = LTCF, rndseed = rndseed, rndseed.reset.node = rndseed.reset.node, verbose = verbose))
   # SIMULATE FULL DATA FROM ACTION DAGs (when actions are present)
   } else {
     if (is.character(actions)) { # grab appropriate actions from the DAG by name
@@ -516,7 +534,7 @@ sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, verbo
       stop("argument actions must be a character vector of action names or a list of action DAGs")
     }
     if (verbose) message("simulating action-specific datasets for action(s): "%+%paste(names(actions), collapse = " "))
-    return(simfull(actions = actions, n = n, wide = wide, LTCF = LTCF, rndseed = rndseed, verbose = verbose))
+    return(simfull(actions = actions, n = n, wide = wide, LTCF = LTCF, rndseed = rndseed, rndseed.reset.node = rndseed.reset.node, verbose = verbose))
   }
 }
 

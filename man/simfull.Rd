@@ -5,7 +5,7 @@
 \title{Simulate Full Data (From Action DAG(s))}
 \usage{
 simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
-  verbose = getOption("simcausal.verbose"))
+  rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{actions}{Actions specifying the counterfactual DAG. This argument must be either an object of class DAG.action or a list of DAG.action objects.}
@@ -17,6 +17,10 @@ simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
 \item{LTCF}{If forward imputation is desired for the missing variable values, this argument should be set to the name of the node that indicates the end of follow-up event. See the vignette, \code{\link{sim}} and \code{\link{doLTCF}} for additional details.}
 
 \item{rndseed}{Seed for the random number generator.}
+
+\item{rndseed.reset.node}{When \code{rndseed} is specified, use this argument to specify the name of the \code{DAG} node at which the random number generator seed is reset back to \code{NULL} (simulation function will call \code{set.seed(NULL)}).
+Can be useful if one wishes to simulate data using the set seed \code{rndseed} only for the first K nodes of the DAG and use an entirely random sample when simulating the rest of the nodes starting at K+1 and on.
+The name of such (K+1)th order \code{DAG} node should be then specified with this argument.}
 
 \item{verbose}{Set to \code{TRUE} to print messages on status and information to the console.
 Turn this off by default using options(simcausal.verbose=FALSE).}

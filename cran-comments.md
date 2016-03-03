@@ -1,5 +1,11 @@
+## Resubmission
+This is a resubmission. In this version I have:
+
+* Fixed the reverse dependency error for 'tmlenet' package
+
 simcausal 0.5.0
 ==============
+## Test environments:
 
 ## Test environments:
 * local OS X install, R 3.2.3
