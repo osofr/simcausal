@@ -69,9 +69,9 @@
 \author{Oleg Sofrygin\\Division of Research,\\Kaiser Permanente Northern California\\University of California, Berkeley\And 
         Mark J. van der Laan\\University of California, Berkeley\AND
         Romain Neugebauer\\Division of Research,\\Kaiser Permanente Northern California}
-\title{\pkg{simcausal} \proglang{R} Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data}
 \Plainauthor{Oleg Sofrygin, Mark J. van der Laan, Romain Neugebauer}
-\Plaintitle{simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data}
+\title{\pkg{simcausal} Package: Technical Details and Extended Examples of Simulations with Complex Longitudinal Data}
+\Plaintitle{simcausal Package: Technical Details and Extended Examples of Simulations with Complex Longitudinal Data)}
 \Shorttitle{\pkg{simcausal}: Causal Simulation Package} %% a short title (if necessary)
 
 \Abstract{ The \pkg{simcausal} \proglang{R} package is a tool for specification and simulation of complex longitudinal
@@ -80,9 +80,7 @@ simplifying the conduct of transparent and reproducible simulation studies, with
 data and interventions frequently encountered in real-world causal inference problems, such as, observational data with
 time-dependent confounding, selection bias, and random monitoring processes. The package interface allows for concise
 expression of complex functional dependencies between a large number of nodes, where each node may represent a 
-measurement at a specific time point.
-% time-varying random variable. 
-The package allows for specification and simulation of counterfactual data under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
+measurement at a specific time point. The package allows for specification and simulation of counterfactual data under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic). In particular, the interventions may
 represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical
 monitoring events. Finally, the package enables the computation of a selected set of user-specified features of the
 distribution of the counterfactual data that represent common causal quantities of interest, such as, treatment-specific
@@ -90,37 +88,36 @@ means, the average treatment effects and coefficients from working marginal stru
 \pkg{simcausal} is demonstrated by replicating the results of two published simulation studies. }
 
 \Keywords{causal inference, simulation, marginal structural model, structural equation model, directed acyclic graph, causal model, \proglang{R}}
-
 \Plainkeywords{causal inference, simulation, marginal structural model, structural equation model, directed acyclic graph, causal model, R} %% without formatting
 
-\Address{
-  Oleg Sofrygin\\
-  Division of Research\\
-  Kaiser Permanente Northern California\\
-  Oakland, CA 94612 \\
-  \emph{and}\\
-  Division of Biostatistics, School of Public Health\\ 
-  University of California, Berkeley\\ 
-  Berkeley, CA 94720\\
-  E-mail: \email{oleg.sofrygin@gmail.com}\\
-  \\
-  Mark J. van der Laan\\
-  Division of Biostatistics, School of Public Health\\ 
-  University of California, Berkeley\\
-  Berkeley, CA 94720\\
-  E-mail: \email{laan@berkeley.edu}\\
-  \\
-  Romain Neugebauer\\
-  Division of Research\\
-  Kaiser Permanente Northern California\\
-  2000 Broadway\\
-  Oakland, CA 94612 \\
-  E-mail: \email{Romain.S.Neugebauer@kp.org}\\
-}
+% \Address{
+%   Oleg Sofrygin\\
+%   Division of Research\\
+%   Kaiser Permanente Northern California\\
+%   Oakland, CA 94612 \\
+%   \emph{and}\\
+%   Division of Biostatistics, School of Public Health\\ 
+%   University of California, Berkeley\\ 
+%   Berkeley, CA 94720\\
+%   E-mail: \email{oleg.sofrygin@gmail.com}\\
+%   \\
+%   Mark J. van der Laan\\
+%   Division of Biostatistics, School of Public Health\\ 
+%   University of California, Berkeley\\
+%   Berkeley, CA 94720\\
+%   E-mail: \email{laan@berkeley.edu}\\
+%   \\
+%   Romain Neugebauer\\
+%   Division of Research\\
+%   Kaiser Permanente Northern California\\
+%   2000 Broadway\\
+%   Oakland, CA 94612 \\
+%   E-mail: \email{Romain.S.Neugebauer@kp.org}\\
+% }
 
 %% need no \usepackage{Sweave.sty}
 %\VignetteEngine{knitr::knitr}
-%\VignetteIndexEntry{simcausal Package: Simulations with Complex Longitudinal Data}
+%\VignetteIndexEntry{simcausal Package: Simulations with Complex Longitudinal Data (Technical Details and Extended Examples)}
 \begin{document}
 
 <<include=FALSE, results='hide'>>=
@@ -399,14 +396,14 @@ attribute, such as, blood pressure).\\
 In this package, a data generating distribution is defined via the specification
 of a structural equation model (SEM) \citep{pearl1995, Pearl2009,
 pearl2010}. Therefore, \pkg{simcausal} also allows for specification and simulation
-of counterfactual data (referred to as ``\emph{full data}'') under various
+of counterfactual data under various
 user-specified interventions (e.g., static, dynamic, deterministic, or
 stochastic), which are referred to as ``\emph{actions}''. These actions
 may represent exposure to treatment regimens, the occurrence or non-occurrence
 of right-censoring events, or of clinical monitoring events (e.g., laboratory
 measurements based on which treatment decisions may be made). Finally,
 the package enables the computation of a selected set of user-specified
-features of the distribution of the full data that represent common causal
+features of the distribution of the counterfactual data that represent common causal
 quantities of interest, referred to as causal target parameters, such as,
 treatment-specific means, the average treatment effects (ATE) (on the multiplicative
 or additive scale) and coefficients from working marginal structural model
@@ -510,10 +507,10 @@ specifies the structural equation model, along with interventions and the
 causal target parameter of interest.
 \item [\emph{observed data}] - data simulated from the (pre-intervention)
 distribution specified by the structural equation model.
-\item [\emph{full data}] - data simulated from one or more post-intervention
+\item [\emph{counterfactual data}] - data simulated from one or more post-intervention
 distributions defined by actions on the structural equation model.
 \item [\emph{causal target parameter}] - the true value of the causal
-target parameter evaluated with full data. 
+target parameter evaluated with counterfactual data. 
 \end{description}
 
 \paragraph{Routines.}
@@ -561,7 +558,7 @@ equation model. See Sections~\ref{actions1} and \ref{actions2} for examples.
 \item [{\code{sim(..., actions = ...)}}] can also be used for simulating independent
 observations from one or more post-intervention distributions, as specified
 by the \code{actions} argument. The resulting output is a named list
-of \code{data.frame} objects, collectively referred to as the \emph{full
+of \code{data.frame} objects, collectively referred to as the \emph{counterfactual
 data}. The number of \code{data.frame} objects in this list is equal
 to the number of post-intervention distributions specified in the \code{actions}
 argument, where each \code{data.frame} object is an iid sample from a
@@ -572,10 +569,10 @@ of target causal parameters. The output from these routines is the input
 saved alongside the interventions. See Sections~\ref{targets1} and \ref{targets2}
 for examples defining various target parameters.
 \item [{\code{eval.target}}] evaluates the causal parameter of interest using
-simulated full data. As input, it can take previously simulated full data
+simulated counterfactual data. As input, it can take previously simulated counterfactual data
 (i.e., the output of a call to the \code{sim(..., actions = ...)} function)
 or, alternatively, the user can specify the sample size \code{n}, based
-on which full data will be simulated first. 
+on which counterfactual data will be simulated first. 
 \end{description}
 
 \subsection{Specifying a structural equation model}\label{SEMintro}
@@ -733,7 +730,7 @@ The function \code{set.targetMSM} defines causal parameters based on
 a \textit{working} marginal structural model \citep{neugebauer2007}. In
 both cases, the true value of the causal parameter is defined by one or
 several post-intervention distributions and can thus be approximated using
-full data.\\
+counterfactual data.\\
 
 The following types of causal parameters can be defined with the function
 \code{set.targetE}: 
@@ -784,7 +781,7 @@ when the working model is not a correct model (see \citet{neugebauer2007}
 for details). This weighting function is set to the constant function of
 1 in this package. The corresponding true value of the coefficients $\alpha$
 can then be approximated by running a standard (unweighted) regression
-routines applied to simulated full data observations. The following types
+routines applied to simulated counterfactual data observations. The following types
 of working models, denoted by $m()$, can be defined with the function
 \code{set.targetMSM}:
 \begin{itemize}
@@ -834,13 +831,13 @@ of a time-varying node. Example uses of this syntax are provided in Section \ref
 
 The \pkg{simcausal} package can simulate two types of data: 1) observed
 data, sampled from the (pre-intervention) distribution specified by the
-structural equation model and 2) full data, sampled from one or more post-intervention
+structural equation model and 2) counterfactual data, sampled from one or more post-intervention
 distributions defined by actions on the structural equation model. Both
 types of data are simulated by invoking the \code{sim} function and the
 user can set the seed for the random number generator using the argument
 \code{rndseed}. The examples showing how to simulate observed data are
 provided in Sections~\ref{simobs1} and \ref{simobs2}, whereas the examples
-showing how to simulate full data are provided in Sections~\ref{simfull1}
+showing how to simulate counterfactual data are provided in Sections~\ref{simfull1}
 and \ref{simfull2}.\\
 
 We note that two types of structural equation models can be encoded with
@@ -879,11 +876,11 @@ argument for data simulation are provided in Sections~\ref{LTCFdat} and \ref{tar
 
 In the last step of a typical workflow, the function \code{eval.target}
 is generally invoked for estimation of the true value of a previously defined
-target causal parameter. The true value is estimated using full data simulated
+target causal parameter. The true value is estimated using counterfactual data simulated
 from post-intervention distributions. The function \code{eval.target}
-can be called with either previously simulated full data, specified by
+can be called with either previously simulated counterfactual data, specified by
 the argument \code{data} or a sample size value, specified by the argument
-\code{n}. In the latter case, full data with the user-specified sample
+\code{n}. In the latter case, counterfactual data with the user-specified sample
 size will be simulated first.
 
 \newpage{}
@@ -893,7 +890,7 @@ size will be simulated first.
 \addcontentsline{toc}{section}{Simulation study with single time point interventions}
 
 This example describes a typical workflow for specifying a simple structural equation model, defining various
-interventions, simulating observed and full data, and calculating various causal target parameters. The structural
+interventions, simulating observed and counterfactual data, and calculating various causal target parameters. The structural
 equation model chosen here illustrates a common point treatment problem in which one is interested in evaluating the
 effect of an intervention on one treatment node on a single outcome node using observational data with confounding by
 baseline covariates. This example also demonstrates the use of a plotting functionality of the \pkg{simcausal} package
@@ -1028,11 +1025,11 @@ To examine the complete internal representation of the \code{DAG.action} object 
 str(A(Dset)[["A0"]])
 @
 
-\subsection[Simulating full data (sim)]{Simulating full data (\code{sim})}\label{simfull1}
-\addcontentsline{toc}{subsection}{Simulating full data (sim)}
+\subsection[Simulating counterfactual data (sim)]{Simulating counterfactual data (\code{sim})}\label{simfull1}
+\addcontentsline{toc}{subsection}{Simulating counterfactual data (sim)}
 
-Simulating full data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG},
-\code{actions} and \code{n} to indicate the causal model, interventions, and sample size of interest. Full data can be
+Simulating counterfactual data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG},
+\code{actions} and \code{n} to indicate the causal model, interventions, and sample size of interest. Counterfactual data can be
 simulated for all actions stored in the \code{DAG} object or a subset by setting the \code{actions} argument to the
 vector of the desired action names.\\
 
@@ -1067,14 +1064,14 @@ Dset <- set.targetE(Dset, outcome = "Y", param = "A1")
 @
 
 The true value of the above causal parameter is now evaluated by calling the function \code{eval.target} and passing the
-previously simulated full data object \code{Xdat1}.
+previously simulated counterfactual data object \code{Xdat1}.
 
 <<message=FALSE>>=
 eval.target(Dset, data = Xdat1)$res
 @
 
-Alternatively, \code{eval.target} can be called without the simulated full data, specifying the sample size argument
-\code{n} instead. In this case a full dataset with the user-specified sample size is simulated first.
+Alternatively, \code{eval.target} can be called without the simulated counterfactual data, specifying the sample size argument
+\code{n} instead. In this case a counterfactual dataset with the user-specified sample size is simulated first.
 
 <<message=FALSE>>=
 eval.target(Dset, n = 1000, rndseed = 123)$res
@@ -1119,7 +1116,7 @@ As just described, we now redefine the actions \code{"A1"} and \code{"A0"} by in
 (the distributional parameter \code{prob}) with parameter \code{d} before setting its values to $0$ or $1$ by
 introducing an additional new argument named \code{d} into the \code{action} function call. This creates an action-
 specific attribute variable \code{d} whose value uniquely identifies each of the two actions and that will be included
-as an additional column variable to the simulating full data sets.
+as an additional column variable to the simulating counterfactual data sets.
 
 <<message=FALSE>>=
 A1 <- node("Anode", distr = "rbern", prob = d)
@@ -1142,7 +1139,7 @@ msm.res$coef
 \addcontentsline{toc}{subsection}{Defining node distributions and vectorizing node formula functions}
 
 To facilitate the comprehension of the following two subsections, we note that, in the \pkg{simcausal} package,
-simulation of observed or full data follows the temporal ordering of the nodes that define the DAG object and is
+simulation of observed or counterfactual data follows the temporal ordering of the nodes that define the DAG object and is
 \textbf{vectorized}. More specifically, the simulation of a dataset with sample size \code{n} is carried out by first
 sampling the vector of all \code{n} observations of the first node, before sampling the vector of all \code{n}
 observations of the second node and so on, where the node ranking is defined by the temporal ordering that was
@@ -1393,7 +1390,7 @@ In this example we replicate results from the longitudinal data simulation proto
 \citet{neugebauer2014, neugebauer2015}. We first describe the structural equation model that implies the data generating
 distribution of the observed data, with time-to-event outcome, as reported in Section 5.1 of \citet{neugebauer2015}. We
 then show how to specify this model using the \pkg{simcausal} \proglang{R} interface, simulate observed data, define
-static and time-varying intervention, simulate full data, and calculate various causal parameters based on
+static and time-varying intervention, simulate counterfactual data, and calculate various causal parameters based on
 these interventions. In particular, we replicate estimates of true counterfactual risk differences under the dynamic
 interventions reported in \citet{neugebauer2014}.
 
@@ -1705,11 +1702,11 @@ plotDAG(A(Dstat)[["A1_ts3"]], tmax = 3, xjitter = 0.3, yjitter = 0.03,
       vertex_attrs = list(size = 15, label.cex = 0.7), excludeattrs = "abar")
 @
 
-\subsection[Simulating full data (sim)]{Simulating full data (\code{sim})}\label{simfull2}
-\addcontentsline{toc}{subsection}{Simulating full data (sim)}
+\subsection[Simulating counterfactual data (sim)]{Simulating counterfactual data (\code{sim})}\label{simfull2}
+\addcontentsline{toc}{subsection}{Simulating counterfactual data (sim)}
 
-Simulating full data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG},
-\code{actions} and \code{n} to indicate the causal model, interventions, and sample size of interest. The full data can
+Simulating counterfactual data is accomplished by calling the function \code{sim} and specifying its arguments \code{DAG},
+\code{actions} and \code{n} to indicate the causal model, interventions, and sample size of interest. The counterfactual data can
 be simulated for all actions stored in the \code{DAG} object or a subset by setting the \code{actions} argument to the
 vector of the desired-action names.
 
@@ -1759,8 +1756,8 @@ Xstat[["A1_ts3"]][1, ]
 \addcontentsline{toc}{subsection}{Converting datasets from wide to long format (DF.to.long)}
 
 The specification of structural equation models based on time-varying nodes such as the one described in
-Section~\ref{node2} allows for simulated (observed or full) data to be structured in either long or wide formats. Below,
-we illustrate these two alternatives. We note that, by default, simulated (observed or full) data from the \code{sim}
+Section~\ref{node2} allows for simulated (observed or counterfactual) data to be structured in either long or wide formats. Below,
+we illustrate these two alternatives. We note that, by default, simulated (observed or counterfactual) data from the \code{sim}
 function are stored in wide format. The data output format from the \code{sim} function can, however, be changed to the
 long format by setting the \code{wide} argument of the \code{sim} function to \code{FALSE} or, equivalently, by applying
 the function \code{DF.to.long} to an existing simulated dataset in wide format.\\
@@ -1775,7 +1772,7 @@ Odat.long <- sim(DAG = lDAG, n = 100, wide = FALSE, rndseed = 123)
 Odat.long[1:5, ]
 @
 
-As with observed data, the default behavior of the \code{sim} function can be changed so that simulated full data are
+As with observed data, the default behavior of the \code{sim} function can be changed so that simulated counterfactual data are
 instead structured in long format:
 
 <<message=FALSE, cache=cache_opt>>=
@@ -1783,7 +1780,7 @@ lXdyn <- sim(Ddyn, actions = c("A1_th0", "A1_th1"), n = 1000, wide = FALSE, rnds
 head(lXdyn[["A1_th0"]], 5)
 @
 
-The following example demonstrates how the function \code{DF.to.longDT} can be used to convert simulated (full or
+The following example demonstrates how the function \code{DF.to.longDT} can be used to convert simulated (counterfactual or
 observed) data stored in wide format to long format (note that \code{DF.to.longDT} internally uses the \code{data.table} package, but returns a \code{data.frame} by default):
 
 <<message=FALSE>>=
@@ -1831,7 +1828,7 @@ Odat.wideLTCF2[c(11,76), 1:18]
 \paragraph{Example 1.} In the example below, we first define two causal target parameters as two vectors, each containing the expectations of
 the node \code{Y[t]}, for time points \code{t}=1, $\ldots$, 16, under the post-intervention distribution defined by one
 of the two dynamic interventions \code{"A1_th0"} and \code{"A1_th1"} defined in Section~\ref{dynact}. Second, we
-evaluate these target parameters using the full data simulated previously in Section~\ref{simfull2.dyn} and we map
+evaluate these target parameters using the counterfactual data simulated previously in Section~\ref{simfull2.dyn} and we map
 the resulting estimates of cumulative risks into estimates of survival probabilities. We also plot the corresponding
 two counterfactual survival curves using the \pkg{simcausal} routine \code{plotSurvEst} as shown in
 Figure~\ref{fig:survfig1}. Finally, we note that Figure~\ref{fig:survfig1} replicates the simulation study results
@@ -1854,7 +1851,7 @@ plotSurvEst(surv = list(d_theta1 = surv_th1, d_theta0 = surv_th0),
 \paragraph{Example 2.} In the example below, we first define the causal target parameters as the ATE on the additive
 scale (cumulative risk differences) and the ATE on the multiplicative scale (cumulative risk ratios), for the two
 dynamic interventions (\code{"A1_th1"} and \code{"A1_th0"}) defined in Section~\ref{dynact} at time point \code{t = 12}.
-Second, we evaluate these target parameters using the previously simulated full data from Section~\ref{simfull2.dyn}.\\
+Second, we evaluate these target parameters using the previously simulated counterfactual data from Section~\ref{simfull2.dyn}.\\
 
 ATE on the additive scale:
 
@@ -1906,15 +1903,15 @@ MSMres <- eval.target(Ddyn, n = 1000, rndseed = 123)
 MSMres$coef
 @
 
-We also note that no previously simulated full data were passed as argument to the function \code{eval.target} above.
+We also note that no previously simulated counterfactual data were passed as argument to the function \code{eval.target} above.
 Instead, the sample size argument \code{n} was specified and the routine will thus first sample \code{n = 10,000}
-observations from each of the two post-intervention distributions before fitting the working MSM with these full data to
-derive estimates of the true coefficient values. Alternatively, the user could have passed the previously simulated full
-data. Note however that in this case, the user must either simulate full data by calling the \code{sim} function with
-the argument \code{LTCF = "Y"} or convert the previously simulated full data with the \emph{last time point value
+observations from each of the two post-intervention distributions before fitting the working MSM with these counterfactual data to
+derive estimates of the true coefficient values. Alternatively, the user could have passed the previously simulated counterfactual
+data. Note however that in this case, the user must either simulate counterfactual data by calling the \code{sim} function with
+the argument \code{LTCF = "Y"} or convert the previously simulated counterfactual data with the \emph{last time point value
 carried forward} imputation function \code{doLTCF}. Both approaches are described in Section~\ref{LTCFdat} and the
 latter approach is demonstrated in the example below, where we first impute the \code{EFU} outcome \code{Y} in the
-previously simulated full data \code{Xdyn}.
+previously simulated counterfactual data \code{Xdyn}.
 
 <<message=FALSE, cache=cache_opt>>=
 XdynLTCF <- lapply(Xdyn, doLTCF, LTCF = "Y")
@@ -1988,7 +1985,7 @@ plotSurvEst(surv = list(MSM_theta1 = surv_th1, MSM_theta0 = surv_th0),
 @
 
 The resulting estimates of the survival curves shown in Figure~\ref{fig:survfig4} approximate that reported in Figure 4
-of \citet{neugebauer2014}. Differences can be explained by the relative small sample size of the full data based on
+of \citet{neugebauer2014}. Differences can be explained by the relative small sample size of the counterfactual data based on
 which the following plot is based (\code{n=10,000} here vs. \code{n=1,000,000} in the simulation study from
 \citet{neugebauer2014}).
 
@@ -2015,10 +2012,10 @@ MSMres <- eval.target(Ddyn, n = 1000, rndseed = 123)
 MSMres$coef
 @
 
-Note that no previously simulated full data were passed as argument to the call to \code{eval.target} above. Instead,
+Note that no previously simulated counterfactual data were passed as argument to the call to \code{eval.target} above. Instead,
 the sample size argument \code{n} was specified and the routine will thus first sample \code{n=10,000} observations from
-each of the two post-intervention distributions before fitting the working MSM with these full data to derive estimates
-of the true coefficient values. Alternatively, the user could have passed the previously simulated full data using the
+each of the two post-intervention distributions before fitting the working MSM with these counterfactual data to derive estimates
+of the true coefficient values. Alternatively, the user could have passed the previously simulated counterfactual data using the
 argument \code{data = Xdyn}.
 
 The resulting coefficient estimates can be mapped into estimates of the two counterfactual hazard curves and plotted as
@@ -2115,14 +2112,14 @@ expit\big(\alpha_{0}+\alpha_{1}t+\alpha_{2}\frac{1}{t}\sum_{j=0}^{t-1}a(j) + \al
 where we use the notation $\bar{a}=(a(0),a(1),...,a(16))$ to denote the $17$ static intervention regimens on the time-
 varying treatment node \code{A1}. Note that the time-varying action attribute \code{abar} introduced in
 Section~\ref{staticact} directly encodes the $17$ treatment regimens values $\bar{a}$ referenced in the MSM working
-model above. To evaluate the target parameters $\alpha_{j}$ above, for $j=0,...,3$, we first simulate full data for the
+model above. To evaluate the target parameters $\alpha_{j}$ above, for $j=0,...,3$, we first simulate counterfactual data for the
 $17$ static interventions of interest as follows:
 
 <<message=FALSE, results='hide', cache=cache_opt>>=
 Xts <- sim(Dstat, actions = names(A(Dstat)), n = 1000, rndseed = 123)
 @
 
-Second, we define the target parameters and estimate them using the full data just simulated as follows:
+Second, we define the target parameters and estimate them using the counterfactual data just simulated as follows:
 
 <<message=FALSE, cache=cache_opt>>=
 msm.form_1 <- "Y ~  t + S(mean(abar[0:(t-1)])) + I(t*S(mean(abar[0:(t-1)])))"
@@ -2147,7 +2144,7 @@ The \code{eval.target} function returns a list with the following named attribut
 formula terms defined by expressions enclosed within the \code{S(...)} function into the corresponding variable names in
 the design matrix that was used to implement the regression, and the design matrix (\code{df_long}) stored as a list of
 \code{data.table} objects from the \proglang{R} package \pkg{data.table} \citep{R-data.table}. Each of these
-\code{data.table} objects contains full data indexed by a particular intervention. These full data are stored in long
+\code{data.table} objects contains counterfactual data indexed by a particular intervention. These counterfactual data are stored in long
 format with possibly additional new columns representing terms in the working MSM formula defined by expressions
 enclosed with the \code{S()} function. The design matrix can be derived by row binding these \code{data.table} objects.
 
@@ -2475,7 +2472,7 @@ In this section, we demonstrate how the \pkg{simcausal} package can be used to r
 \citet{lefebvre2008}. Specifically, we replicate the results first reported in Tables II and IV of that paper. We first
 specify the observed data generating distribution using the two structural equation models corresponding with Scenarios
 1 and 3 described in \citet{lefebvre2008}. Second, for each scenario, we evaluate the true values of the coefficients of
-the MSM using full data and compare them to those reported by \citet{lefebvre2008}. Finally for each scenario, we
+the MSM using counterfactual data and compare them to those reported by \citet{lefebvre2008}. Finally for each scenario, we
 implement the same IPW estimators of these MSM coefficients and evaluate their performances using the same two metrics
 (bias and mean squared error) as in \citet{lefebvre2008}. Each IPW estimator is defined by a distinct model for the
 propensity scores. Our replication results are reported in Tables~\ref{tab2Lefebvre} and \ref{tab4Lefebvre}, and we show
@@ -2587,8 +2584,8 @@ if (file.exists(f1name)) {
 @
 
 Note that the true values of the MSM coefficients above were obtained from the averages of coefficient estimates
-obtained from several simulated full data sets. This approach was implemented to avoid the memory limitation that can be
-encountered when trying to simulate a single very large full data set.\\
+obtained from several simulated counterfactual data sets. This approach was implemented to avoid the memory limitation that can be
+encountered when trying to simulate a single very large counterfactual data set.\\
 
 Finally, we replicate the IPW estimation results for Scenario 1 presented originally in Table II of \citet{lefebvre2008}
 using the source \proglang{R} code provided in the appendix. To estimate the propensity scores $P(A(0)|L(0))$ and

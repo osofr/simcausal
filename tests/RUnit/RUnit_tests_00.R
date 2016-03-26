@@ -24,7 +24,7 @@ if(FALSE) {
   devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
-  
+
   # check reverse dependencies:
   devtools::revdep(dependencies = c("Depends", "Imports", "Suggests", "LinkingTo"),
                     recursive = FALSE, ignore = NULL)
