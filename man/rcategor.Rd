@@ -25,7 +25,7 @@ Matrix version of the categorical distribution. The argument \code{probs} can be
 D <- DAG.empty()
 D <- D + node("race",t=0,distr="rcategor",probs=c(0.2,0.1,0.4,0.15,0.05,0.1))
 Dset <- set.DAG(D)
-simdat <- simobs(Dset, n=200, rndseed=1)
+simdat <- sim(Dset, n=200, rndseed=1)
 
 #---------------------------------------------------------------------------------------
 # Specifying and simulating from a DAG with a categorical node with varying
@@ -36,6 +36,6 @@ D <- D + node("L0", distr="rnorm", mean=10, sd=5)
 D <- D + node("L1", distr="rnorm", mean=10, sd=5)
 D <- D + node("L2", distr="rcategor", probs=c(abs(1/L0), abs(1/L1)))
 Dset <- set.DAG(D)
-simdat <- simobs(Dset, n=200, rndseed=1)
+simdat <- sim(Dset, n=200, rndseed=1)
 }
 

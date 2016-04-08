@@ -26,6 +26,6 @@ D <- D + node("W1", distr="rbern", prob=0.05)
 D <- D + node("W2", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
 D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
 Dset <- set.DAG(D)
-simdat <- simobs(Dset, n=200, rndseed=1)
+simdat <- sim(Dset, n=200, rndseed=1)
 }
 

@@ -16,7 +16,7 @@
 #'D <- D + node("W2", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
 #'D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
 #'Dset <- set.DAG(D)
-#'simdat <- simobs(Dset, n=200, rndseed=1)
+#'simdat <- sim(Dset, n=200, rndseed=1)
 #' @export
 rbern <- function(n, prob) {
 	rbinom(n=n, prob=prob, size=1)
@@ -24,10 +24,11 @@ rbern <- function(n, prob) {
 
 #' Constant (Degenerate) Node Distribution
 #'
-#' Wrapper for a constant value (degenerate) distribution.
+#' Wrapper for constant value (degenerate) distribution.
 #'
 #' @param n Sample size.
-#' @param const A vector of constant values.
+#' @param const Either a vector with one constant value (replicated \code{n} times)
+#' or a vector of length \code{n} or a matrix with \code{n} rows (for a multivariate node).
 #' @return A vector of constants of length \code{n}.
 #' @examples
 #'
@@ -38,16 +39,27 @@ rbern <- function(n, prob) {
 #'D <- D + node("W1", distr="rbern", prob=0.05)
 #'D <- D + node("W2", distr="rconst", const=1)
 #'D <- D + node("W3", distr="rconst", const=ifelse(W1==1,5,10))
+#'create_mat <- function(W1, W2, W3) cbind(W1,W2,W3)
+#'# Two identical ways of creating a multivariate node (just repeating W1, W2, W3):
+#'D <- D + node(c("W4.1", "W4.2", "W4.3"), distr="rconst", const=cbind(W1, W2, W3))
+#'D <- D + node(c("cW4.1", "cW4.2", "cW4.3"), distr="rconst", const=create_mat(W1, W2, W3))
 #'Dset <- set.DAG(D)
-#'simdat <- simobs(Dset, n=200, rndseed=1)
+#'simdat <- sim(Dset, n=200, rndseed=1)
 #' @export
 rconst <- function(n, const) {
 	if (n==0) {
 		return(vector(length = n))
+	} else if (is.matrix(const)) {
+		return(const)
 	} else if (length(const) == 1) {
 		return(rep.int(const, n))
-	} else {
+	} else if (length(const) < n) {
+		stop("the length of const arg is not 1 and is less than n; it needs to be one or the other")
+	} else if (length(const) > n) {
+		warning("the length of const arg is more than n; const was truncated to length n")
 		return(const[1:n])
+	} else {
+		return(const)
 	}
 }
 
@@ -67,10 +79,10 @@ rconst <- function(n, const) {
 #'D <- DAG.empty()
 #'D <- D + node("race",t=0,distr="rcategor",probs=c(0.2,0.1,0.4,0.15,0.05,0.1))
 #'Dset <- set.DAG(D)
-#'simdat <- simobs(Dset, n=200, rndseed=1)
+#'simdat <- sim(Dset, n=200, rndseed=1)
 #'
 #'#---------------------------------------------------------------------------------------
-#'# Specifying and simulating from a DAG with a categorical node with varying 
+#'# Specifying and simulating from a DAG with a categorical node with varying
 #'# probabilities (probabilities are determined by values sampled for nodes L0 and L1)
 #'#---------------------------------------------------------------------------------------
 #'D <- DAG.empty()
@@ -78,7 +90,7 @@ rconst <- function(n, const) {
 #'D <- D + node("L1", distr="rnorm", mean=10, sd=5)
 #'D <- D + node("L2", distr="rcategor", probs=c(abs(1/L0), abs(1/L1)))
 #'Dset <- set.DAG(D)
-#'simdat <- simobs(Dset, n=200, rndseed=1)
+#'simdat <- sim(Dset, n=200, rndseed=1)
 #' @export
 rcategor <- function(n, probs) {
 	# if (is.vector(probs)) {
@@ -164,10 +176,10 @@ distr.list <- function() {
 #' Template function for writing \code{SimCausal} custom distribution wrappers.
 #'
 #' One of the named arguments must be 'n', this argument is passed on to the function automatically by the package and is assigned to the number of samples that needs to be generated from this distribution.
-#' Other arguments (in this example arg1 and arg2) must be declared by the user as arguments inside the node() function that uses this distribution, 
+#' Other arguments (in this example arg1 and arg2) must be declared by the user as arguments inside the node() function that uses this distribution,
 #' e.g., \code{node("Node1"}, \code{distr="distr.template"}, \code{arg1 = ...}, \code{arg2 = ...)}.
 #' Both, arg1 and arg2, can be either numeric constants or formulas involving past node names. The constants get passed on to the distribution function unchanged. The formulas are evaluated inside the environment of the simulated data and are passed on to the distribution functions as vectors.
-#' The output of the distribution function is expected to be a vector of length n of the sampled covariates. 
+#' The output of the distribution function is expected to be a vector of length n of the sampled covariates.
 #'
 #' @param n Sample size that needs to be generated
 #' @param arg1 Argument 2

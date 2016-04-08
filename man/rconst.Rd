@@ -9,13 +9,14 @@ rconst(n, const)
 \arguments{
 \item{n}{Sample size.}
 
-\item{const}{A vector of constant values.}
+\item{const}{Either a vector with one constant value (replicated \code{n} times)
+or a vector of length \code{n} or a matrix with \code{n} rows (for a multivariate node).}
 }
 \value{
 A vector of constants of length \code{n}.
 }
 \description{
-Wrapper for a constant value (degenerate) distribution.
+Wrapper for constant value (degenerate) distribution.
 }
 \examples{
 #---------------------------------------------------------------------------------------
@@ -25,7 +26,11 @@ D <- DAG.empty()
 D <- D + node("W1", distr="rbern", prob=0.05)
 D <- D + node("W2", distr="rconst", const=1)
 D <- D + node("W3", distr="rconst", const=ifelse(W1==1,5,10))
+create_mat <- function(W1, W2, W3) cbind(W1,W2,W3)
+# Two identical ways of creating a multivariate node (just repeating W1, W2, W3):
+D <- D + node(c("W4.1", "W4.2", "W4.3"), distr="rconst", const=cbind(W1, W2, W3))
+D <- D + node(c("cW4.1", "cW4.2", "cW4.3"), distr="rconst", const=create_mat(W1, W2, W3))
 Dset <- set.DAG(D)
-simdat <- simobs(Dset, n=200, rndseed=1)
+simdat <- sim(Dset, n=200, rndseed=1)
 }
 
