@@ -57,8 +57,6 @@ for the same data generating distribution.
 Each argument for the input network can be an evaluable R expression. All formulas are captured by delayed evaluation and are evaluated during the simulation.
 Formulas can refer to standard or user-specified R functions that must only apply to the values of previously defined nodes
 (i.e. node(s) that were called prior to \code{network()} function call).
-
-To force the immediate evaluation of any variable inside these expressions wrap the variable with \code{.()} function, see Example 2 for \code{.(t_end)} in \code{\link{node}}.
 }
 \section{Syntax}{
 

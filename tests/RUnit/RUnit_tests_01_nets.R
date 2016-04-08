@@ -1,7 +1,7 @@
 #------------------------------------------------------------------------------------------------------------
 # Using structural equation models with networks
 # Tests for generating networks for a biased network sample (conditional on bslVar) of size nF
-# author: Oleg Sofrygin 
+# author: Oleg Sofrygin
 #------------------------------------------------------------------------------------------------------------
 `%+%` <- function(a, b) paste0(a, b)
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
@@ -184,7 +184,6 @@ test.networkgen1 <- function() {
 
   # W2 - binary infection status at t=0, positively correlated with W1
   prob_W2 <- seq(0.45, 0.8, by=0.3/nW1cat)[1:nW1cat]
-  # prob_W2 <- seq.int(0.45, 0.8, length.out = nW1cat)
   length(prob_W2)
   D <- D + node("W2", distr = "rbern", asis.params = list(prob = "prob_W2[W1+1]"))
 
@@ -407,7 +406,7 @@ test.networkgen2 <- function() {
   prob_Ni_W1_3 <- normprob(c(pN_0, pnorm(-2*abs(3 - k_arr) / 5)))  # W1=3 probabilities of |F_i|
   prob_Ni_W1_4 <- normprob(c(pN_0, plogis(-4 + 2 * (k_arr - 2))))  # W1=4 probabilities of |F_i|
   prob_Ni_W1_5 <- normprob(c(pN_0, plogis(-4 + 2 * (k_arr - 3))))  # W1=5 probabilities of |F_i|
-  
+
   # W1 - categorical or continuous confounder (5 categories, 0-4):
   nW1cat <- 6
   rbinom2 <- function(n, size, prob) rbinom(n, size = size, prob = prob[1,])

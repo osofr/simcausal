@@ -1,5 +1,5 @@
 # evaluate expressions enclosed by .(expression) right away in the parent (calling) environment
-bquote2 <- function (x, where = parent.frame()) { 
+bquote2 <- function (x, where = parent.frame()) {
   if (is.atomic(x) || is.name(x)) { # Leave unchanged
     x
   } else if (is.call(x)) {
@@ -24,69 +24,92 @@ bquote2 <- function (x, where = parent.frame()) {
 #' @param name Character node name or a vector of names when specifying a multivariate node. For time-dependent nodes the names will be automatically expanded to a scheme "name_t" for each t provided specified.
 #' @param t Node time-point(s). Allows specification of several time-points when t is a vector of positive integers, in which case the output will consist of a named list of length(t) nodes, corresponding to each value in t.
 #' @param distr Character name of the node distribution, can be a standard distribution R function, s.a. rnorm, rbinom, runif or user defined. The function must accept a named argument "n" to specify the total sample size. Distributional parameters (arguments) must be passed as either named arguments to node or as a named list of parameters "params".
-#' @param EFU End-of-Follow Up flag for designating a survival/censoring type node, only applies to Bernoulli nodes. When \code{EFU=TRUE} this node becomes an indicator for the end of follow-up event (censoring, end of study, death, etc). 
-#' When simulated variable with this node distribution evaluates to value 1 subsequent nodes with higher temporal \code{order} values will be set to NA by default (or imputed with carry forward imputation, depending on the settings of the \code{sim} function). 
+#' @param EFU End-of-Follow Up flag for designating a survival/censoring type node, only applies to Bernoulli nodes. When \code{EFU=TRUE} this node becomes an indicator for the end of follow-up event (censoring, end of study, death, etc).
+#' When simulated variable with this node distribution evaluates to value 1 subsequent nodes with higher temporal \code{order} values will be set to NA by default (or imputed with carry forward imputation, depending on the settings of the \code{sim} function).
 #' This can only be set to \code{TRUE} and should be omitted otherwise.
 #' @param order An optional integer parameter specifying the order in which these nodes will be sampled. The value of order has to start at 1 and be unique for each new node, can be specified as a range / vector and has to be of the same length as the argument \code{t} above. When order is left unspecified it will be automatically inferred based on the order in which the node(s) were added in relation to other nodes. See Examples and Details below.
 #' @param ... Named arguments specifying distribution parameters that are accepted by the \code{distr} function. The parameters can be R expressions that are themselves formulas of the past node names.
 #' @param params A list of additional named parameters to be passed on to the \code{distr} function. The parameters have to be either constants or character strings of R expressions of the past node names.
-#' @param asis.params (ADVANCED USE) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list. 
+#' @param asis.params (ADVANCED USE) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
 #' There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}). Time varying nodes should be refernced by their names as they appear in the simulated data, as in \code{TVar_t}.
-#' 
+#'
 #' @section Details:
-#' 
+#'
 #' The combination of \code{name} and \code{t} must uniquely identify each node in the DAG. Use argument \code{t} to identify measurements of the same attribute (e.g. 'A1c') at various time points.
 #' The collection of all unique \code{t} values, across all nodes, should consist of non-negative integers (i.e., starting at 0).
-#' 
-#' The optional \code{order} argument can be specified, used for determining the sampling order of each node. 
+#'
+#' The optional \code{order} argument can be specified, used for determining the sampling order of each node.
 #' When \code{order} not specified, it is automatically inferred based on the actual order in which the nodes were added to the DAG (earlier added nodes get lower \code{order} value and are sampled first)
 #'
-#' All node calls that share the same generic name \code{name} must also share the same \code{EFU} value (if any is specified in at least one of them). 
-#' A value of \code{TRUE} for the \code{EFU} indicates that if a simulated value for a measurement of the attribute represented by node is 1 
+#' All node calls that share the same generic name \code{name} must also share the same \code{EFU} value (if any is specified in at least one of them).
+#' A value of \code{TRUE} for the \code{EFU} indicates that if a simulated value for a measurement of the attribute represented by node is 1
 #' then all the following nodes with that measurement (in terms of higher \code{t} values) in the DAG will be unobserved (i.e., their simulated value will be set to NA).
 #'
 #' @section Node formulas (parameters of the distribution):
 #'
 #' Each formula of an input node is an evaluable R expression. All formulas are delayed in the evaluation until the simulation time.
-#' Formulas can refer to standard or user-specified R functions that must only apply to the values of parent nodes, 
-#' i.e. a subset of the node(s) with an \code{order} value strictly lower than that of the node characterized by the formula. 
-#' Formulas must reference the parent nodes with unique \code{name} identifiers, employing the square bracket vector subsetting \code{name[t]} for referencing a 
-#' parent node at a particular time point \code{t} (if any time-points were specified). 
-#' The square bracket notation is used to index a generic name with the relevant time point as illustrated in the examples. 
-#' When an input node is used to define several nodes (i.e., several measurement of the same attribute, \code{t=0:5}), the formula(s) specified in that node can apply 
-#' to each node indexed by a given time point denoted by \code{t}. This generic expression \code{t} can then be referenced within a formula to simultaneously identify a 
-#' different set of parent nodes for each time point as illustrated below. Note that the parents of each node represented by a given \code{node} object are implicitly defined 
+#' Formulas can refer to standard or user-specified R functions that must only apply to the values of parent nodes,
+#' i.e. a subset of the node(s) with an \code{order} value strictly lower than that of the node characterized by the formula.
+#' Formulas must reference the parent nodes with unique \code{name} identifiers, employing the square bracket vector subsetting \code{name[t]} for referencing a
+#' parent node at a particular time point \code{t} (if any time-points were specified).
+#' The square bracket notation is used to index a generic name with the relevant time point as illustrated in the examples.
+#' When an input node is used to define several nodes (i.e., several measurement of the same attribute, \code{t=0:5}), the formula(s) specified in that node can apply
+#' to each node indexed by a given time point denoted by \code{t}. This generic expression \code{t} can then be referenced within a formula to simultaneously identify a
+#' different set of parent nodes for each time point as illustrated below. Note that the parents of each node represented by a given \code{node} object are implicitly defined
 #' by the nodes referenced in formulas of that \code{node} call.
-#' 
-#' (ADVANCED USE) All distribution parameters (e.g., \code{mean}, \code{probs}, \code{sd}, \code{unifmin} and \code{unifmax}) are interpreted by delayed evaluation, 
+#'
+#' (ADVANCED USE) All distribution parameters (e.g., \code{mean}, \code{probs}, \code{sd}, \code{unifmin} and \code{unifmax}) are interpreted by delayed evaluation,
 #' to force immediate evaluation of a variable \code{Var} wrap the variable inside \code{.()} function, as in \code{.(Var)}. See Example 2 for a working example that evaluates \code{.(t_end)} variable.
-#' 
+#'
+#' @section Five types of evaluation for node function arguments:
+#'
+#' There is a great deal of flexibility in the way in which the \code{node} function arguments can be evaluated.
+#' By default, the named arguments specified as expressions are first captured by delayed-evaluation and then
+#' modified by simcausal to enable the special types of functional syntax.
+#' For example, simcausal always over-rides the subsetting operators '\code{[...]}' (for time varying nodes) and '[[...]]' (for networks), implying
+#' that these operators can no longer be used in their typical R way.
+#' Furthermore, simcausal will over-ride the standard `c` function, with its own definition. Similarly, it will over-ride any calls to \code{sum} and \code{mean} functions
+#' with their row-matrix counterpart functions \code{rowSums} and \code{rowMeans}.
+#' When programming with simcausal (such as passing node arguments inside a function, prior to defining the node), it may be helpful to instead pass
+#' such node arguments as character strings, rather than as R expressions, in which case one should use the argument \code{params}, with syntax being params = list(mean="A+B") (see examples).
+#' However, there are also instances when the user might want to retain the original behavior of all R expressions and functions and evaluate a particular node argument "as.is".
+#' For example, the user may wish to immediately evaluate a certain value or a certain function, using only the user calling environment (and ignoring the environment of the simulated data),
+#' In this case the node argument (or a specific part of the node argument) should be surrounded with \code{.()}.
+#' Note that once an expression surrounded with \code{.(...)} the simcausal definitions of \code{[...]} and \code{[[...]]} no
+#' longer have any meaning for these expressions and no error checking for "correctness" of such node arguments will be performed.
+#' A possible intermediate use case might be when the user wants to use the environment of the simulated data but preserve the
+#' the original R syntax for \code{[...]} and \code{[[...]]} operators, in which case the expression should be either surrounded by eval(...) statement or
+#' passed as a named string inside the list argument \code{asis.params}.
+#' but using the environment of the simulated data eval(exprs),
+#' this is useful when defining complex node distributions, such as the multivariate node distribution we provide in our examples in ?node;
+#' d) same as c) but using character strings instead of expressions, with as asis.params=list(...)
+#'
 #' @section Multivariate random variables (multivariate nodes):
 #'
 #' Starting from v.0.5, a single \code{node} call can be used for defining a multivariate (and possibly correlated) random vector.
-#' To define a random vector that has more than 1 dimension, use the argument \code{name} to specify a vector with names for each dimension, e.g., 
+#' To define a random vector that has more than 1 dimension, use the argument \code{name} to specify a vector with names for each dimension, e.g.,
 #'
 #'\code{node(c("X1","X2"), distr = "rmvnorm", mean = c(0,1)), sigma = matrix(c(1,0.75,0.75,1), ncol=2)}
 #'
-#' will define a bi-variate (correlated) normally distributed node, 
+#' will define a bi-variate (correlated) normally distributed node,
 #' the simulated data set will contain this bi-variately distributed random variable in columns "X1" and "X2".
-#' Note that the multivariate sampling distribution function (such as function \code{rmvnorm} from the package \code{mvtnorm}) must return a matrix of 
-#' \code{n} rows (number of observations) and \code{length(name)} columns (dimensionality). See additional examples below. 
-#' 
-#' Note that one can also define time-varying multivariate nodes, e.g., 
+#' Note that the multivariate sampling distribution function (such as function \code{rmvnorm} from the package \code{mvtnorm}) must return a matrix of
+#' \code{n} rows (number of observations) and \code{length(name)} columns (dimensionality). See additional examples below.
+#'
+#' Note that one can also define time-varying multivariate nodes, e.g.,
 #'
 #'\code{node(c("X1","X2"), t=0:5, distr = "rmvnorm", mean = c(0,1))}.
 #'
-#' However, time-varying indexing of parent nodes is not allowed in any multivariate node formulas, e.g., using expressions like 
+#' However, time-varying indexing of parent nodes is not allowed in any multivariate node formulas, e.g., using expressions like
 #'
 #'\code{node(c("X1","X2"), t=6, distr = "rmvnorm", mean = c(X1[t-1],1))},
 #'
 #' is not possible and will not return any sensible results.
-#' 
+#'
 #' @return A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
 #' @example tests/examples/set.DAG.R
 #' @export
-# Constructor for node objects, uses standard R distribution functions, 
+# Constructor for node objects, uses standard R distribution functions,
 # added optional attributes that are saved with the node (such as custom distribution functions, etc)
 node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params = list()) {
   env <- parent.frame()
@@ -144,7 +167,7 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
   if (length(name)>1) {
     node.name <- paste0(name, collapse=".")
     mv.names <- name
-    attr(node_dist_params$dist_params, "asis.flags")[] <- TRUE
+    # attr(node_dist_params$dist_params, "asis.flags")[] <- TRUE
   } else {
     node.name <- name
     mv.names <- name

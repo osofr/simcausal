@@ -66,6 +66,31 @@ by the nodes referenced in formulas of that \code{node} call.
 to force immediate evaluation of a variable \code{Var} wrap the variable inside \code{.()} function, as in \code{.(Var)}. See Example 2 for a working example that evaluates \code{.(t_end)} variable.
 }
 
+\section{Five types of evaluation for node function arguments}{
+
+
+There is a great deal of flexibility in the way in which the \code{node} function arguments can be evaluated.
+By default, the named arguments specified as expressions are first captured by delayed-evaluation and then
+modified by simcausal to enable the special types of functional syntax.
+For example, simcausal always over-rides the subsetting operators '\code{[...]}' (for time varying nodes) and '[[...]]' (for networks), implying
+that these operators can no longer be used in their typical R way.
+Furthermore, simcausal will over-ride the standard `c` function, with its own definition. Similarly, it will over-ride any calls to \code{sum} and \code{mean} functions
+with their row-matrix counterpart functions \code{rowSums} and \code{rowMeans}.
+When programming with simcausal (such as passing node arguments inside a function, prior to defining the node), it may be helpful to instead pass
+such node arguments as character strings, rather than as R expressions, in which case one should use the argument \code{params}, with syntax being params = list(mean="A+B") (see examples).
+However, there are also instances when the user might want to retain the original behavior of all R expressions and functions and evaluate a particular node argument "as.is".
+For example, the user may wish to immediately evaluate a certain value or a certain function, using only the user calling environment (and ignoring the environment of the simulated data),
+In this case the node argument (or a specific part of the node argument) should be surrounded with \code{.()}.
+Note that once an expression surrounded with \code{.(...)} the simcausal definitions of \code{[...]} and \code{[[...]]} no
+longer have any meaning for these expressions and no error checking for "correctness" of such node arguments will be performed.
+A possible intermediate use case might be when the user wants to use the environment of the simulated data but preserve the
+the original R syntax for \code{[...]} and \code{[[...]]} operators, in which case the expression should be either surrounded by eval(...) statement or
+passed as a named string inside the list argument \code{asis.params}.
+but using the environment of the simulated data eval(exprs),
+this is useful when defining complex node distributions, such as the multivariate node distribution we provide in our examples in ?node;
+d) same as c) but using character strings instead of expressions, with as asis.params=list(...)
+}
+
 \section{Multivariate random variables (multivariate nodes)}{
 
 
@@ -193,17 +218,16 @@ D <- set.DAG(D)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 4: Define 34 Bernoulli nodes, or 2 Bernoulli nodes over 17 time points,
-# prob argument contains .() expression that is immediately evaluated in the calling
-# environment (.(t_end) will evaluate to 16)
 #---------------------------------------------------------------------------------------
 t_end <- 16
 D <- DAG.empty()
 D <- D +
 node("L2", t = 0:t_end, distr = "rbinom",
-	prob = ifelse(t == .(t_end), 0.5, 0.1), size = 1) +
+	prob = ifelse(t == t_end, 0.5, 0.1), size = 1) +
 node("L1", t = 0:t_end, distr = "rbinom",
 	prob = ifelse(L2[0] == 1, 0.5, 0.1), size = 1)
 D <- set.DAG(D)
+sim(D, n=10)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 5: Defining new distribution function 'rbern', defining and passing a custom
@@ -222,7 +246,7 @@ node("W1", distr = "rbern", prob = 0.05) +
 node("W2", distr = "rbern", prob = customfun(W1, 0.5)) +
 node("W3", distr = "rbern", prob = ifelse(W1 == 1, 0.5, 0.1))
 D1d <- set.DAG(D, vecfun = c("customfun"))
-sim(D1d, n = 50, rndseed = 1)
+sim(D1d, n = 10, rndseed = 1)
 
 
 #---------------------------------------------------------------------------------------
@@ -251,7 +275,7 @@ D <- D +
     distr = "rconst",
     const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
 Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
-sim(Dset1, n = 50, rndseed = 1)
+sim(Dset1, n = 10, rndseed = 1)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 7: Multivariate random variables
@@ -259,22 +283,29 @@ sim(Dset1, n = 50, rndseed = 1)
 require("mvtnorm")
 D <- DAG.empty()
 
-# 3 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
+# 2 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
 D <- D +
-  node(c("X1","X2","X3"), distr = "rmvnorm", mean = c(0,1,2))
+  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)"))
+# Defining exactly the same mulivariate distribution using a more natural syntax:
+D <- D + node(c("new.X1","new.X2"), distr = "rmvnorm", mean = .(c(0,1)))
+
+# Similarly, can define a degenerate (rconst) multivariate node:
+D <- D + node(c("X1.1", "X1.2"), distr="rconst", const=.(cbind(X1, X2)))
 
 # Bivariate normal (correlation coef 0.75):
 D <- D +
   node(c("Y1","Y2"), distr = "rmvnorm",
-    mean = c(0,1),
-    sigma = matrix(c(1,0.75,0.75,1), ncol=2))
+    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)"))
+# Same binariate normal with a more natural simcausal syntax:
+D <- D +
+  node(c("new.Y1","new.Y2"), distr = "rmvnorm",
+    mean = .(c(0,1)), sigma = .(matrix(c(1,0.75,0.75,1)), ncol=2))
 
 # Can use any component of such multivariate nodes when defining future nodes:
 D <- D + node("A", distr = "rconst", const = 1 - X1)
-# Can also define a degenerate (rconst) multivariate node:
-D <- D + node(c("X1.1", "X1.2"), distr="rconst", const=cbind(X1, X2))
+
 Dset1 <- set.DAG(D, verbose = TRUE)
-sim(Dset1, n = 50)
+sim(Dset1, n = 10)
 
 # Bivariate uniform copula using copula package (correlation coef 0.75):
 require("copula")
@@ -283,14 +314,14 @@ D <- D +
   node(c("Y1","Y2"), distr = "rCopula",
     copula = normalCopula(0.75, dim = 2))
 Dset2 <- set.DAG(D)
-sim(Dset2, n = 50)
+sim(Dset2, n = 10)
 
 # Bivariate binomial from previous copula, with same correlation:
 vecfun.add("qbinom")
 D <- D + node("A.Bin1", distr = "rconst", const = qbinom(Y1, 10, 0.5))
 D <- D + node("A.Bin2", distr = "rconst", const = qbinom(Y2, 15, 0.7))
 Dset3 <- set.DAG(D)
-sim(Dset3, n = 50)
+sim(Dset3, n = 10)
 
 # Same as "A.Bin1" and "A.Bin2", but directly using rmvbin function in bindata package:
 require("bindata")
@@ -300,7 +331,7 @@ D <- D +
     margprob = c(0.5, 0.5),
     bincorr = matrix(c(1,0.75,0.75,1), ncol=2))
 Dset4 <- set.DAG(D)
-sim(Dset4, n = 50)
+sim(Dset4, n = 10)
 
 # Time-varying multivar node (3 time-points, 2 dimensional normal):
 D <- DAG.empty()
@@ -309,6 +340,6 @@ D <- D +
     mean = c(0,1),
     sigma = matrix(rep(0.75,4), ncol=2))
 Dset5 <- set.DAG(D)
-sim(Dset5, n = 50)
+sim(Dset5, n = 10)
 }
 

@@ -1,6 +1,6 @@
 # ************************************************************************************
-# TO DO: 
-  # x) Extend the checking for non_TD pars to TD parents in find_FormVars() 
+# TO DO:
+  # x) Extend the checking for non_TD pars to TD parents in find_FormVars()
   # x) For non_TD var outside of the DAG also check that length(non_TD) < 2
   # x) => Want to allow vectors in user.env to be referenced as uservec[t]
   # x) => This will allow avoiding declaration of node attributes as nodes, will save a ton of memory
@@ -30,7 +30,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
   # combine all default vectorized funs + the user-specified vectorized function in global :
   vector_fcns_all <- c(vector_fcns, vector_ops_fcns, vector_math_fcns, vecfun.get())
   curr.dfvarnms <- data.env[["ANCHOR_ALLVARNMS_VECTOR_0"]]
-  # 
+  #
   # (not USED) SUMMARY FCNS (non-vectorized): these will be always turned into apply(arg, 1, func)
   # summary_fcns <- c("c","all","any","sum","mean","prod","min","max","range")
   # (not USED) FOR FUTURE IMPLEMENTATION: FUNCTION NAMES THAT AREN'T ALLOWED IN FORMULA EXPRESSIONS:
@@ -39,11 +39,11 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
   # * recursively parse the call tree structure for a given expression, find call to '[' or a name, then output that name (TDVar name will be called as TDVar[])
 
   # ************************************************************************************
-  # TO DO: 
+  # TO DO:
   # Extend the same checks for non_TD var existance to TD vars => Want to allow vectors in user.env to be referenced as uservec[t]
   # When TDvar_t not in DAG, check that TD_var exists in user.env, check that its a vector and that length matches t length
   # Decide between method I & II for finding non_TD parents
-  # Curently using method I for non_TD vars, plotting DAG will exclude 
+  # Curently using method I for non_TD vars, plotting DAG will exclude
   # ************************************************************************************
 
   find_FormVars <- function(x, vartype="TD") {
@@ -59,7 +59,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       dprint("is x in DAG? " %+% is.inDAG);
 
       # CHECK FOR UNDECLARED VARS: Verify if x is defined in user env if (!notis.fun & !is.inDAG)
-      # exists.x <- exists(as.character(x), where = user.env, inherits = FALSE) 
+      # exists.x <- exists(as.character(x), where = user.env, inherits = FALSE)
       exists.x <- exists(as.character(x), where = user.env, inherits = TRUE)
       dprint("does x exist in user.env? " %+% exists.x)
 
@@ -186,8 +186,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
           x[[1]] <- quote(rowMeans)	# check if the function is 'mean', in which case replace call with 'colMeans'
           as.call(lapply(x, modify_call, where = where))	# continue parsing recursively, turning result back into call
         } else if (identical(x[[1]], quote(structure))) {
-          modify_call(as.call(x[[2]]), where = where)  # continue parsing recursively, turning result back into call          
-          # as.call(lapply(x[[2]], modify_call, where = where))  # continue parsing recursively, turning result back into call          
+          modify_call(as.call(x[[2]]), where = where)  # continue parsing recursively, turning result back into call
         } else {
           nargs <- length(x)-1
           if (nargs > 1) { # IF NON-VECTORIZED func has more than one argument, combine all args into one with cbind_mod
@@ -305,7 +304,7 @@ eval.nodeform.asis <- function(expr_call, expr_str, self, data.env) {
 # 2) finds all time-dep var names (Var[]) and non-time dep var names (Var)
 # 3) replaces all summary function calls, s.a., func(Var) with apply(Var, 1, func)
 # 4) replaces all calls to functions with several vectors, s.a., func(X1,X2,X3) with func(cbind(X1,X2,X3))
-# 5) evaluates final expression in a special environment where: 
+# 5) evaluates final expression in a special environment where:
   # -) variables that have been simulated so far in obs.df are accessible
   # -) the subset vector function '[' is replaces with its specialized version, with syntax TDVar[t_range] for subsetting columns of the observed data by time
   # -) vecapply() function that is a wrapper for apply, converts vector to a 1 col matrix
@@ -394,7 +393,7 @@ parse.sVar.out <- function(sVar.idx, self, data.df) {
 #' \item{sW_nms} ...
 #' \item{Kmax} ...
 #' }
-#' Evaluates and and stores arbitrary summary measure expressions. 
+#' Evaluates and and stores arbitrary summary measure expressions.
 #' The expressions (exprs_list) are evaluated in the environment of the input data.frame.
 #' @importFrom R6 R6Class
 #' @importFrom assertthat assert_that
@@ -412,7 +411,7 @@ Define_sVar <- R6Class("Define_sVar",
     asis.flags = list(),          # list of flags, TRUE for "as is" node expression evaluation
     ReplMisVal0 = FALSE,          # vector of indicators, for each TRUE sVar.expr[[idx]] will replace all NAs with gvars$misXreplace (0)
     sVar.misXreplace = NULL,      # replacement values for missing sVar, vector of length(exprs_list)
-    sVar.noname = FALSE,          # vector, for each TRUE sVar.expr[[idx]] ignores user-supplied name and generates names automatically    
+    sVar.noname = FALSE,          # vector, for each TRUE sVar.expr[[idx]] ignores user-supplied name and generates names automatically
 
     exprs_list = list(),          # sVar expressions as a list
     sVar.expr.names = character(),# user-provided name of each sVar.expr
@@ -438,10 +437,10 @@ Define_sVar <- R6Class("Define_sVar",
           Nsamp <- env$self$Nsamp
           assert_that(!is.null(Nsamp))
           if (Nsamp > 0) {
-            cbind_res <- matrix(cbind_res, nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)  
+            cbind_res <- matrix(cbind_res, nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)
           } else {
             cbind_res <- matrix(nrow = Nsamp, ncol = ncol(cbind_res), byrow = TRUE)
-          } 
+          }
         }
         dprint("cbind_res"); dprint(cbind_res)
         cbind_res
@@ -467,16 +466,16 @@ Define_sVar <- R6Class("Define_sVar",
         if (identical(class(indx),"logical")) indx <- which(indx)
 
         # ******* NOTE *******
-        # Don't like the current implementation that defines TDvars as characters and then returns a matrix by cbinding 
+        # Don't like the current implementation that defines TDvars as characters and then returns a matrix by cbinding
         # the existing columins in existing data.frame. This is possibly wasteful. Could we instead subset the existing data.frame?
         TDvars <- var.chr%+%"_"%+%indx
         # Checking the variables paste0(var, "_", indx) exist in simulated data.frame environment:
         dprint("ANCHOR_ALLVARNMS_VECTOR_0:"); dprint(env[["ANCHOR_ALLVARNMS_VECTOR_0"]])
 
-        # ******* TO DO ******* 
+        # ******* TO DO *******
         # EXTEND TO CHECKING FOR TDvar IN ENCLOSING ENVIRONMENT (user.env) AS WELL IF TDvar_t doesn't exist in the data
         # IF TDvar exists check that its a vector of appropriate length, index it accordinly (using which(t%in%tvec))
-        # will need to first eval such vector the variable as in: 
+        # will need to first eval such vector the variable as in:
         # var.val <- eval(var, envir = env)
         existsTDVar <- function(TDvar_t) TDvar_t %in% env[["ANCHOR_ALLVARNMS_VECTOR_0"]]
         check_exist <- sapply(TDvars, existsTDVar)
@@ -518,7 +517,7 @@ Define_sVar <- R6Class("Define_sVar",
         if(inherits(var.val, "try-error")) {
           stop("\n...attempt to evaluate network indexing variable failed...")
         }
-        
+
         # if result is one column matrix -> convert to a vector, if matrix has >1 columns -> throw an error:
         if (length(dim(var.val)) > 1) {
           var.chr <- colnames(var.val)[1]
@@ -563,7 +562,7 @@ Define_sVar <- R6Class("Define_sVar",
       dprint("self$sVar.expr.names: "); dprint(self$sVar.expr.names)
 
       self$asis.flags <- attributes(exprs_list)[["asis.flags"]]
-      if (is.null(self$asis.flags)) { 
+      if (is.null(self$asis.flags)) {
         self$asis.flags <- as.list(rep.int(FALSE, length(exprs_list)))
         names(self$asis.flags) <- names(exprs_list)
       }
@@ -654,7 +653,7 @@ Define_sVar <- R6Class("Define_sVar",
       assert_that("NetIndClass" %in% class(netind_cl))
       self$netind_cl <- netind_cl
       invisible(self)
-    }    
+    }
   ),
 
   active = list(

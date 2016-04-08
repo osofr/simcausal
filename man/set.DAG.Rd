@@ -135,17 +135,16 @@ D <- set.DAG(D)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 4: Define 34 Bernoulli nodes, or 2 Bernoulli nodes over 17 time points,
-# prob argument contains .() expression that is immediately evaluated in the calling
-# environment (.(t_end) will evaluate to 16)
 #---------------------------------------------------------------------------------------
 t_end <- 16
 D <- DAG.empty()
 D <- D +
 node("L2", t = 0:t_end, distr = "rbinom",
-	prob = ifelse(t == .(t_end), 0.5, 0.1), size = 1) +
+	prob = ifelse(t == t_end, 0.5, 0.1), size = 1) +
 node("L1", t = 0:t_end, distr = "rbinom",
 	prob = ifelse(L2[0] == 1, 0.5, 0.1), size = 1)
 D <- set.DAG(D)
+sim(D, n=10)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 5: Defining new distribution function 'rbern', defining and passing a custom
@@ -164,7 +163,7 @@ node("W1", distr = "rbern", prob = 0.05) +
 node("W2", distr = "rbern", prob = customfun(W1, 0.5)) +
 node("W3", distr = "rbern", prob = ifelse(W1 == 1, 0.5, 0.1))
 D1d <- set.DAG(D, vecfun = c("customfun"))
-sim(D1d, n = 50, rndseed = 1)
+sim(D1d, n = 10, rndseed = 1)
 
 
 #---------------------------------------------------------------------------------------
@@ -193,7 +192,7 @@ D <- D +
     distr = "rconst",
     const = -0.5 + 1.2*A + 0.1*W1 + 0.3*W2 + 0.2*W3 + 0.2*I + U.Y)
 Dset1 <- set.DAG(D, latent.v = c("I", "U.Y"))
-sim(Dset1, n = 50, rndseed = 1)
+sim(Dset1, n = 10, rndseed = 1)
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 7: Multivariate random variables
@@ -201,22 +200,29 @@ sim(Dset1, n = 50, rndseed = 1)
 require("mvtnorm")
 D <- DAG.empty()
 
-# 3 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
+# 2 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
 D <- D +
-  node(c("X1","X2","X3"), distr = "rmvnorm", mean = c(0,1,2))
+  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)"))
+# Defining exactly the same mulivariate distribution using a more natural syntax:
+D <- D + node(c("new.X1","new.X2"), distr = "rmvnorm", mean = .(c(0,1)))
+
+# Similarly, can define a degenerate (rconst) multivariate node:
+D <- D + node(c("X1.1", "X1.2"), distr="rconst", const=.(cbind(X1, X2)))
 
 # Bivariate normal (correlation coef 0.75):
 D <- D +
   node(c("Y1","Y2"), distr = "rmvnorm",
-    mean = c(0,1),
-    sigma = matrix(c(1,0.75,0.75,1), ncol=2))
+    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)"))
+# Same binariate normal with a more natural simcausal syntax:
+D <- D +
+  node(c("new.Y1","new.Y2"), distr = "rmvnorm",
+    mean = .(c(0,1)), sigma = .(matrix(c(1,0.75,0.75,1)), ncol=2))
 
 # Can use any component of such multivariate nodes when defining future nodes:
 D <- D + node("A", distr = "rconst", const = 1 - X1)
-# Can also define a degenerate (rconst) multivariate node:
-D <- D + node(c("X1.1", "X1.2"), distr="rconst", const=cbind(X1, X2))
+
 Dset1 <- set.DAG(D, verbose = TRUE)
-sim(Dset1, n = 50)
+sim(Dset1, n = 10)
 
 # Bivariate uniform copula using copula package (correlation coef 0.75):
 require("copula")
@@ -225,14 +231,14 @@ D <- D +
   node(c("Y1","Y2"), distr = "rCopula",
     copula = normalCopula(0.75, dim = 2))
 Dset2 <- set.DAG(D)
-sim(Dset2, n = 50)
+sim(Dset2, n = 10)
 
 # Bivariate binomial from previous copula, with same correlation:
 vecfun.add("qbinom")
 D <- D + node("A.Bin1", distr = "rconst", const = qbinom(Y1, 10, 0.5))
 D <- D + node("A.Bin2", distr = "rconst", const = qbinom(Y2, 15, 0.7))
 Dset3 <- set.DAG(D)
-sim(Dset3, n = 50)
+sim(Dset3, n = 10)
 
 # Same as "A.Bin1" and "A.Bin2", but directly using rmvbin function in bindata package:
 require("bindata")
@@ -242,7 +248,7 @@ D <- D +
     margprob = c(0.5, 0.5),
     bincorr = matrix(c(1,0.75,0.75,1), ncol=2))
 Dset4 <- set.DAG(D)
-sim(Dset4, n = 50)
+sim(Dset4, n = 10)
 
 # Time-varying multivar node (3 time-points, 2 dimensional normal):
 D <- DAG.empty()
@@ -251,6 +257,6 @@ D <- D +
     mean = c(0,1),
     sigma = matrix(rep(0.75,4), ncol=2))
 Dset5 <- set.DAG(D)
-sim(Dset5, n = 50)
+sim(Dset5, n = 10)
 }
 

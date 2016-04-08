@@ -5,18 +5,18 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' Define a Network Generator
 #'
 #' Define a network generator by providing a function (using the argument \code{netfun}) which will simulate a network of connected friends for observations \code{i} in \code{1:n}.
-#' This network then serves as a backbone for defining and simulating from the structural equation models for dependent data. 
+#' This network then serves as a backbone for defining and simulating from the structural equation models for dependent data.
 #' In particular, the network allows new nodes to be defined as functions of the previously simulated node values of \code{i}'s friends, across all observations \code{i}.
 #' Let \code{F_i} denote the set of friends of one observation \code{i} (observations in \code{F_i} are assumed to be "connected" to \code{i}) and
 #' refer to the union of these sets \code{F_i} as a "network" on \code{n} observations, denoted by \code{F}.
 #' A user-supplied network generating function \code{netfun} should be able to simulate such network \code{F} by returning a matrix of \code{n} rows,
 #' where each row \code{i} defines a friend set \code{F_i}, i.e., row \code{i} should be a vector of observations in \code{1:n} that are connected to \code{i} (friends of \code{i}),
 #' with the remainder filled by \code{NA}s.
-#' Each friend set \code{F_i} can contain up to \code{Kmax} unique indices \code{j} from \code{1:n}, except for \code{i} itself. 
-#' \code{F_i} is also allowed to be empty (row \code{i} has only \code{NA}s), implying that \code{i} has no friends. 
-#' The functionality is illustrated in the examples below. For additional information see Details. 
+#' Each friend set \code{F_i} can contain up to \code{Kmax} unique indices \code{j} from \code{1:n}, except for \code{i} itself.
+#' \code{F_i} is also allowed to be empty (row \code{i} has only \code{NA}s), implying that \code{i} has no friends.
+#' The functionality is illustrated in the examples below. For additional information see Details.
 #' To learn how to use the \code{node} function for defining a node as a function of the friend node values, see Syntax and Network Summary Measures.
-#' 
+#'
 #' Without the network of friends, the \code{DAG} objects constructed by calling the \code{node} function can only specify structural equation models for independent and identically distributed data.
 #' That is, if no network is specified, for each observation \code{i} a node can be defined conditionally only on \code{i}'s own previously simulated node values.
 #' As a result, any two observations simulated under such data-generating model are always independent and identically distributed.
@@ -26,7 +26,7 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' on the past node values of \code{i}'s friends (observations in \code{F_i}).
 #' The network of friends can be used in subsequent calls to \code{node} function where new nodes (random variables) defined by the \code{node} function can depend on the node values of \code{i}'s friends
 #' (observations in the set \code{F_i}). During simulation it is assumed observations on \code{F_i} can simultaneously influence \code{i}.
-#' 
+#'
 #' Note that the current version of the package does not allow combining time-varying node indexing \code{Var[t]} and network node indexing \code{Var[[net_indx]]}
 #' for the same data generating distribution.
 #'
@@ -34,15 +34,13 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' Formulas can refer to standard or user-specified R functions that must only apply to the values of previously defined nodes
 #' (i.e. node(s) that were called prior to \code{network()} function call).
 #'
-#' To force the immediate evaluation of any variable inside these expressions wrap the variable with \code{.()} function, see Example 2 for \code{.(t_end)} in \code{\link{node}}.
-#' 
 #' @section Syntax:
-#' The \code{network} function call that defines the network of friends can be added to a growing \code{DAG} object by using \code{'+'} syntax, much like a new \code{node} is added to a \code{DAG}. 
+#' The \code{network} function call that defines the network of friends can be added to a growing \code{DAG} object by using \code{'+'} syntax, much like a new \code{node} is added to a \code{DAG}.
 #' Subsequently defined nodes (\code{node} function calls) can employ the double square bracket subsetting syntax to reference previously simulated node values
 #' for specific friends in \code{F_i} simultaneously across all observations \code{i}.
-#' For example, \code{VarName[[net_indx]]} can be used inside the \code{node} formula to reference the node \code{VarName} values of \code{i}'s friends in \code{F_i[net_indx]}, 
+#' For example, \code{VarName[[net_indx]]} can be used inside the \code{node} formula to reference the node \code{VarName} values of \code{i}'s friends in \code{F_i[net_indx]},
 #' simultaneously across all \code{i} in \code{1:n}.
-#' 
+#'
 #' The friend subsetting index \code{net_indx} can be any non-negative integer vector that takes values from 0 to \code{Kmax},
 #' where 0 refers to the \code{VarName} node values of observation \code{i} itself (this is equivalent to just using \code{VarnName} in the \code{node} formula),
 #' \code{net_indx} value of 1 refers to node \code{VarName} values for observations in \code{F_i[1]}, across all \code{i} in \code{1:n}
@@ -61,7 +59,7 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' Similarly, use \code{mean(VarName[[net_indx]])} to define a summary measure as a mean of \code{VarName} values of friends in \code{F_i[net_indx]}, across all \code{i}.
 #' For more details on defining such summary functions see the \code{simcausal} vignette.
 #'
-#' @param netfun Character name of the user-defined network generating function, can be any R function that returns a matrix of friend IDs of dimension \code{c(n, Kmax)}. 
+#' @param netfun Character name of the user-defined network generating function, can be any R function that returns a matrix of friend IDs of dimension \code{c(n, Kmax)}.
 #' The function must accept a named argument \code{n} that specifies the total sample size of the network.
 #' The matrix of network IDs should have \code{n} rows and \code{Kmax} columns, where each row \code{i} contains a vector of unique IDs in \code{1:n} that are \code{i}'s friends
 #' (observations that can influence \code{i}'s node distribution), except for \code{i} itself.
@@ -70,9 +68,9 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' allowing for network sampling itself to be dependent on the previously simulated node values, as shown in Example 2.
 #' @param name Character string specifiying the name of the current network, may be used for adding new network that replaces the existing one (resample previous network)
 # @param Kmax Either an R expression that evaluates to an integer constant or an integer specifying the maximum number of friends (connections) any simulated observation can have.
-#' @param ... Named arguments specifying distribution parameters that are accepted by the network sampling function in \code{netfun}. 
+#' @param ... Named arguments specifying distribution parameters that are accepted by the network sampling function in \code{netfun}.
 #' These parameters can be R expressions that are themselves formulas of the past node names.
-#' @param params A list of additional named parameters to be passed on to the \code{netfun} function. 
+#' @param params A list of additional named parameters to be passed on to the \code{netfun} function.
 #' The parameters have to be either constants or character strings of R expressions of the past node names.
 #' @return A list containing the network object(s) of type \code{DAG.net}, this will be utilized when data is simulated with \code{sim} function.
 #' @example tests/examples/example.simnets.R
@@ -80,7 +78,7 @@ is.integerish <- function (x) is.integer(x) || (is.numeric(x) && all(x == as.int
 #' @seealso \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}
 #' @export
 network <- function(name, netfun, ..., params = list()) {
-# network <- function(name, netfun, Kmax, ..., params = list()) {  
+# network <- function(name, netfun, Kmax, ..., params = list()) {
   env <- parent.frame()
   if (missing(netfun)) stop("netfun argument must be specified")
   # collect all distribution parameters with delayed evaluation (must be named)
@@ -121,14 +119,14 @@ network <- function(name, netfun, ..., params = list()) {
 }
 
 # ------------------------------------------------------------------------------------
-# 
+#
 # ------------------------------------------------------------------------------------
 #' Convert igraph Network Object into Sparse Adjacency Matrix
-#' 
+#'
 #' Convert igraph network object into its sparse adjacency matrix representation using \code{as_adjacency_matrix} function from the \code{igraph} package.
 #' @param igraph_network Network as an \code{igraph} object
-#' @return Sparase adjacency matrix returned by \code{igraph::as_adjacency_matrix} function. 
-#' NOTE: for directed graphs the friend IDs pointing into vertex \code{i} are assumed to be listed in the column \code{i} 
+#' @return Sparase adjacency matrix returned by \code{igraph::as_adjacency_matrix} function.
+#' NOTE: for directed graphs the friend IDs pointing into vertex \code{i} are assumed to be listed in the column \code{i}
 #' (i.e, \code{which(adjmat[,i])} are friends of \code{i}).
 # @family network functions
 #' @seealso \code{\link{network}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}};
@@ -143,15 +141,15 @@ igraph.to.sparseAdjMat <- function(igraph_network) {
 #' @param sparseAdjMat Network represented as a sparse adjacency matrix (S4 class object \code{dgCMatrix} from package \code{Matrix}).
 #' NOTE: The friends (row numbers) of observation \code{i} are assumed to be listed in column \code{i}
 #' (i.e, \code{which(sparseAdjMat[,i])} are friends of \code{i}).
-#' @param trimKmax Trim the maximum number of friends to this integer value. If this argument is not missing, 
+#' @param trimKmax Trim the maximum number of friends to this integer value. If this argument is not missing,
 #'  the conversion network matrix obtained from \code{sparseAdjMat} will be trimmed, so that each observation has at most \code{trimKmax} friends.
 #'  The trimming initiates from the last column of the network ID matrix, removing columns until only \code{trimKmax} columns are left.
 #' @return A named list with 3 items: 1) \code{NetInd_k}; 2) \code{nF}; and 3) \code{Kmax}.
-#' 1) \code{NetInd_k} - matrix of network IDs of dimension \code{(n=nrow(sparseAdjMat),Kmax)}, where each row \code{i} consists of the network IDs (friends) for observation \code{i}. 
+#' 1) \code{NetInd_k} - matrix of network IDs of dimension \code{(n=nrow(sparseAdjMat),Kmax)}, where each row \code{i} consists of the network IDs (friends) for observation \code{i}.
 #' Remainders are filled with NAs.
 #' 2) \code{nF} - integer vector of length \code{n} specifying the number of friends for each observation.
 #' 3) \code{Kmax} - integer constant specifying the maximum observed number of friends in input \code{sparseAdjMat} (this is the column dimension for the output matrix \code{NetInd_k}).
-#' 
+#'
 # @family network functions
 #' @seealso \code{\link{network}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}; \code{\link{igraph.to.sparseAdjMat}};
 #' @export
@@ -201,7 +199,7 @@ sparseAdjMat.to.NetInd <- function(sparseAdjMat, trimKmax) {
 #' Convert Network IDs Matrix into Sparse Adjacency Matrix
 #'
 #' Convert \code{simcausal} network ID matrix (\code{NetInd_k}) into a network represented by a sparse adjacency matrix.
-#' @param NetInd_k Matrix of network IDs of dimension \code{(n=nrow(sparseAdjMat),Kmax)}, 
+#' @param NetInd_k Matrix of network IDs of dimension \code{(n=nrow(sparseAdjMat),Kmax)},
 #' where each row \code{i} consists of the network IDs (row number of friends) of observation \code{i}. Remainders are filled with \code{NA}s.
 #' @param nF Integer vector of length \code{n} specifying the number of friends for each observation.
 #' @return Network represented as a sparse adjacency matrix (S4 class object \code{dgCMatrix} from package \code{Matrix}).
@@ -226,9 +224,9 @@ NetInd.to.sparseAdjMat <- function(NetInd_k, nF) {
 #'
 #' Uses \code{graph_from_adjacency_matrix} function from the \code{igraph} package to convert the network in sparse adjacency matrix format into \code{igraph} network object.
 #' @param sparseAdjMat Network represented as a sparse adjacency matrix (S4 class object \code{dgCMatrix} from package \code{Matrix}).
-#' NOTE: for directed graphs the friend IDs pointing into vertex \code{i} are assumed to be listed in the column \code{i} 
+#' NOTE: for directed graphs the friend IDs pointing into vertex \code{i} are assumed to be listed in the column \code{i}
 #' (i.e, \code{which(sparseAdjMat[,i])} are friends of \code{i}).
-#' @param mode Character scalar, passed on to \code{igraph::graph_from_adjacency_matrix}, specifies how igraph should interpret the supplied matrix. 
+#' @param mode Character scalar, passed on to \code{igraph::graph_from_adjacency_matrix}, specifies how igraph should interpret the supplied matrix.
 #' See \code{?igraph::graph_from_adjacency_matrix} for details.
 #' @return A list containing the network object(s) of type \code{DAG.net}.
 #' @seealso \code{\link{network}}; \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}};
@@ -240,10 +238,10 @@ sparseAdjMat.to.igraph <- function(sparseAdjMat, mode = "directed") {
 #-----------------------------------------------------------------------------
 # ALL NETWORK VARIABLE NAMES MUST BE CONSTRUCTED BY CALLING THIS FUNCTION.
 # In the future might return the network variable (column vector) itself.
-# Helper function that for given variable name (varnm) and friend index (fidx) 
-# returns the character name of that network variable varnm[fidx], 
-# for fidx = 0 (var itself), ..., kmax. fidx can be a vector, in which case a 
-# character vector of network names is returned. If varnm is also a vector, a 
+# Helper function that for given variable name (varnm) and friend index (fidx)
+# returns the character name of that network variable varnm[fidx],
+# for fidx = 0 (var itself), ..., kmax. fidx can be a vector, in which case a
+# character vector of network names is returned. If varnm is also a vector, a
 # character vector for all possible combinations of (varnm x fidx) is returned.
 # OUTPUT format: Varnm_net.j:
 #-----------------------------------------------------------------------------
@@ -271,7 +269,7 @@ netvar <- function(varnm, fidx) {
 ## ---------------------------------------------------------------------
 #' R6 class for creating and storing a friend matrix (network IDs) for network data
 #'
-#' This R6 class defines fields and methods for creating and storing \code{NetInd_k}, 
+#' This R6 class defines fields and methods for creating and storing \code{NetInd_k},
 #' a matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
 #'
 #' @docType class
@@ -287,16 +285,16 @@ netvar <- function(varnm, fidx) {
 #' }
 #' @section Methods:
 #' \describe{
-#'   \item{\code{new(nobs, Kmax = 1)}}{Uses \code{nobs} and \code{Kmax} to instantiate an object of R6 class and pre-allocate memory 
+#'   \item{\code{new(nobs, Kmax = 1)}}{Uses \code{nobs} and \code{Kmax} to instantiate an object of R6 class and pre-allocate memory
 #'          for the future network ID matrix.}
 #'   \item{\code{makeNetInd.fromIDs(Net_str, IDs_str = NULL, sep = ' ')}}{Build the matrix of network IDs (\code{NetInd_k}) from IDs string vector,
-#'          all friends of one observation \code{i} are located in a string Net_str[i], with two distinct friend IDs of \code{i} 
-#'          separated by character \code{sep}. If \code{IDs_str} is NULL it is assumed that the friends in Net_str are 
+#'          all friends of one observation \code{i} are located in a string Net_str[i], with two distinct friend IDs of \code{i}
+#'          separated by character \code{sep}. If \code{IDs_str} is NULL it is assumed that the friends in Net_str are
 #'          actual row numbers in \code{1:nobs}, otherwise IDs from Net_str will be used for looking up the observation row numbers in \code{IDs_str}.}
-#'   \item{\code{make.nF(NetInd_k = self$NetInd_k, nobs = self$nobs, Kmax = self$Kmax)}}{This method calculates the integer number of 
-#'         friends for each row of the network ID matrix (\code{self$NetInd_k}). The result is assigned to a field \code{self$nF} and 
+#'   \item{\code{make.nF(NetInd_k = self$NetInd_k, nobs = self$nobs, Kmax = self$Kmax)}}{This method calculates the integer number of
+#'         friends for each row of the network ID matrix (\code{self$NetInd_k}). The result is assigned to a field \code{self$nF} and
 #'         is returned invisibly.}
-#'   \item{\code{mat.nF(nFnode)}}{\code{nFnode} - the character name for the number of friends variable that is assigned as a column 
+#'   \item{\code{mat.nF(nFnode)}}{\code{nFnode} - the character name for the number of friends variable that is assigned as a column
 #'   name to a single column matrix in \code{self$nF}.}
 #' }
 #' @export

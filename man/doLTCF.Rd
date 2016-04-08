@@ -37,7 +37,7 @@ lDAG <- lDAG +
 	node(name = "L2", t = 1:t_end, distr = "rbern",
  	prob = ifelse(A1[t - 1]  ==  1, 0.1,
  			ifelse(L2[t-1] == 1, 0.9,
- 			  min(1,0.1 + t/.(t_end))))) +
+        min(1,0.1 + t/t_end)))) +
 	node(name = "A1", t = 1:t_end, distr = "rbern",
  	prob = ifelse(A1[t - 1]  ==  1, 1,
  			 ifelse(L2[0] == 0, 0.3,
