@@ -2,7 +2,7 @@
 % Please edit documentation in R/distributions.R
 \name{rconst}
 \alias{rconst}
-\title{Constant (Degenerate) Node Distribution}
+\title{Constant (Degenerate) Distribution (Returns its Own Argument \code{const})}
 \usage{
 rconst(n, const)
 }

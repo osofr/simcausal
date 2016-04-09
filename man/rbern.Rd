@@ -2,7 +2,7 @@
 % Please edit documentation in R/distributions.R
 \name{rbern}
 \alias{rbern}
-\title{Bernoulli Node Distribution}
+\title{Random Sample from Bernoulli Distribution}
 \usage{
 rbern(n, prob)
 }

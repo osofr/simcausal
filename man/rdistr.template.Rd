@@ -22,10 +22,15 @@ A vector of length \code{n}
 Template function for writing \code{SimCausal} custom distribution wrappers.
 }
 \details{
-One of the named arguments must be 'n', this argument is passed on to the function automatically by the package and is assigned to the number of samples that needs to be generated from this distribution.
-Other arguments (in this example arg1 and arg2) must be declared by the user as arguments inside the node() function that uses this distribution,
+One of the named arguments must be 'n', this argument is passed on to the function automatically by
+the package and is assigned to the number of samples that needs to be generated from this distribution.
+Other arguments (in this example arg1 and arg2) must be declared by the user as
+arguments inside the node() function that uses this distribution,
 e.g., \code{node("Node1"}, \code{distr="distr.template"}, \code{arg1 = ...}, \code{arg2 = ...)}.
-Both, arg1 and arg2, can be either numeric constants or formulas involving past node names. The constants get passed on to the distribution function unchanged. The formulas are evaluated inside the environment of the simulated data and are passed on to the distribution functions as vectors.
+Both, arg1 and arg2, can be either numeric constants or formulas involving past node names.
+The constants get passed on to the distribution function unchanged.
+The formulas are evaluated inside the environment of the simulated data and are passed on to the
+distribution functions as vectors.
 The output of the distribution function is expected to be a vector of length n of the sampled covariates.
 }
 
