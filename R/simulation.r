@@ -89,7 +89,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
         } else {
           # stop("error while evaluating node "%+% cur.node$name %+%" expression(s): "%+%expr_str%+%".\n One of the distribution parameters evaluated to an incorrect vector length, check syntax.")
           if (verbose) message("evaluating node "%+% cur.node$name %+%" expression(s): "%+%expr_str%+%
-              ".\n One of the distribution parameters evaluated to non-standard vector length, make sure the distribution function knows how to handle it.")
+              ".\n One of the distribution parameters evaluated to non-standard vector length (its neither 1 nor n), make sure the distribution function knows how to handle it.")
         }
         param
       }
@@ -110,7 +110,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
         } else {
           # stop("error while evaluating node "%+% cur.node$name %+%" expression(s): "%+%expr_str%+%".\n One of the distribution parameters evaluated to an incorrect vector length, check syntax.")
           if (verbose) message("evaluating node "%+% cur.node$name %+%
-              " expression(s): One of the distribution parameters evaluated to a matrix of non-standard dimensions, make sure the distribution function knows how to handle it.")
+              " expression(s): One of the distribution parameters evaluated to a matrix of non-standard dimensions (its neither 1 nor n rows), make sure the distribution function knows how to handle it.")
         }
       } else {
         # print("expr_str"); print(expr_str)

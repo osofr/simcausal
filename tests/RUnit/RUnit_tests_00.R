@@ -929,10 +929,14 @@ test.longparse <- function() {
   datD3
 
   # testing that rep with rcategor.int returns an error (rep functionality not implemented yet):
+  # 04/08/16: This no longer errors, because the responsibility now is on rcategor.int to catch if something is wrong.
   D.error <- D +
     node('A', distr = 'rconst', const = 1/3) +
+      # This expresssion is correct in simcausal syntax, the result of this evaluation is a single vector of length n*3
+      # rcategor.int and rcategor can accept vectors and will think that its being asked to simulate a categorical with
+      # n*3 different categories
     node('group', distr = 'rcategor.int', probs = rep(A, 3))
-  checkException(set.DAG(D.error))
+  # checkException(set.DAG(D.error))
   sim(set.DAG(D.error), n = 20)
 
   # using c instead of rep with rcategor.int works as cbind(A,A,A):
