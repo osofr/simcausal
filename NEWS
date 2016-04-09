@@ -6,7 +6,7 @@ simcausal 0.1
 simcausal 0.1.9
 ==============
 
-* Development version update. 
+* Development version update.
 
 * Added vignette; the node.depr function is no longer supported; updated the documentation for ?simcausal, doLTCF, sim, simobs and simfull, add.action, add.nodes functions; changed examples for node and set.DAG; added .onAttach message;
 
@@ -67,5 +67,10 @@ simcausal 0.5.0
 * Changed the format of plotDAG output. The internal (endogenous) nodes are no longer surrounded by circles. All latent nodes are surrounded by circles, all children of latent nodes are shown with dashed arrow.
 
 * Switched internal storage of simulated data to data.table. The output is always a data.frame.
+
+simcausal 0.5.1
+==============
+
+* More consistent control over non-standard evaluation. Can wrap any R expression supplied as the node argument in .() or eval() to skip all of simcausal non-standard evaluation and checks, this will evaluate the expression in the environment of the data + user calling environment. The default R subsetting operators for '[...]' and '[[...]]' will be applied to all expressions wrapped in .() and hence the simcausal operators for time-varying nodes and networks will not longer be applied. See a separate section in ?node and examples 7,8 for details. One can apply the operator .() to only part of the expression, to avoid simcausal parsing on that specific part as shown in Example 8 with `.(coefAi[t]) * A[t-1]`.
 
 

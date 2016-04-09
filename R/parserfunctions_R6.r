@@ -106,7 +106,8 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
     } else if (is.pairlist(x)) {
       unique(unlist(lapply(x, find_FormVars, vartype)))
     } else {
-      stop("Don't know how to handle type ", typeof(x), call. = FALSE)
+      message("Don't know the expression result type ", typeof(x), call. = FALSE)
+      character()
     }
   }
 
@@ -117,7 +118,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
         x	# Leave unchanged
       } else if (is.call(x)) {
         # reached '[', '[[' or 'c' functions, don't need to parse any deeper, return this subtree intact
-        if (((identical(x[[1]], quote(`[`)) || identical(x[[1]], quote(`[[`))) && is.name(x[[2]])) || identical(x[[1]], quote(c))) {
+        if (((identical(x[[1]], quote(`[`)) || identical(x[[1]], quote(`[[`))) && is.name(x[[2]])) || identical(x[[1]], quote(c)) || identical(x[[1]], quote(.)) || identical(x[[1]], quote(eval))) {
           x # Leave unchanged
         } else {
           atomargs_test <- sapply(2:length(x), function(i) is.atomic(x[[i]]))
@@ -133,7 +134,9 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       } else if (is.pairlist(x)) {
         as.pairlist(lapply(x, eval_atomic, where = where))
       } else { # User supplied incorrect input
-        stop("Don't know how to handle type ", typeof(x), call. = FALSE)
+        message("Don't know the expression result type ", typeof(x), call. = FALSE)
+        # stop("Don't know how to handle type ", typeof(x), call. = FALSE)
+        x # Leave unchanged
       }
     } # end of eval_atomic()
 
@@ -167,7 +170,9 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       if (is.name(x)) dprint("name: "%+%x)
       x	# Leave unchanged
     } else if (is.call(x)) {
-      if (identical(x[[1]], quote(`[`)) && is.name(x[[2]])) {	# reached '[' function, don`t need to parse any deeper, return this subtree intact
+      if (identical(x[[1]], quote(.)) || identical(x[[1]], quote(eval))) { # Call to .() or eval(), so evaluate and don't go any deeper
+        eval(x[[2]], envir = data.env, enclos = user.env)
+      } else if (identical(x[[1]], quote(`[`)) && is.name(x[[2]])) {	# reached '[' function, don`t need to parse any deeper, return this subtree intact
         x
       } else if (identical(x[[1]], quote(`[[`)) && is.name(x[[2]])) { # reached '[[' function, same as above
         x
@@ -209,7 +214,9 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
     } else if (is.pairlist(x)) {
       as.pairlist(lapply(x, modify_call, where = where))
     } else { # User supplied incorrect input
-      stop("Don't know how to handle type ", typeof(x), call. = FALSE)
+      message("Don't know the expression result type ", typeof(x), call. = FALSE)
+      # stop("Don't know how to handle type ", typeof(x), call. = FALSE)
+      x # Leave unchanged
     }
   }
 
@@ -226,6 +233,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
   dprint("TD_t_vnames: "); dprint(TD_t_vnames)
 
   modified_call <- modify_call(eval_atom_call) 			# parse current call and replace any non-vectorized function with apply call (adding cbind_mod if more than one arg)
+
   dprint("modified_call"); dprint(modified_call)
 
   return(list(Vnames = Vnames, TD_vnames = TD_vnames, TD_t_vnames = TD_t_vnames, modified_call = modified_call))

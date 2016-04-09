@@ -199,44 +199,43 @@ sim(Dset1, n = 10, rndseed = 1)
 #---------------------------------------------------------------------------------------
 require("mvtnorm")
 D <- DAG.empty()
-
 # 2 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
 D <- D +
-  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)"))
-# Defining exactly the same mulivariate distribution using a more natural syntax:
-D <- D + node(c("new.X1","new.X2"), distr = "rmvnorm", mean = .(c(0,1)))
-
-# Similarly, can define a degenerate (rconst) multivariate node:
-D <- D + node(c("X1.1", "X1.2"), distr="rconst", const=.(cbind(X1, X2)))
-
-# Bivariate normal (correlation coef 0.75):
-D <- D +
-  node(c("Y1","Y2"), distr = "rmvnorm",
-    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)"))
-# Same binariate normal with a more natural simcausal syntax:
-D <- D +
-  node(c("new.Y1","new.Y2"), distr = "rmvnorm",
-    mean = .(c(0,1)), sigma = .(matrix(c(1,0.75,0.75,1)), ncol=2))
-
-# Can use any component of such multivariate nodes when defining future nodes:
-D <- D + node("A", distr = "rconst", const = 1 - X1)
-
+  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)")) +
+# Equivalent, but more natural syntax .() to define the same distribution as above:
+  node(c("Y1","Y2"), distr = "rmvnorm", mean = .(c(0,1))) +
+# Equivalent to .() is wrapping the expression in eval():
+  node(c("Z1","Z2"), distr = "rmvnorm", mean = eval(c(0,1))) +
+# Can define a degenerate (rconst) multivariate node:
+  node(c("X1.copy", "X2.copy"), distr = "rconst", const = c(X1, X2)) +
+# Same as above, but using .() to force direct evaluation:
+  node(c("Y1.copy", "Y2.copy"), distr="rconst", const=.(cbind(Y1, Y2)))
 Dset1 <- set.DAG(D, verbose = TRUE)
 sim(Dset1, n = 10)
 
-# Bivariate uniform copula using copula package (correlation coef 0.75):
+D <- DAG.empty()
+# Bivariate normal (correlation coef 0.75):
+D <- D +
+  node(c("X1","X2"), distr = "rmvnorm",
+    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)")) +
+# Same binariate normal with a more natural syntax .():
+  node(c("Y1","Y2"), distr = "rmvnorm",
+    mean = .(c(0,1)), sigma = .(matrix(c(1,0.75,0.75,1), ncol=2))) +
+# Can use any component of such multivariate nodes when defining future nodes:
+  node("A", distr = "rconst", const = 1 - X1)
+Dset2 <- set.DAG(D, verbose = TRUE)
+sim(Dset2, n = 10)
+
+# Two ways to define the same bivariate uniform copula:
 require("copula")
 D <- DAG.empty()
 D <- D +
-  node(c("Y1","Y2"), distr = "rCopula",
-    copula = normalCopula(0.75, dim = 2))
-Dset2 <- set.DAG(D)
-sim(Dset2, n = 10)
-
-# Bivariate binomial from previous copula, with same correlation:
+  node(c("X1","X2"), distr = "rCopula", copula = .(normalCopula(0.75, dim = 2)))
 vecfun.add("qbinom")
-D <- D + node("A.Bin1", distr = "rconst", const = qbinom(Y1, 10, 0.5))
-D <- D + node("A.Bin2", distr = "rconst", const = qbinom(Y2, 15, 0.7))
+# Bivariate binomial derived from previous copula, with same correlation:
+D <- D +
+  node(c("A.Bin1", "A.Bin2"), distr = "rconst",
+    const = c(qbinom(X1, 10, 0.5), qbinom(X2, 15, 0.7)))
 Dset3 <- set.DAG(D)
 sim(Dset3, n = 10)
 
@@ -245,18 +244,30 @@ require("bindata")
 D <- DAG.empty()
 D <- D +
   node(c("B.Bin1","B.Bin2"), distr = "rmvbin",
-    margprob = c(0.5, 0.5),
-    bincorr = matrix(c(1,0.75,0.75,1), ncol=2))
-Dset4 <- set.DAG(D)
-sim(Dset4, n = 10)
+    margprob = .(c(0.5, 0.5)),
+    bincorr = .(matrix(c(1,0.75,0.75,1), ncol=2)))
+Dset4b <- set.DAG(D)
+sim(Dset4b, n = 10)
 
-# Time-varying multivar node (3 time-points, 2 dimensional normal):
+# Time-varying multivar node (3 time-points, 2 dimensional normal)
+# plus changing the mean over time:
 D <- DAG.empty()
 D <- D +
   node(c("X1", "X2"), t = 0:2, distr = "rmvnorm",
-    mean = c(0,1),
-    sigma = matrix(rep(0.75,4), ncol=2))
-Dset5 <- set.DAG(D)
-sim(Dset5, n = 10)
+    mean = .(c(0,1)) + t,
+    sigma = .(matrix(rep(0.75,4), ncol=2)))
+Dset5b <- set.DAG(D)
+sim(Dset5b, n = 10)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 8: Combining simcausal non-standard evaluation with .() forced evaluation
+#---------------------------------------------------------------------------------------
+coefAi <- 1:10
+D <- DAG.empty()
+D <- D +
+  node("A", t = 1, distr = "rbern", prob = 0.5) +
+  node("A", t = 2:10, distr = "rconst", const = .(coefAi[t]) * A[t-1])
+Dset8 <- set.DAG(D)
+sim(Dset8, n = 10)
 }
 

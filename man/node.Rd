@@ -9,22 +9,32 @@ node(name, t, distr, EFU, order, ..., params = list(), asis.params = list())
 \arguments{
 \item{name}{Character node name or a vector of names when specifying a multivariate node. For time-dependent nodes the names will be automatically expanded to a scheme "name_t" for each t provided specified.}
 
-\item{t}{Node time-point(s). Allows specification of several time-points when t is a vector of positive integers, in which case the output will consist of a named list of length(t) nodes, corresponding to each value in t.}
+\item{t}{Node time-point(s). Allows specification of several time-points when t is a vector of positive integers, in which case the output will consist of a
+named list of length(t) nodes, corresponding to each value in t.}
 
-\item{distr}{Character name of the node distribution, can be a standard distribution R function, s.a. rnorm, rbinom, runif or user defined. The function must accept a named argument "n" to specify the total sample size. Distributional parameters (arguments) must be passed as either named arguments to node or as a named list of parameters "params".}
+\item{distr}{Character name of the node distribution, can be a standard distribution R function, s.a. rnorm, rbinom, runif or user defined.
+The function must accept a named argument "n" to specify the total sample size.
+Distributional parameters (arguments) must be passed as either named arguments to node or as a named list of parameters "params".}
 
-\item{EFU}{End-of-Follow Up flag for designating a survival/censoring type node, only applies to Bernoulli nodes. When \code{EFU=TRUE} this node becomes an indicator for the end of follow-up event (censoring, end of study, death, etc).
-When simulated variable with this node distribution evaluates to value 1 subsequent nodes with higher temporal \code{order} values will be set to NA by default (or imputed with carry forward imputation, depending on the settings of the \code{sim} function).
+\item{EFU}{End-of-Follow Up flag for designating a survival/censoring type node, only applies to Bernoulli nodes. When \code{EFU=TRUE} this node becomes an indicator for the end of follow-up event
+(censoring, end of study, death, etc).
+When simulated variable with this node distribution evaluates to value 1 subsequent nodes with higher temporal \code{order} values will be set to NA by default
+(or imputed with carry forward imputation, depending on the settings of the \code{sim} function).
 This can only be set to \code{TRUE} and should be omitted otherwise.}
 
-\item{order}{An optional integer parameter specifying the order in which these nodes will be sampled. The value of order has to start at 1 and be unique for each new node, can be specified as a range / vector and has to be of the same length as the argument \code{t} above. When order is left unspecified it will be automatically inferred based on the order in which the node(s) were added in relation to other nodes. See Examples and Details below.}
+\item{order}{An optional integer parameter specifying the order in which these nodes will be sampled. The value of order has to start at 1 and be unique for each new node,
+can be specified as a range / vector and has to be of the same length as the argument \code{t} above.
+When order is left unspecified it will be automatically inferred based on the order in which the node(s) were added in relation to other nodes. See Examples and Details below.}
 
 \item{...}{Named arguments specifying distribution parameters that are accepted by the \code{distr} function. The parameters can be R expressions that are themselves formulas of the past node names.}
 
 \item{params}{A list of additional named parameters to be passed on to the \code{distr} function. The parameters have to be either constants or character strings of R expressions of the past node names.}
 
-\item{asis.params}{(ADVANCED USE) A list of additional named distributional parameters that will be evaluated "as is", inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
-There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}). Time varying nodes should be refernced by their names as they appear in the simulated data, as in \code{TVar_t}.}
+\item{asis.params}{(ADVANCED USE) A list of additional named distributional parameters that will be evaluated "as is",
+inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
+There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}).
+Time varying nodes should be referenced by their names as they appear in the simulated data, as in \code{TVar_t}.
+The equivalent syntax is to wrap the original expression with \code{.(...)} or \code{eval(...)}. See the details description below, also see examples 7 and 8.}
 }
 \value{
 A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
@@ -51,8 +61,8 @@ then all the following nodes with that measurement (in terms of higher \code{t} 
 \section{Node formulas (parameters of the distribution)}{
 
 
-Each formula of an input node is an evaluable R expression. All formulas are delayed in the evaluation until the simulation time.
-Formulas can refer to standard or user-specified R functions that must only apply to the values of parent nodes,
+Each user-supplied argument to the node function is an evaluable R expression, their evaluation is delayed until the actual simulation time.
+These arguments can refer to standard or user-specified R functions that must only apply to the values of parent nodes,
 i.e. a subset of the node(s) with an \code{order} value strictly lower than that of the node characterized by the formula.
 Formulas must reference the parent nodes with unique \code{name} identifiers, employing the square bracket vector subsetting \code{name[t]} for referencing a
 parent node at a particular time point \code{t} (if any time-points were specified).
@@ -61,34 +71,38 @@ When an input node is used to define several nodes (i.e., several measurement of
 to each node indexed by a given time point denoted by \code{t}. This generic expression \code{t} can then be referenced within a formula to simultaneously identify a
 different set of parent nodes for each time point as illustrated below. Note that the parents of each node represented by a given \code{node} object are implicitly defined
 by the nodes referenced in formulas of that \code{node} call.
-
-(ADVANCED USE) All distribution parameters (e.g., \code{mean}, \code{probs}, \code{sd}, \code{unifmin} and \code{unifmax}) are interpreted by delayed evaluation,
-to force immediate evaluation of a variable \code{Var} wrap the variable inside \code{.()} function, as in \code{.(Var)}. See Example 2 for a working example that evaluates \code{.(t_end)} variable.
 }
 
-\section{Five types of evaluation for node function arguments}{
+\section{Different types of evaluation for node function arguments}{
 
 
-There is a great deal of flexibility in the way in which the \code{node} function arguments can be evaluated.
+There is quite a bit of flexibility in the way in which the \code{node} function arguments can be evaluated.
 By default, the named arguments specified as expressions are first captured by delayed-evaluation and then
-modified by simcausal to enable the special types of functional syntax.
-For example, simcausal always over-rides the subsetting operators '\code{[...]}' (for time varying nodes) and '[[...]]' (for networks), implying
-that these operators can no longer be used in their typical R way.
+modified by \code{simcausal} to enable the special types of functional syntax.
+For example, simcausal will over-ride the subsetting operators '\code{[...]}' (for time varying nodes) and '[[...]]' (for networks), implying
+that these operators can no longer be used in their typical \code{R} way.
 Furthermore, simcausal will over-ride the standard `c` function, with its own definition. Similarly, it will over-ride any calls to \code{sum} and \code{mean} functions
 with their row-matrix counterpart functions \code{rowSums} and \code{rowMeans}.
-When programming with simcausal (such as passing node arguments inside a function, prior to defining the node), it may be helpful to instead pass
-such node arguments as character strings, rather than as R expressions, in which case one should use the argument \code{params}, with syntax being params = list(mean="A+B") (see examples).
-However, there are also instances when the user might want to retain the original behavior of all R expressions and functions and evaluate a particular node argument "as.is".
-For example, the user may wish to immediately evaluate a certain value or a certain function, using only the user calling environment (and ignoring the environment of the simulated data),
-In this case the node argument (or a specific part of the node argument) should be surrounded with \code{.()}.
-Note that once an expression surrounded with \code{.(...)} the simcausal definitions of \code{[...]} and \code{[[...]]} no
-longer have any meaning for these expressions and no error checking for "correctness" of such node arguments will be performed.
-A possible intermediate use case might be when the user wants to use the environment of the simulated data but preserve the
-the original R syntax for \code{[...]} and \code{[[...]]} operators, in which case the expression should be either surrounded by eval(...) statement or
-passed as a named string inside the list argument \code{asis.params}.
-but using the environment of the simulated data eval(exprs),
-this is useful when defining complex node distributions, such as the multivariate node distribution we provide in our examples in ?node;
-d) same as c) but using character strings instead of expressions, with as asis.params=list(...)
+When programming with \code{simcausal} (such as passing node arguments inside a function, prior to defining the node), it may be helpful to instead pass
+such node arguments as character strings, rather than as R expressions. In this case one should use the argument \code{params}
+by adopting the following syntax \code{node(...,params = list(mean="A+B"))}, which has an equivalent functionality to using: \code{node(..., mean = A+B)}.
+
+There are also instances when it might be desirable to retain the original behavior of all \code{R} expressions and functions and evaluate a particular node argument "as is".
+For example, the user may wish to evaluate a certain value or a certain function, using only the user calling environment and the environment of the simulated data, but keeping the
+original \code{R} functionality of all operators, including those of \code{[...]} and \code{[[...]]}.
+In this case the node argument (or a specific part of the node argument) should be wrapped in \code{.()} or \code{eval()}.
+Note that once the expression has been wrapped with \code{.(...)} (or \code{eval(...)}), the \code{simcausal} definitions of operators \code{[...]} and \code{[[...]]} no
+longer apply to such expressions and no error checking for "correctness" of these node arguments will be performed.
+An alternative and equivalent way to achieve this functionality is provide the expression as a character string and pass it along in a named list argument \code{asis.params}.
+See Example 7 below for additional details.
+
+The forced-evaluation operator \code{.()} can be also used as part of an expression,
+which will prevent the typical \code{simcausal} evaluation on only that specific part. Example 8 below demonstrates the following use case
+for the expression \code{.(coefAi[t]) * A[t-1]},
+which will look for vector \code{coefAi} and then subset it by current value of \code{t} (and return a scalar),
+while \code{A[t-1]} will evaluate to the entire column vector of variable \code{A} for time point \code{t-1}.
+Such an expression will multiply the entire time-varying vector \code{A[t-1]} by scalar value determined
+by current value of \code{t} and the previously defined vector \code{coefAi}.
 }
 
 \section{Multivariate random variables (multivariate nodes)}{
@@ -107,12 +121,6 @@ Note that the multivariate sampling distribution function (such as function \cod
 Note that one can also define time-varying multivariate nodes, e.g.,
 
 \code{node(c("X1","X2"), t=0:5, distr = "rmvnorm", mean = c(0,1))}.
-
-However, time-varying indexing of parent nodes is not allowed in any multivariate node formulas, e.g., using expressions like
-
-\code{node(c("X1","X2"), t=6, distr = "rmvnorm", mean = c(X1[t-1],1))},
-
-is not possible and will not return any sensible results.
 }
 \examples{
 #---------------------------------------------------------------------------------------
@@ -282,44 +290,43 @@ sim(Dset1, n = 10, rndseed = 1)
 #---------------------------------------------------------------------------------------
 require("mvtnorm")
 D <- DAG.empty()
-
 # 2 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
 D <- D +
-  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)"))
-# Defining exactly the same mulivariate distribution using a more natural syntax:
-D <- D + node(c("new.X1","new.X2"), distr = "rmvnorm", mean = .(c(0,1)))
-
-# Similarly, can define a degenerate (rconst) multivariate node:
-D <- D + node(c("X1.1", "X1.2"), distr="rconst", const=.(cbind(X1, X2)))
-
-# Bivariate normal (correlation coef 0.75):
-D <- D +
-  node(c("Y1","Y2"), distr = "rmvnorm",
-    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)"))
-# Same binariate normal with a more natural simcausal syntax:
-D <- D +
-  node(c("new.Y1","new.Y2"), distr = "rmvnorm",
-    mean = .(c(0,1)), sigma = .(matrix(c(1,0.75,0.75,1)), ncol=2))
-
-# Can use any component of such multivariate nodes when defining future nodes:
-D <- D + node("A", distr = "rconst", const = 1 - X1)
-
+  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)")) +
+# Equivalent, but more natural syntax .() to define the same distribution as above:
+  node(c("Y1","Y2"), distr = "rmvnorm", mean = .(c(0,1))) +
+# Equivalent to .() is wrapping the expression in eval():
+  node(c("Z1","Z2"), distr = "rmvnorm", mean = eval(c(0,1))) +
+# Can define a degenerate (rconst) multivariate node:
+  node(c("X1.copy", "X2.copy"), distr = "rconst", const = c(X1, X2)) +
+# Same as above, but using .() to force direct evaluation:
+  node(c("Y1.copy", "Y2.copy"), distr="rconst", const=.(cbind(Y1, Y2)))
 Dset1 <- set.DAG(D, verbose = TRUE)
 sim(Dset1, n = 10)
 
-# Bivariate uniform copula using copula package (correlation coef 0.75):
+D <- DAG.empty()
+# Bivariate normal (correlation coef 0.75):
+D <- D +
+  node(c("X1","X2"), distr = "rmvnorm",
+    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)")) +
+# Same binariate normal with a more natural syntax .():
+  node(c("Y1","Y2"), distr = "rmvnorm",
+    mean = .(c(0,1)), sigma = .(matrix(c(1,0.75,0.75,1), ncol=2))) +
+# Can use any component of such multivariate nodes when defining future nodes:
+  node("A", distr = "rconst", const = 1 - X1)
+Dset2 <- set.DAG(D, verbose = TRUE)
+sim(Dset2, n = 10)
+
+# Two ways to define the same bivariate uniform copula:
 require("copula")
 D <- DAG.empty()
 D <- D +
-  node(c("Y1","Y2"), distr = "rCopula",
-    copula = normalCopula(0.75, dim = 2))
-Dset2 <- set.DAG(D)
-sim(Dset2, n = 10)
-
-# Bivariate binomial from previous copula, with same correlation:
+  node(c("X1","X2"), distr = "rCopula", copula = .(normalCopula(0.75, dim = 2)))
 vecfun.add("qbinom")
-D <- D + node("A.Bin1", distr = "rconst", const = qbinom(Y1, 10, 0.5))
-D <- D + node("A.Bin2", distr = "rconst", const = qbinom(Y2, 15, 0.7))
+# Bivariate binomial derived from previous copula, with same correlation:
+D <- D +
+  node(c("A.Bin1", "A.Bin2"), distr = "rconst",
+    const = c(qbinom(X1, 10, 0.5), qbinom(X2, 15, 0.7)))
 Dset3 <- set.DAG(D)
 sim(Dset3, n = 10)
 
@@ -328,18 +335,30 @@ require("bindata")
 D <- DAG.empty()
 D <- D +
   node(c("B.Bin1","B.Bin2"), distr = "rmvbin",
-    margprob = c(0.5, 0.5),
-    bincorr = matrix(c(1,0.75,0.75,1), ncol=2))
-Dset4 <- set.DAG(D)
-sim(Dset4, n = 10)
+    margprob = .(c(0.5, 0.5)),
+    bincorr = .(matrix(c(1,0.75,0.75,1), ncol=2)))
+Dset4b <- set.DAG(D)
+sim(Dset4b, n = 10)
 
-# Time-varying multivar node (3 time-points, 2 dimensional normal):
+# Time-varying multivar node (3 time-points, 2 dimensional normal)
+# plus changing the mean over time:
 D <- DAG.empty()
 D <- D +
   node(c("X1", "X2"), t = 0:2, distr = "rmvnorm",
-    mean = c(0,1),
-    sigma = matrix(rep(0.75,4), ncol=2))
-Dset5 <- set.DAG(D)
-sim(Dset5, n = 10)
+    mean = .(c(0,1)) + t,
+    sigma = .(matrix(rep(0.75,4), ncol=2)))
+Dset5b <- set.DAG(D)
+sim(Dset5b, n = 10)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 8: Combining simcausal non-standard evaluation with .() forced evaluation
+#---------------------------------------------------------------------------------------
+coefAi <- 1:10
+D <- DAG.empty()
+D <- D +
+  node("A", t = 1, distr = "rbern", prob = 0.5) +
+  node("A", t = 2:10, distr = "rconst", const = .(coefAi[t]) * A[t-1])
+Dset8 <- set.DAG(D)
+sim(Dset8, n = 10)
 }
 
