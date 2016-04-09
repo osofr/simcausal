@@ -160,13 +160,13 @@ rcat.b1 <- function(n, probs) {
 
 #' @describeIn rcat.b1 Random Sample from Base 0 Categorical (Integer) Distribution
 #' @export
-rcat.b0 <- function(n, probs) rcategor.int(n, probs) - 1
+rcat.b0 <- function(n, probs) rcat.b1(n, probs) - 1
 
 #' @describeIn rcat.b1 (Deperecated) Random Sample from Base 1 Categorical (Integer) Distribution
 #' @export
 rcategor.int <- function(n, probs) {
 	warning("This function is deprecated, please use rcat.b1() instead.")
-	rcat.b1
+	rcat.b1(n, probs)
 }
 
 #' List All Custom Distribution Functions in \code{simcausal}.
