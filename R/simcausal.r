@@ -18,8 +18,8 @@ SuppressGivenWarnings <- function(expr, warningsToIgnore) {
 
 opts <- new.env(parent = emptyenv())
 opts$vecfun <- NULL           # character vector of user-defined vectorized function names
-opts$debug <- FALSE           # debug mode, when TRUE print all calls to dprint()
-# opts$debug <- TRUE           # debug mode, when TRUE print all calls to dprint()
+# opts$debug <- FALSE           # debug mode, when TRUE print all calls to dprint()
+opts$debug <- TRUE           # debug mode, when TRUE print all calls to dprint()
 
 gvars <- new.env(parent = emptyenv())
 gvars$misval <- NA_integer_ # the default missing value for observations

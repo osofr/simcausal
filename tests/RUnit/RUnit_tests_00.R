@@ -929,13 +929,11 @@ test.longparse <- function() {
   datD3
 
   # testing that rep with rcategor.int returns an error (rep functionality not implemented yet):
-  D.error <- D + node('A',
-                 distr = 'rconst',
-                 const = 1/3)
-  D.error <- D.error + node('group',
-                  distr = 'rcategor.int',
-                  probs = rep(A, 3))
+  D.error <- D +
+    node('A', distr = 'rconst', const = 1/3) +
+    node('group', distr = 'rcategor.int', probs = rep(A, 3))
   checkException(set.DAG(D.error))
+  sim(set.DAG(D.error), n = 20)
 
   # using c instead of rep with rcategor.int works as cbind(A,A,A):
   D.noerror <- D + node('A',
@@ -2355,7 +2353,7 @@ fmakeBern <- function(name, order, meanform, EFU=NULL, logit=TRUE, t = NULL) {
     meanform <- as.character(meanform)
     if (logit) meanform <-  paste0("plogis(", meanform, ")")
     # node()
-    if (!is.null(EFU)) {
+    if (is.null(EFU)) {
       return(node(name = name, distr = "rbern", order = order, params = list(prob = meanform)))
     } else {
       return(node(name = name, distr = "rbern", order = order, params = list(prob = meanform), EFU = TRUE))
@@ -2402,6 +2400,7 @@ test.set.DAG_DAG1 <- function() {
     checkEquals(action1_DAG_1[[1]]$A$dist_params$prob,"1")
 
     fulldf_ac1 <- simfull(action1_DAG_1, n=n, rndseed = 123)
+
     # nrow(fulldf_ac1[[1]])
     checkTrue(class(fulldf_ac1)=="list")
     checkTrue(length(fulldf_ac1)==1)
