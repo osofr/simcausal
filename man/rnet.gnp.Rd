@@ -4,7 +4,7 @@
 \alias{rnet.gnp}
 \title{Call \code{igraph::sample_gnp} to generate random graph object according to the G(n,p) Erdos-Renyi model}
 \usage{
-rnet.gnp(n, p, ...)
+rnet.gnp(n, p)
 }
 \arguments{
 \item{n}{Size of the network graph (number of nodes).}

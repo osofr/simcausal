@@ -129,7 +129,7 @@ rcat.b1 <- function(n, probs) rcategor.int(n, probs)
 
 #' @describeIn rcat.b1 Random Sample from Base 0 Categorical (Integer) Distribution
 #' @export
-rcat.b0 <- function(n, probs) rcat(n, probs)-1
+rcat.b0 <- function(n, probs) rcategor.int(n, probs) - 1
 
 #' @describeIn rcat.b1 (Deperecated) Random Sample from Base 1 Categorical (Integer) Distribution
 #' @export
