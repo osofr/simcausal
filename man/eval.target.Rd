@@ -23,8 +23,8 @@ Turn this off by default using options(simcausal.verbose=FALSE).}
 }
 \value{
 For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}),
-MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}),
-and the long format full data that was used for fitting this MSM \code{"df_long"}.
+ MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}),
+ and the long format full data that was used for fitting this MSM \code{"df_long"}.
 }
 \description{
 This function estimates the true value of the previously set target parameter (\code{set.targetE} or \code{set.targetMSM}) using the DAG object and either 1) \code{data}: list of action-specific simulated \code{data.frames}; or 2) \code{actions}; or 3) when \code{data} and \code{actions} are missing, using all distinct actions previously defined on the \code{DAG} object.

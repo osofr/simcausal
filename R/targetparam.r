@@ -1,4 +1,3 @@
-
 # Parse MSM formula
 # Create new term object
 # Replace all summary measure S() calls in glm formula with "XMSMterms.i" vars that will be eval'ed and defined during MSM evaluation
@@ -81,7 +80,9 @@ parse.MSMform <- function(msm.form, t_vec, old.DAG, term_map_tab_old = NULL) {
     # Create a DAG with nodes given by above MSM terms (summary measure DAG):
     MSMtermsD <- DAG.empty()
     for (i in seq(XMSMterms)) {
-      MSMtermsD <- MSMtermsD + node(XMSMterms[i], t = t_vec,  distr = "rconst", const = .(parse(text = S_exprs_vec[i])[[1]]))
+      expr.chr <- S_exprs_vec[i]
+      MSMtermsD <- MSMtermsD + node(XMSMterms[i], t = t_vec,  distr = "rconst", params = list(const = expr.chr))
+      # replaced this: .(parse(text = S_exprs_vec[i])[[1]])
     }
     # Add user.env to all DAG nodes:
     user.env <- attributes(old.DAG)$user.env
@@ -142,116 +143,20 @@ subset_dat_long <- function(dt, t_sel) {
 
 #' Define Non-Parametric Causal Parameters
 #'
-#' Set up the causal target parameter as a vector of expectations, ratio of expectations or contrast of expectations (average treatment effect) over the nodes of specified actions. 
+#' Set up the causal target parameter as a vector of expectations, ratio of expectations or contrast of expectations (average treatment effect) over the nodes of specified actions.
 #'These settings are then used to evaluate the true value of the causal target parameter by calling \code{\link{eval.target}} function.
 #'
-#' @param DAG Object specifying the directed acyclic graph (DAG) for the observed data 
+#' @param DAG Object specifying the directed acyclic graph (DAG) for the observed data
 #' @param outcome Name of the outcome node
 #' @param t Integer vector of time points to use for expectations, has to be omitted or NULL for non-time-varying DAGs.
-#' @param param A character vector \code{"ActionName1"}, specifying the action name for the expectation target parameter; 
-#'\code{"ActionName1 / ActionName2"}, for the ratio of expectations of \code{outcome} nodes for actions \code{"ActionName1"} 
+#' @param param A character vector \code{"ActionName1"}, specifying the action name for the expectation target parameter;
+#'\code{"ActionName1 / ActionName2"}, for the ratio of expectations of \code{outcome} nodes for actions \code{"ActionName1"}
 #'and \code{"ActionName2"}; \code{"ActionName1 - ActionName2"} for the contrast of expectations of \code{outcome} for actions \code{"ActionName1"} and \code{"ActionName2"}
 #' @param ... Additional attributes (to be used in future versions)
 #' @param attr Additional attributes (to be used in future versions)
 #' @return A modified DAG object with the target parameter saved as part of the DAG,
 #'this DAG can now be passed as an argument to \code{\link{eval.target}} function for actual Monte-Carlo evaluation of the target parameter. See Examples.
-#' @examples
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 1: DAG with single point treatment
-#'#---------------------------------------------------------------------------------------
-#'# Define a DAG with single-point treatment ("Anode")
-#'D <- DAG.empty()
-#'D <- D + node("W1", distr="rbern", prob=plogis(-0.5))
-#'D <- D + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1))
-#'D <- D + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2))
-#'D <- D + node("Y", distr="rbern", prob=plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2), 
-#'EFU=TRUE)
-#'D_WAY <- set.DAG(D)
-#'
-#'# Defining interventions (actions)
-#'# define action "A1" that sets the treatment node to constant 1
-#'D_WAY <- D_WAY + action("A1", nodes=node("Anode",distr="rbern", prob=1))
-#'# define another action "A0" that sets the treatment node to constant 0
-#'D_WAY <- D_WAY + action("A0", nodes=node("Anode",distr="rbern", prob=0))
-#'#---------------------------------------------------------------------------------------
-#'# Defining and calculating causal parameters:
-#'#---------------------------------------------------------------------------------------
-#'# Counterfactual mean of node "Y" under action "A1"
-#'D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1")
-#'eval.target(D_WAY, n=10000)
-#'
-#'# Contrasts of means of "Y" under action "A1" minus action "A0"
-#'D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1-A0")
-#'eval.target(D_WAY, n=10000)
-#'
-#'# Ratios of "Y" under action "A1" over action "A0"
-#'D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
-#'eval.target(D_WAY, n=10000)
-#'
-#'# Alternative parameter evaluation by passing already simulated full data to 
-#'# \code{eval.target}
-#'X_dat1 <- simfull(A(D_WAY), n=10000)
-#'D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
-#'eval.target(D_WAY, data=X_dat1)
-#'
-#'#---------------------------------------------------------------------------------------
-#'# EXAMPLE 2: DAG with time-varying outcomes (survival outcome) 
-#'#---------------------------------------------------------------------------------------
-#'# Define longitudinal data structure over 6 time-points t=(0:5)
-#'t_end <- 5
-#'D <- DAG.empty()
-#'D <- D + node("L2", t=0, distr="rbern", prob=0.05)
-#'D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1))
-#'D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, 
-#'ifelse(L1[0]==0 & L2[0]==0, 0.1,
-#'ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))))
-#'D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
-#'D <- D + node("Y",  t=0, distr="rbern",
-#'prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)),
-#'EFU=TRUE)
-#'D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1,
-#'ifelse(L2[t-1]==1, 0.9,
-#'min(1,0.1 + t/16))))
-#'D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1,
-#'ifelse(L1[0]==1 & L2[0]==0, 0.3,
-#'ifelse(L1[0]==0 & L2[0]==0, 0.1,
-#'ifelse(L1[0]==1 & L2[0]==1, 0.7,
-#'0.5)))))
-#'D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, EFU=TRUE)
-#'D <- D + node("Y",  t=1:t_end, distr="rbern",
-#'prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))),
-#'EFU=TRUE)
-#'D <- set.DAG(D)
-#'
-#'# Add two dynamic actions (indexed by values of the parameter theta={0,1})
-#'# Define intervention nodes
-#'act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-#'act_tp_theta <- node("A1",t=1:t_end, distr="rbern", 
-#'prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
-#'# Add two actions to current DAG object
-#'D <- D + action("A1_th0", nodes=c(act_t0_theta, act_tp_theta), theta=0)
-#'D <- D + action("A1_th1", nodes=c(act_t0_theta, act_tp_theta), theta=1)
-#'#---------------------------------------------------------------------------------------
-#'# Defining and calculating the target parameter
-#'#---------------------------------------------------------------------------------------
-#'# Counterfactual mean of node "Y" at time-point t=4 under action "A1_th0"
-#'D <- set.targetE(D, outcome="Y", t=4, param="A1_th0")
-#'eval.target(D, n=5000)
-#'
-#'# Vector of counterfactual means of"Y" over all time points under action "A1_th1"
-#'D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th1")
-#'eval.target(D, n=5000)
-#'
-#'# Vector of counterfactual contrasts of "Y" over all time points 
-#'# for action "A1_th1" minus action "A1_th0"
-#'D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th1 - A1_th0")
-#'eval.target(D, n=5000)
-#'
-#'# Vector of counterfactual ratios of "Y" over all time points 
-#'# for action "A1_th0" over action "A1_th1"
-#'D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th0 / A1_th1")
-#'eval.target(D, n=5000)
-#'
+#' @example tests/examples/set.targetE.examples.R
 #' @export
 # function to set the target as expectation of several nodes indexed by time, saves target obj in DAG until evaluation
 set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
@@ -291,7 +196,7 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
 #'
 #' Enclosing an MSM formula term inside S(), e.g., S(mean(A[0:t])), forces this term to be evaluated as a summary measure of time-indexed nodes in the full data environment. All such MSM terms are parsed and then evaluated inside the previously simulated full data environment, each S() term is then replaced with a vector name 'XMSMterms.i' that is a result of this evaluation.
 #'
-#' @param DAG Object specifying the directed acyclic graph (DAG) for the observed data 
+#' @param DAG Object specifying the directed acyclic graph (DAG) for the observed data
 #' @param outcome Name of the outcome node
 #' @param t Vector of time points which are used for pooling the \code{outcome}
 #' @param formula MSM formula for modeling pooled outcome on the full data with glm regression. Left hand side should be equal to the \code{outcome}, right hand side can include baseline covariates, action-specific attribute names and time-dependent treatment summary measures. See Details.
@@ -300,70 +205,7 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
 #' @param ... Additional attributes (to be used in future versions)
 #' @param attr Additional attributes (to be used in future versions)
 #' @return A modified DAG object with well-defined target parameter saved as part of the DAG, this DAG can now be passed as an argument to \code{eval.target} function for actual Monte-Carlo evaluation of the target parameter. See Examples.
-#' @examples
-#'
-#'#---------------------------------------------------------------------------------------
-#'# DAG with time-varying outcomes (survival outcome) 
-#'#---------------------------------------------------------------------------------------
-#'# Define longitudinal data structure over 6 time-points t=(0:5)
-#'t_end <- 5
-#'D <- DAG.empty()
-#'D <- D + node("L2", t=0, distr="rbern", prob=0.05)
-#'D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1))
-#'D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5,
-#'ifelse(L1[0]==0 & L2[0]==0, 0.1,
-#'ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))))
-#'D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
-#'D <- D + node("Y",  t=0, distr="rbern",
-#'prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)),
-#'EFU=TRUE)
-#'D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1,
-#'ifelse(L2[t-1]==1, 0.9,
-#'min(1,0.1 + t/16))))
-#'D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1,
-#'ifelse(L1[0]==1 & L2[0]==0, 0.3,
-#'ifelse(L1[0]==0 & L2[0]==0, 0.1,
-#'ifelse(L1[0]==1 & L2[0]==1, 0.7,
-#'0.5)))))
-#'D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, EFU=TRUE)
-#'D <- D + node( "Y",  t=1:t_end, distr="rbern",
-#'prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))),
-#'EFU=TRUE)
-#'D <- set.DAG(D)
-#'
-#'# Add two dynamic actions (indexed by values of the parameter theta={0,1})
-#'# Define intervention nodes
-#'act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
-#'act_tp_theta <- node("A1",t=1:t_end, distr="rbern",
-#'prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
-#'# Add two actions to current DAG object
-#'D <- D + action("A1_th0", nodes=c(act_t0_theta, act_tp_theta), theta=0)
-#'D <- D + action("A1_th1", nodes=c(act_t0_theta, act_tp_theta), theta=1)
-#'
-#'#---------------------------------------------------------------------------------------
-#'# MSM EXAMPLE 1: Modeling survival over time
-#'#---------------------------------------------------------------------------------------
-#'# Modeling pooled survival Y_t over time as a projection on the following working 
-#'# logistic model:
-#'msm.form <- "Y ~ theta + t + I(theta*t)"
-#'D <- set.targetMSM(D, outcome="Y", t=0:5, formula=msm.form, family="binomial", 
-#'hazard=FALSE)
-#'MSMres <- eval.target(D, n=1000)
-#'MSMres$coef
-#'
-#'#---------------------------------------------------------------------------------------
-#'# MSM EXAMPLE 2: Modeling survival over time with exposure-based summary measures
-#'#---------------------------------------------------------------------------------------
-#'# Now we want to model Y_t by adding a summary measure covariate defined as mean 
-#'# exposure A1 from time 0 to t;
-#'# Enclosing any term inside S() forces its evaluation in the environment 
-#'# of the full (counterfactual) data.
-#'msm.form_sum <- "Y ~ theta + t + I(theta*t) + S(mean(A1[0:t]))"
-#'D <- set.targetMSM(D, outcome="Y", t=0:5, formula=msm.form_sum, family="binomial",
-#'hazard=FALSE)
-#'MSMres <- eval.target(D, n=1000)
-#'MSMres$coef
-#'
+#' @example tests/examples/MSM.examples.R
 #' @export
 # function to set MSM as the target, saves target obj in DAG until evaluation
 set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", hazard, ...,  attr=list()) {
@@ -393,7 +235,6 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
   DAG
 }
 
-
 #' Evaluate the True Value of the Causal Target Parameter
 #'
 #' This function estimates the true value of the previously set target parameter (\code{set.targetE} or \code{set.targetMSM}) using the DAG object and either 1) \code{data}: list of action-specific simulated \code{data.frames}; or 2) \code{actions}; or 3) when \code{data} and \code{actions} are missing, using all distinct actions previously defined on the \code{DAG} object.
@@ -405,12 +246,11 @@ set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", haza
 #' @param data List of action-specific \code{data.frames} generated with \code{sim} or \code{simfull}
 #' @param actions Character vector of action names which play the role of the data generating mechanism for simulated data when argument \code{data} is missing. Alternatively, \code{actions} can be a list of action DAGs  pre-selected with \code{A(DAG)} function. When this argument is missing, full data is automatically sampled from all available actions in the \code{DAG} argument.
 #' @param rndseed Seed for the random number generator.
-#' @param verbose Set to \code{TRUE} to print messages on status and information to the console. 
+#' @param verbose Set to \code{TRUE} to print messages on status and information to the console.
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
-#' @return For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}), 
-#'MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}), 
-#'and the long format full data that was used for fitting this MSM \code{"df_long"}.
-#' 
+#' @return For targetE returns a vector of counterfactual means, ATE or ATR; for targetMSM returns a named list with the MSM model fit (\code{"msm"}),
+#'  MSM model coefficients (\code{"coef"}), the mapping of the MSM summary terms \code{S()} to the actual variable names used in the data, (\code{"S.msm.map"}),
+#'  and the long format full data that was used for fitting this MSM \code{"df_long"}.
 #' @importFrom assertthat assert_that is.count
 #' @export
 eval.target <- function(DAG, n, data, actions, rndseed = NULL, verbose = getOption("simcausal.verbose")) {
@@ -490,9 +330,9 @@ eval.target <- function(DAG, n, data, actions, rndseed = NULL, verbose = getOpti
       params.MSM$family <- "quasibinomial"
     }
 
-    if (missing(data)) {# if no full data, simulate full data from actions argument			
+    if (missing(data)) {# if no full data, simulate full data from actions argument
       if (verbose) message("data not specified, simulating full data")
-      if (missing(actions)) {	
+      if (missing(actions)) {
       	if (verbose) message("no actions specified, sampling full data for ALL actions from the DAG")
       	actions <- A(DAG)
       }
@@ -516,7 +356,7 @@ eval.E <- function(DAG, df_full, outnodes, outnode_nms, params.E, attrs) {
   interv_nms <- params.E$interv_nms
   res_ratio <- params.E$res_ratio
   res_diff <- params.E$res_diff
-  # Calculates the counterfactual mean for EACH intervention (specified in actions) and each outnode	
+  # Calculates the counterfactual mean for EACH intervention (specified in actions) and each outnode
   # CHECKS THAT NO OUTCOME NODES ARE MISSING (NA)
   outmean_l <- lapply(df_full[interv_nms], function(df) {
                       out <- df[,outnode_nms, drop=FALSE]
@@ -615,7 +455,7 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, ver
 
     #*******************************
     # evaluating the target parameter when the df_full is already in long format (with warnings)
-    # ****TO DO**** 
+    # ****TO DO****
     # ADD SUBSETTING BY t FOR DATA in LONG FORMAT
     #*******************************
   } else {

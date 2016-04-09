@@ -1,0 +1,95 @@
+#---------------------------------------------------------------------------------------
+# EXAMPLE 1: DAG with single point treatment
+#---------------------------------------------------------------------------------------
+# Define a DAG with single-point treatment ("Anode")
+D <- DAG.empty()
+D <- D + node("W1", distr="rbern", prob=plogis(-0.5))
+D <- D + node("W2", distr="rbern", prob=plogis(-0.5 + 0.5*W1))
+D <- D + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2))
+D <- D + node("Y", distr="rbern", prob=plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2),
+EFU=TRUE)
+D_WAY <- set.DAG(D)
+
+# Defining interventions (actions)
+# define action "A1" that sets the treatment node to constant 1
+D_WAY <- D_WAY + action("A1", nodes=node("Anode",distr="rbern", prob=1))
+# define another action "A0" that sets the treatment node to constant 0
+D_WAY <- D_WAY + action("A0", nodes=node("Anode",distr="rbern", prob=0))
+#---------------------------------------------------------------------------------------
+# Defining and calculating causal parameters:
+#---------------------------------------------------------------------------------------
+# Counterfactual mean of node "Y" under action "A1"
+D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1")
+eval.target(D_WAY, n=10000)
+
+# Contrasts of means of "Y" under action "A1" minus action "A0"
+D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1-A0")
+eval.target(D_WAY, n=10000)
+
+# Ratios of "Y" under action "A1" over action "A0"
+D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
+eval.target(D_WAY, n=10000)
+
+# Alternative parameter evaluation by passing already simulated full data to
+# \code{eval.target}
+X_dat1 <- simfull(A(D_WAY), n=10000)
+D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
+eval.target(D_WAY, data=X_dat1)
+
+#---------------------------------------------------------------------------------------
+# EXAMPLE 2: DAG with time-varying outcomes (survival outcome)
+#---------------------------------------------------------------------------------------
+# Define longitudinal data structure over 6 time-points t=(0:5)
+t_end <- 5
+D <- DAG.empty()
+D <- D + node("L2", t=0, distr="rbern", prob=0.05)
+D <- D + node("L1", t=0, distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1))
+D <- D + node("A1", t=0, distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5,
+ifelse(L1[0]==0 & L2[0]==0, 0.1,
+ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))))
+D <- D + node("A2", t=0, distr="rbern", prob=0, order=4, EFU=TRUE)
+D <- D + node("Y",  t=0, distr="rbern",
+prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)),
+EFU=TRUE)
+D <- D + node("L2", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 0.1,
+ifelse(L2[t-1]==1, 0.9,
+min(1,0.1 + t/16))))
+D <- D + node("A1", t=1:t_end, distr="rbern", prob=ifelse(A1[t-1]==1, 1,
+ifelse(L1[0]==1 & L2[0]==0, 0.3,
+ifelse(L1[0]==0 & L2[0]==0, 0.1,
+ifelse(L1[0]==1 & L2[0]==1, 0.7,
+0.5)))))
+D <- D + node("A2", t=1:t_end, distr="rbern", prob=0, EFU=TRUE)
+D <- D + node("Y",  t=1:t_end, distr="rbern",
+prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))),
+EFU=TRUE)
+D <- set.DAG(D)
+
+# Add two dynamic actions (indexed by values of the parameter theta={0,1})
+# Define intervention nodes
+act_t0_theta <- node("A1",t=0, distr="rbern", prob=ifelse(L2[0] >= theta,1,0))
+act_tp_theta <- node("A1",t=1:t_end, distr="rbern",
+prob=ifelse(A1[t-1]==1,1,ifelse(L2[t] >= theta,1,0)))
+# Add two actions to current DAG object
+D <- D + action("A1_th0", nodes=c(act_t0_theta, act_tp_theta), theta=0)
+D <- D + action("A1_th1", nodes=c(act_t0_theta, act_tp_theta), theta=1)
+#---------------------------------------------------------------------------------------
+# Defining and calculating the target parameter
+#---------------------------------------------------------------------------------------
+# Counterfactual mean of node "Y" at time-point t=4 under action "A1_th0"
+D <- set.targetE(D, outcome="Y", t=4, param="A1_th0")
+eval.target(D, n=5000)
+
+# Vector of counterfactual means of"Y" over all time points under action "A1_th1"
+D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th1")
+eval.target(D, n=5000)
+
+# Vector of counterfactual contrasts of "Y" over all time points
+# for action "A1_th1" minus action "A1_th0"
+D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th1 - A1_th0")
+eval.target(D, n=5000)
+
+# Vector of counterfactual ratios of "Y" over all time points
+# for action "A1_th0" over action "A1_th1"
+D <- set.targetE(D, outcome="Y", t=0:5, param="A1_th0 / A1_th1")
+eval.target(D, n=5000)

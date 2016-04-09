@@ -68,15 +68,18 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
       special <- as.character(x) %in% specialVar
       dprint("is x special? " %+% special)
 
-      if (notis.fun && !is.inDAG && !exists.x && !special) stop("Undefined variable: " %+% as.character(x), call. = FALSE)
+
+      if (notis.fun && !is.inDAG && !exists.x && !special) {
+        stop("Undefined variable: " %+% as.character(x), call. = FALSE)
+        # if (identical(x[[1]], quote(.)) || identical(x[[1]], quote(eval))) { # do nothing, don't parse the expressions wrapped in .()
+        # character()
+      }
 
       # ****************************
       # *) For non_TD var outside of the DAG also check that length(non_TD) < 2
       # ****************************
-
       # if (is.inDAG) varnames <- as.character(x) # METHOD I declares only vars that exist in the DAG as a parent
       if (notis.fun) varnames <- as.character(x) # METHOD II declares any nonfun var as a parent
-
     } else if (is.atomic(x) || is.name(x)) {
       character()
     } else if (is.call(x)) {
