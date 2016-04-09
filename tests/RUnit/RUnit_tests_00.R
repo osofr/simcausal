@@ -2355,7 +2355,11 @@ fmakeBern <- function(name, order, meanform, EFU=NULL, logit=TRUE, t = NULL) {
     meanform <- as.character(meanform)
     if (logit) meanform <-  paste0("plogis(", meanform, ")")
     # node()
-    return(node(name = name, distr = "rbern", order = order, params = list(prob = meanform), EFU = .(EFU)))
+    if (!is.null(EFU)) {
+      return(node(name = name, distr = "rbern", order = order, params = list(prob = meanform)))
+    } else {
+      return(node(name = name, distr = "rbern", order = order, params = list(prob = meanform), EFU = TRUE))
+    }
     # return(list(name = name, distr = "rbern", dist_params = list(prob = meanform), EFU = EFU, order = order, node.env = environment()))
 }
 
@@ -2391,7 +2395,6 @@ test.set.DAG_DAG1 <- function() {
 
 
     # returns a named list of DAGs, where each item = one counterfactual DAG
-
     action1_DAG_1 <- list(simcausal:::setAction(actname="action1_DAG_1", inputDAG=datgendist_DAG1, actnodes=newaction1))
     checkTrue(class(action1_DAG_1)%in%"list")
     checkTrue(length(action1_DAG_1)==1)

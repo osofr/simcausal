@@ -5,12 +5,12 @@
 #------------------------------------------------------------------------------------------------------------
 `%+%` <- function(a, b) paste0(a, b)
 as.numeric.factor <- function(x) {as.numeric(levels(x))[x]}
-allNA = function(x) all(is.na(x))
+allNA <- function(x) all(is.na(x))
 
 
 # (1) Previously t was set to null when no time-varying nodes were defined (even if user defined t in the user environment)
 # (2) Previously special vars Kmax,nF were set to NULL if no network (even if user defined Kmax or nF in user environment)
-test.tKmaxnet = function() {
+test.tKmaxnet <- function() {
   # ------------------------------------------------------------------
   # THIS NOW WORKS:
   t <- 5
