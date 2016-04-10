@@ -1,4 +1,4 @@
-#' Call \code{igraph::sample_gnp} to generate random graph object according to the G(n,p) Erdos-Renyi model
+#' Call \code{igraph::sample_gnp} to Generate Random Graph Object According to the G(n,p) Erdos-Renyi Model
 #'
 #' Call \code{igraph::sample_gnp} and convert the output to \code{simcausal} network matrix.
 #' @param n Size of the network graph (number of nodes).
@@ -13,7 +13,7 @@ rnet.gnp <- function(n, p) {
   return(NetInd_out$NetInd_k)
 }
 
-#' Call \code{igraph::sample_gnm} to generate random graph object according to the G(n,m) Erdos-Renyi model
+#' Call \code{igraph::sample_gnm} to Generate Random Graph Object According to the G(n,m) Erdos-Renyi Model
 #'
 #' Call \code{igraph::sample_gnm} and convert the output to \code{simcausal} network matrix.
 #' The parameter \code{m} of \code{igraph::sample_gnm} is derived from \code{n} and \code{m_pn} as \code{as.integer(m_pn*n)}
@@ -29,6 +29,27 @@ rnet.gnm <- function(n, m_pn) {
   sparse_AdjMat <- simcausal::igraph.to.sparseAdjMat(igraph.gnm)
   NetInd_out <- simcausal::sparseAdjMat.to.NetInd(sparse_AdjMat)
   return(NetInd_out$NetInd_k)
+}
+
+#' Call \code{igraph::sample_smallworld} to Generate Random Graph Object from the Watts-Strogatz Small-World Model
+#'
+#' Call \code{igraph::sample_smallworld} and convert the output to \code{simcausal} network matrix.
+#' The parameters are the same as those of \code{igraph::sample_smallworld}.
+#' The loop edges aren't allowed (\code{loops = FALSE}) and the multiple edges aren't allowed either \code{multiple = FALSE}.
+#' @param n Size of the network graph (the number of nodes).
+#' @param dim Same as in \code{igraph::sample_smallworld}: Integer constant, the dimension of the starting lattice.
+#' @param nei Same as in \code{igraph::sample_smallworld}: Integer constant, the neighborhood within which the vertices of the lattice will be connected.
+#' @param p Same as in \code{igraph::sample_smallworld}: Real constant between zero and one, the rewiring probability.
+#' @return A matrix with n rows, each row lists the indices of friends connected to that particular observation.
+#' @seealso \code{\link{rnet.gnp}}, \code{\link{rnet.gnm}}
+#' @export
+#'
+rnet.SmWorld <- function(n, dim, nei, p) {
+    g <- igraph::sample_smallworld(dim = dim, size = n, nei = nei, p = p, loops = FALSE, multiple = FALSE)
+    g <- igraph::as.directed(g, mode = c("mutual"))
+    sparse_AdjMat <- simcausal::igraph.to.sparseAdjMat(g)
+    NetInd_out <- simcausal::sparseAdjMat.to.NetInd(sparse_AdjMat)
+    return(NetInd_out[["NetInd_k"]])
 }
 
 #' List All Custom Network Generator Functions in \code{simcausal}.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/network_distributions.R
 \name{rnet.gnp}
 \alias{rnet.gnp}
-\title{Call \code{igraph::sample_gnp} to generate random graph object according to the G(n,p) Erdos-Renyi model}
+\title{Call \code{igraph::sample_gnp} to Generate Random Graph Object According to the G(n,p) Erdos-Renyi Model}
 \usage{
 rnet.gnp(n, p)
 }
