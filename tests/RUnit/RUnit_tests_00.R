@@ -2651,7 +2651,7 @@ test.faster_tolongdata <- function() {
     # this takes longer (6 sec longer for 1Mil obs)
     # D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
     D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*(sum(L2[0:t])==0)), order=9+4*(0:(t_end-1)), EFU=TRUE)
-
+    lDAG3 <- set.DAG(D)
     #-------------------------------------------------------------
     # Adding dynamic actions (indexed by a real-valued parameter)
     #-------------------------------------------------------------
