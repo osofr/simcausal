@@ -1,0 +1,1127 @@
+---
+title: "Conducting Simulations in Causal Inference with Networks-Based Structural Equation Models"
+author:
+  - Oleg Sofrygin (University of California, Berkeley)
+  - Romain Neugebauer (DOR, Kaiser Permanente Northern California)
+  - Mark J. van der Laan (University of California, Berkeley)
+abstract: >
+  We describe applications of the simcausal R package for simulation-based evaluation and comparison of statistical methods for causal inference in network data (e.g., in the presence of interference or spillover). The process of specifying the distribution of dependent data on N connected units generally consists of two parts. First, one describes the network of connections between these units (e.g., social or geographical network) by specifying the distribution of a network graph. Second, one specifies the distribution of the rest of the variables by parameterizing a structural equation model for connected units. In particular, such model uses the structure of the network to allow simulation of the covariates of each unit which may be dependent on the covariates of connected units.
+  The functional form of this dependence is controlled explicitly by the user.
+  These simulation tools are targeted to the types of data and interventions frequently encountered in real-world network causal inference problems, such as, observational data with time-dependent and network confounding, selection bias, random monitoring processes.
+  We developed a novel R interface which simplifies the specification of complex network-based functional relationships between connected units. Moreover, this network-based syntax can be combined with the previously described syntax for specifying longitudinal data structures, allowing for simulations of network-based processes that also evolve in time (e.g., contagion process in an epidemic).
+  The package also allows for specification and simulation of counterfactual data  under various user-specified interventions (e.g., static, dynamic, deterministic, or stochastic). Finally, the package enables the computation of a selected
+  set of user-specified features of the distribution of the counterfactual data that represent common causal quantities
+  of interest, such as, treatment-specific means and the average treatment effects. We demonstrate the practical applicability of simcausal by conducting a simulation study that compared three dependent data estimators, as well as providing several examples of realistic simulations where units are connected by either a social or geographic network.
+date: "`r Sys.Date()`"
+keywords: networks, causal inference, simulation, structural equation model, causal model, R
+always_allow_html: yes
+output:
+  pdf_document:
+    pandoc_args: [
+      "--variable=biblio-style:unsrtnat"
+    ]
+    includes:
+      in_header: mystyles.sty
+    citation_package: natbib
+    toc: true
+    toc_depth: 1
+    number_sections: true
+    highlight: haddock
+    keep_tex: true
+    latex_engine: pdflatex
+vignette: >
+  %\VignetteIndexEntry{simcausal: Simulations with Networks}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+fontsize: 10pt
+---
+
+<!--   formatted: [networks, causal inference, simulation, structural equation model, causal model, \proglang{R}]
+  plain:     [networks, causal inference, simulation, structural equation model, causal model, R]
+
+<!-- highlight: zenburn -->
+<!-- “default”, “tango”, “pygments”, “kate”, “monochrome”, “espresso”, “zenburn”, and “haddock”  -->
+<!-- bibliography:
+  - SimCausal_Networks_2016.bib
+ -->
+<!-- output:
+  pdf_document:
+    pandoc_args: [
+      "--natbib"
+    ]
+<!--
+  - name: Oleg Sofrygin
+    affiliation: University of California, Berkeley
+    email: oleg.sofrygin@gmail.com
+  - name: Romain Neugebauer
+    affiliation: DOR, Kaiser Permanente Northern California
+  - name: Mark J. van der Laan
+    affiliation: University of California, Berkeley
+ -->
+<!-- output:
+  rticles::jss_article
+-->
+
+
+```{r, include=FALSE, results='hide'}
+  require(knitr)
+  exportTexOnly=FALSE # do not include any chunks in the final result (R code is still evaluated)
+  require(simcausal)
+  cache_opt <- TRUE
+  options(useFancyQuotes = FALSE)
+  # opts_chunk$set(highlight=TRUE, background='white', comment=NA)
+  # render_sweave()
+  # opts_chunk$set(fig.path='figure/beamer-',fig.align='center',fig.show='hold',size='footnotesize')
+  opts_chunk$set(fig.path='figure/beamer-',fig.align='center',fig.show='hold',size='smallsize')
+  # to crop white space in output figures:
+  knit_hooks$set(pdfcrop = hook_pdfcrop)
+  # To disable syntax color highlighing of R code in the entire document
+  # opts_chunk$set(highlight=FALSE)
+  # To change the background color on knitR output from default gray to white:
+  # opts_chunk$set(background='white')
+  opts_chunk$set(include=!exportTexOnly)
+  # rmarkdown::draft("my_article.Rmd", template = "jss_article", package = "rticles")
+  # options(width=80)  # make the printing fit on the page
+  options(width=90)  # make the printing fit on the page
+  set.seed(1121)   # make the results repeatable
+```
+
+```{r, include=FALSE, results='hide'}
+  # Need to first load that packages that need to be cited:
+  # library("tsna")
+  # library("networkDynamic")
+  # library("RSiena")
+  # library("netdiffuseR")
+  # library("ndtv")
+  # "geomnet"
+  # "NetSwan"
+  # "visNetwork"
+  # library("nets")
+  # library("ebdbNet")
+  # library("ggnetwork")
+  # library("d3Network")
+  # library("interventionalDBN")
+  # library("LogitNet")
+  # library("RSNNS")
+  # library("dna")
+  # library("multiplex")
+  # library("lvm4net")
+  # library("sna")
+  # library("EpiModel")
+  # library("ergm")
+  # library("tergm")
+  # library("CIDnetworks")
+  # library("egonet")
+  # library("epinet")
+  # library("SocialMediaLab")
+  # library("hybridModels")
+  # library("NetSim")
+  # require(simcausal)
+  # require(data.table)
+  # require(ggplot2)
+  # require(ltmle)
+  # require(igraph)
+  # require(lavaan); require(lavaan.survey); require(sem); require(semPLS); require(OpenMx); require(simsem)
+  # require(gems); require(aftgee); require(survsim)
+  # # # Select packages to cite:
+  # citPkgs <- names(sessionInfo()$otherPkgs)
+  # citPkgs <- c(citPkgs, "base")
+  # require(knitr)
+  # # # Write the bibtex file:
+  # write_bib(citPkgs, file = "R-Pckgs_tmp.bib")
+```
+
+<!-- ************************************************ -->
+# Introduction
+<!-- ************************************************ -->
+
+
+In this paper we describe how to conduct simulation studies with network-dependent data using the \pkg{simcausal} package [@R-simcausal]. The package was developed using the \proglang{R} system for statistical computing [@r] and is available from the Comprehensive \proglang{R} Archive
+Network (CRAN) at \url{http://CRAN.R-project.org/package=simcausal}.
+The main purpose of this tool is to allow simulation-based evaluation and comparison of statistical methods for causal inference in network data (e.g., in the presence of interference or spillover [@hudgens2008toward; @Sobel2006]).
+The process of specifying the data-generating distribution for $N$ connected units generally consists of two parts. First, one describes the network of connections between these units (e.g., social or geographical network) by specifying a network graph with $N$ nodes. Next, one specifies the distribution of the unit-level covariates (node attributes) by parameterizing a structural equation model (SEM) for connected units [@vdL2014nets]. This SEM allows the covariates of one unit to be dependent on the covariates of other connected units. The functional form of this dependence is controlled explicitly by the user. For this purpose we have developed a novel \proglang{R} interface which simplifies the specification of complex network-based functional relationships between connected units.
+In more detail, in this article we consider simulations that can exhibit the following three types of dependence between units:
+(i) the outcome for each unit can be a function of the treatment assignments of other units that are connected to the unit through its network, an occurrence referred to as interference or spillover [@hudgens2008toward; @Sobel2006]; (ii) the outcome of each unit can be a function of the baseline covariates of other units that are connected to the unit through its network, sometimes referred to as network-correlated outcomes [@basse2015]; and (iii) the observed exposure allocation for each unit can be a function of the baseline covariates of other units. Moreover, the network-based syntax can be *combined* with the existing syntax for specifying longitudinal data structures, allowing for simulations of network-based processes that also evolve in time. We refer to the vignette "*simcausal Package: Simulations with Complex Longitudinal Data*" [@R-simcausal] for general information about the \pkg{simcausal} package and the description of its syntax for simulating longitudinal IID data.
+
+
+The past decade has seen an increasing body of literature devoted to the estimation of causal effects in network-dependent data. Many of these studies seek to answer questions about the role that social networks play in various aspects of public health. For example, Christakis et al. used the observational data on subjects connected by a social network
+to estimate the causal effects of contagion for obesity, smoking and a variety of other outcomes [ @christakis2007spread; @christakis2013social], finding that many of these conditions are subject to *social contagion*.
+The author's found that the person's risk of becoming obese increases with each new obese friend, even when one controls for all *measured* confounding factors.
+However, the statistical methods employed by these studies have come under scrutiny due to possibly anti-conservative standard error estimates that did not account for network-dependence among the observed units [@lyons2011spread], and possibly biased effect estimates resulting from: model misspecification [@lyons2011spread; @vanderweele2013social],  network-induced homophily [@shalizi2011homophily], and unmeasured confounding by environmental factors [@shalizi2011homophily].
+Given that such studies may have a high impact on future policy and public health decisions, it is important that those decisions are based on valid scientific evidence and are guided by studies that employ robust statistical methodology. That is, there is clearly a need for finding ways to objectively assess the validity of various statistical methods for causal inference on social networks, using a large set of potential data-generating processes that one might encountered in real data. We note that simulation studies represent one of such possible methods.
+That is, a carefully designed simulation study can test the validity of a statistical method against a wide range of possible data-generating processes, test the method's sensitivity to violations of its key assumptions, and highlight its limitations for specific types of data. Moreover, simulations can be also helpful in identifying errors in the implementation of complex statistical algorithms.
+
+Network simulation studies have been also previously applied to assess the validity of different estimation approaches in causal inference (for example, see  @Noel2011, @eckles2014design and @Athey2015). Such simulation studies have also been used as a guiding tool for comparison of the benefits of different experimental design strategies in the presence of the network [@walker2014design; @Aral2011; @harling2016leveraging; @basse2015].
+However, to the best of our knowledge, there is no open-source simulation software for conducing network-related causal inference research that is similar to the tools provided by \pkg{simcausal} package.
+In particular, our package is not designed for simulation-based research exploring the mechanism of network formation and network dynamics in time, although it could used in conjunction with simulation tools specifically designed for this purpose. In contrast, our package provides an interface for designing simulations that are consistent with non-parametric structural equations on the existing network, providing a broad range of possible data-generating distributions, specifically for causal inference research under interference and/or spillover. In other words, \pkg{simcausal} allows specification of a model based on a regular causal DAG, and in conjunction with previously specified network model this causal DAG can be also used for specifying a wide range of distributions for  units which may be dependent on one another.
+We also note that \pkg{simcausal} greatly simplifies the conduct of such large scale and complex network simulations.
+Finally, it is important to note that a simulation study alone cannot serve as a substitute for results based on sound statistical theory.
+That is, a simulation by itself cannot guarantee the validity of a statistical method.
+Nonetheless, a simulation study also provides an important proof of concept that can greatly complement theoretically claimed results.
+
+In summary, some of the advantages and differences of our proposed network simulation package over other open-source tools: \pkg{simcausal} provides a simple and concise interface for specifying a network data-generating distribution and incorporating the network structure into various forms of functional dependence of one unit on other *connected* units.
+Next, it permits the simulation of such interconnected data structures, as well as the generation of the counterfactual data under single or multiple time-point interventions.
+The user-defined causal parameters can then be evaluated from the counterfactual data and serve as gold-standards in testing
+the validity of various statistical methods.
+Finally, the \pkg{simcausal} package provides the syntax for specifying complex longitudinal data structures *in combination* with the network-dependent syntax, allowing one to simulate complex network processes that also evolve over time.
+
+## Other related \proglang{R} packages
+
+As of May 29, 2016, there were 208 \proglang{R} packages on CRAN that contain the word "network" in their title sentence. A large number of these packages are dedicated towards visual analysis and representation of networks (e.g., \pkg{ggnetwork} [@R-ggnetwork], \pkg{igraph} [@igraph], \pkg{d3Network} [@R-d3Network]), re-constructing the network based on biological, neural and other field-specific data (e.g., \pkg{interventionalDBN} [@R-interventionalDBN], \pkg{LogitNet} [@R-LogitNet], \pkg{RSNNS} [@R-RSNNS], \pkg{dna} [@R-dna]), statistical analysis of networks based on specific network-generating models (\pkg{multiplex} [@R-multiplex], \pkg{lvm4net} [@R-lvm4net]). In addition, a large collection of packages often referred to as a "\pkg{statnet} suite of packages" provides various tools for social network analysis, visualization, simulation and diagnoses based on the statistical methods of exponential-family random graph models (ERGMs) or other related parametric model families for networks (e.g., \pkg{statnet} \citep{statnetJSS}, \pkg{sna} [@R-sna], \pkg{EpiModel} [@R-EpiModel], \pkg{ergm} [@R-ergm], \pkg{tergm} [@R-tergm]). Other packages for statistical analysis of network or network-related data include, among others, \pkg{netdiffuseR} [@R-netdiffuseR], \pkg{nets} [@R-nets], \pkg{ebdbNet} [@R-ebdbNet] and \pkg{tmlenet} [@R-tmlenet].
+Finally, a large number of \proglang{R} packages are targeted towards analyses and simulation of various networks, network evolution over time and the modeling various network features, such as the creation of the tie between two nodes and answering questions such as,  how and why certain network ties are formed?  Among the packages that are tailored to such analyses are \pkg{CIDnetworks} [@R-CIDnetworks], \pkg{tsna} [@R-tsna], \pkg{networkDynamic} [@R-networkDynamic] and \pkg{egonet} [@R-egonet]. Another class of packages that is worth noting are those specifically targeted towards modeling of epidemics on a network graph, such as packages \pkg{epinet} [@R-epinet], \pkg{netdiffuseR} [@R-netdiffuseR], \pkg{EpiModel} [@R-EpiModel], for example, by relying on the agent-based modeling or ERMG techniques. In addition, the following packages are specifically designed for simulations of the network-graph data: \pkg{SocialMediaLab} [@R-SocialMediaLab], which provides tools for collecting and generating social media data for networks; <!-- **epinet** [@R-epinet], which simulates transmission of diseases through contact networks (uses SEIR epidemic model and a random graph model);  --><!-- **netdiffuseR** [@R-netdiffuseR], a package which allows empirical statistical analysis, visualization and simulation of network models of the diffusion of innovations (calculating transmission rate, hazard rates, exposure models, network threshold levels, infectiousness/contagion, and susceptibility);  -->\pkg{hybridModels} [@R-hybridModels], which allows simulations of stochastic models for transmission of infectious diseases in longitudinal networks; \pkg{NetSim} [@R-NetSim], a package for simulating social networks<!-- , which allow combining and simulating a variety of micro-models to research their impact on the macro-features of social networks -->; and finally, \pkg{RSiena} [@R-RSiena], a package designed for simulation-based analysis of networks as well as model fitting for longitudinal network data.
+
+## Organization of this article
+
+The rest of this article is organized as follows.
+In Section \ref{technical-details}, we formally describe our assumed observed data structure and provide the technical definition of the underlying nonparametric structural equation model (NPSEM) for connected units.
+In Section \ref{interface} we provide some technical details of the \pkg{simcausal} interface for simulating data according to the user-specified parameterization of this NPSEMs.
+In Section \ref{sim.Example1}, we describe an example of a simulation that uses a network distributed according to the Erdos-Renyi model [@renyi1959random].
+In Section \ref{sim.Example2}, we describe the use of the package for simulating from more complex user-defined network distributions, for example, when the probability of forming a connections between two units depends on their baseline covariates. We also illustrate the use of \pkg{simcausal} in a typical simulation study, evaluating the true sample-average mean causal outcome (*the gold-standard*) of a single time-point stochastic intervention for continuous exposure.
+In Section \ref{sim.Example3}, we demonstrate how one of our network simulation examples could be used in practice for assessing the performance of statistical methods for estimation of causal effects among network-dependent observations.
+In Section \ref{sim.longdata}, we simulate a network in a longitudinal setting in which effects are propagated over time and across units.
+We conclude with a discussion in Section \ref{discussion}.
+
+
+<!-- ************************************************ -->
+# Technical details
+<!-- ************************************************ -->
+
+We start by introducing some notation. Suppose that we can simulate a sample of $N$ connected observations, where each observed unit is indexed as $i=1,\ldots,N$. We let $F_i \subseteq \{ 1,\ldots,N \} \backslash i$ denote the set of observations that are assumed "\emph{connected}" to $i$ or, as we will refer to it, the units in $F_i$ are "\emph{friends}" of $i$. In other words, we assume that each set $F_i$ consists of a unique set of indices $j$ in $\{1,\ldots,N\}$, except for $i$ itself. We also allow $F_i$ to be empty, which would imply that observation $i$ is not receiving input from any other units. We assume that $i$ may receive input from other observations only if those observations are listed as part of $F_i$. We will refer to the union of all $F_i$ as a "\emph{network profile}" on all $N$ observations, which will be denoted by $\mathbf{F}$. Let $O_{i}=(W_{i},A_{i},Y_{i})$ denote the data collected on each observation $i$, for $i=1,\ldots,N$, where $W_{i}$ denotes all the baseline covariates for $i$, $A_{i}$ denotes the exposure of $i$ and $Y_{i}$ denotes the outcome of $i$. Let $\mathbf{W}=(W_{i})_{i=1}^{N}$, $\mathbf{A}=(A_{i})_{i=1}^{N}$, $\mathbf{Y}=(Y_{i})_{i=1}^{N}$ and $\mathbf{O}=(\mathbf{W},\mathbf{A},\mathbf{Y})$. Finally, we assume $F_{i}\in W_{i}$, that is, the network of friends of $i$ is assumed to be part of $i'$s baseline covariates.
+
+
+## Nonparametric structural equation model for connected units
+
+We now define the nonparametric structural equation model (NPSEM) [@Pearl2009] for $N$ connected units, similar to that described in @vdL2014nets. This model will form the basis for describing the type of network-based data generating distributions that can be defined within the \pkg{simcausal} package. To help with the presentation, we first consider a *more general* NPSEM, which is then followed with the definition of our actual NPSEM of interest. Suppose that the $N$ connected observations are generated by applying the following, general, NPSEM[^fn-footnoteNPSEM]:
+$$
+\begin{array}{lclc}
+W_{i} & = & f_{W_{i}}(U_{W_{i}}), & i=1,\ldots,N,\\
+A_{i} & = & f_{A_{i}}(W_{i},(W_{j}:j\in F_{i}),U_{A_{i}}), & i=1,\ldots,N,\\
+Y_{i} & = & f_{Y_{i}}(A_{i},W_{i},(A_{j},W_{j}\::\:j\in F_{i}),U_{Y_{i}}), & i=1,\ldots,N,
+\end{array}
+$$
+
+[^fn-footnoteNPSEM]: This NPSEM is general in the sense that it makes no functional restrictions on $f_{W_{i}}$, $f_{A_{i}}$ and $f_{Y_{i}}$, allowing each $i$-specific set of covariates $(W_i,A_i,Y_i)$ to be generated from their own $i$-specific functions. We do, however, assume that the dependence of $i$ on other units is limited to set $F_i$ and we also make an assumption of independent errors $(U_{W_i},U_{A_i},U_{Y_i})$ across units.
+
+where for now we assume that the error terms $(U_{W_i},U_{A_i},U_{Y_i})$ are sampled as IID, for $i=1,\ldots,N$. Note that the above NPSEM could be represented as a Directed Acyclic Graph (DAG) [@pearl1995], by drawing arrows from causes to their effects. However, such a DAG would have to include all $N$ dependent observations (the entire network), since the above NPSEM includes a separate equation for each observed unit $i=1,\ldots,N$. For example, for a network with two units ($N=2$), in which unit $i=1$ is dependent on unit $i=2$, but not vice-versa, the NPSEM could be depicted with a DAG shown in Figure \ref{fig:figDAG2depobs}. We also note that the error terms $(U_{W_i},U_{A_i},U_{Y_i})$, for $i=1,2$, are excluded from this causal DAG [@pearl2012causalfoundation], with the implication that each of the remaining variables is subject to the influence of its own independent error.
+
+
+```{r figDAG2depobs, fig.pos='H', fig.width=4, fig.height=3, dev='tikz', pdfcrop=TRUE, echo=FALSE, message=FALSE, fig.cap = "An example of a directed acyclic graph (DAG) for two observations, where unit 1 is dependent on unit 2, but not vice-versa. \\label{fig:figDAG2depobs}"}
+D <- DAG.empty()
+D <- D+ node("W1",distr="rbern",prob=0.05) +
+        node("W2",distr="rbern",prob=0.05) +
+        node("A1",t=0,distr="rbern",prob=plogis(W1+W2)) +
+        node("A2",t=0,distr="rbern",prob=W2)
+D <- D+ node("Y1",t=1,distr="rbern", prob=plogis(-0.5+0.5*W1+W2+0.5*A1[0]+0.5*A2[0]))+
+        node("Y2",t=1,distr="rbern", prob=plogis(-0.5+0.5*W2+0.5*A2[0]))
+lDAG_Spill3 <- set.DAG(D)
+DAGname <- "DAG_spill3"
+customvlabs <- c("$W_1$","$W_2$","$A_1$","$A_2$","$Y_1$","$Y_2$")
+plotDAG(lDAG_Spill3, xjitter=0.03, yjitter=0.16,
+        edge_attrs=list(width=0.7, arrow.width=0.2, arrow.size=0.5),
+        vertex_attrs=list(size=7, label.cex=0.6),customvlabs=customvlabs)
+```
+
+To simplify our notation and to also to maintain the grip on the increasing dimensionality of such network-connected data, we assume that there are some known summary measures:
+$$W_{i}^{s}:=w_{i}^{s}(W_{i},W_{j}:j\in F_{i})$$ and $$A_{i}^{s}:=a_{i}^{s}((A_{i},W_{i}),(A_{j},W_{j}\::\:j\in F_{i})),$$
+and we use the short-hand notation
+$W_{i}^{s}$
+for $w_{i}^{s}(\cdot)$
+and $A_{i}^{s}$ for $a_{i}^{s}(\cdot)$.
+We assume that these summary measures
+$W_{i}^{s}$ and $A_{i}^{s}$
+are of constant-in-$i$ dimension that does not depend on $N$. We now assume that the observed $N$ units are actually generated from the following NPSEM, which can be viewed as a special case of the NPSEM presented earlier:
+$$
+\begin{array}{lclc}
+W_{i} & = & f_{W_{i}}(U_{W_{i}}), & i=1,\ldots,N,\\
+A_{i} & = & f_{A}(W_{i}^{s},U_{A_{i}}), & i=1,\ldots,N,\\
+Y_{i} & = & f_{Y}(A_{i}^{s},W_{i}^{s},U_{Y_{i}}), & i=1,\ldots,N.
+\end{array}
+$$
+
+This NPSEM implies that the observed data could be simulated in the following manner:
+
+1. Start by generating $N$ baseline covariates $(W_1,\ldots,W_N)$, by first drawing the (independent or weakly dependent) errors $U_{W_{i}}$ and then applying the equations $f_{W_{i}}(U_{W_{i}})$, for $i=1,\ldots,N$;
+2. Generate $N$ baseline summaries $(W_1^s,\ldots,W_N^s)$, by applying the baseline summary measures $w_i^s(\cdot)$ to $W_i$ and $(W_j:j \in F_i)$, for $i=1,\ldots,N$;
+3. Generate $N$ exposures $(A_1,\ldots,A_N)$, by first drawing the errors $U_{A_{i}}$ and then applying the common equation $f_{A}(\cdot)$ to each $W_i^s$ and $U_{A_{i}}$, for $i=1,\ldots,N$;
+4. Generate $N$ exposure summaries $(A_1^s,\ldots,A_N^s)$, by applying the exposure summary measures $a_i^s(\cdot)$ to $(A_i,W_i)$ and $(A_j,W_j:j \in F_i)$, for $i=1,\ldots,N$; and
+5. Generate $N$ outcomes $Y_1,\ldots,Y_N$, by drawing the errors $U_{Y_{i}}$ and then applying the common equation $f_{Y}(\cdot)$ to $(A_i^s,W_i^s)$ and $U_{Y_{i}}$, for $i=1,\ldots,N$.
+
+Note that in this paper we only consider NPSEMs which assume a certain independence structure of the errors, namely, conditional on $\mathbf{W}$ we assume that: (1) $(U_{A_{i}},U_{Y_{i}})$, for $i=1,\ldots,N$ are IID; and (2) For each $i$, $U_{A_{i}}$ is independent of $U_{Y_{i}}$.
+<!-- the `simcausal` package does not require one to make any explicit distributional or independence assumptions on $U_{i}:=(U_{W_{i}},U_{A_{i}},U_{Y_{i}})$ (i.e., the errors of each unit could have an arbitrary dependence structure with other units). However, -->
+The above structural equation model assumptions on generating $A_{i}$ and $Y_{i}$ imply that if two different units with the same number of friends have the same individual covariate and treatment values, and also have the same values for the covariates and treatments of their friends, they will be subjected to the same conditional distribution for drawing their treatment and outcome. We note that we had assumed $U_{W_{i}}$ are iid and since $f_{W_{i}}$ are allowed to be different for each $i$ this corresponds with assuming that $W_{1},\ldots,W_{N}$ are independent, but not necessarily identically distributed. However, our package also allows simulating dependent $W_{1},\ldots,W_{N}$, for example, by defining a *latent* (hidden) covariate $W^*_i$ which is shared between all observations connected to $i$ and then defining the *observed* baseline covariate for $i$ and all $j \in F_i$ conditionally on $W^*_i$. Such simulation procedure allows one to introduce dependence between the observed $W_i$ and $W_j$, whenever $i$ and $j$ are connected.
+
+These independence assumptions on $U_{i}:=(U_{W_{i}},U_{A_{i}},U_{Y_{i}})$, for $i=1,\ldots,N$ imply that:
+
+1. $W_1,\ldots,W_N$ are independent (or more generally, their dependence is weak enough);
+2. Conditional on $\mathbf{W}$, the random variables $(A_1,\ldots,A_N)$ are mutually independent; and
+3. Conditional on $(\mathbf{A},\mathbf{W})$, the random variables $(Y_1,\ldots,Y_N)$ are mutually independent.
+
+Thus, all the dependence between units is explained by the observed pasts of the units themselves and of their friends. Finally, these structural assumptions lead to the following assumptions for the conditional distribution of $Y_i$ and $A_i$. Specifically, let $P(A_{i}\:|\:\mathbf{W})$ denote the conditional distribution of the exposure $A_{i}$, given all $\mathbf{W}$; and let $P(Y_{i}\:|\:\mathbf{A},\mathbf{W})$ denote the conditional distribution of the outcome $A_{i}$, given all $(\mathbf{A},\mathbf{W})$, for observations $i=1,\ldots,N$. The above NPSEM with the network structure $\mathbf{F}$ imply the following for these conditional distributions:
+
+1. Each $P(A_{i}\:|\:\cdot)$ depends on $(W_{i},W_{j}:j\in F_{i})$ only as a function of some fixed-dimension summary measure $w_{i}^{s}(W_{i},W_{j}:j\in F_{i})$; and
+2. Each $P(Y_{i}\:|\:\cdot)$ depends on $(A_{i},W_{i})$ and $(A_{j},W_{j}\::\:j\in F_{i})$ only as a function of some fixed-dimension summary measures $a_{i}^{s}((A_{i},W_{i}),(A_{j},W_{j}\::\:j\in F_{i}))$ and $w_{i}^{s}(W_{i},W_{j}:j\in F_{i})$.
+
+Note that the above-defined NPSEM also implicitly encodes the definition of counterfactual variables, i.e., variables which would result from some particular interventions on a set of endogenous variables.
+For example, for a particular vector of treatment assignments $\mathbf{a}=(a_1,\ldots,a_N)$, we could modify the NPSEM as follows:
+$$
+\begin{array}{lclc}
+W_{i} & = & f_{W_{i}}(U_{W_{i}}), & i=1,\ldots,N,\\
+A_{i} & = & a_{i}, & i=1,\ldots,N,\\
+Y_{i,\mathbf{a}} & = & f_{Y}(a_{i}^{s}(\mathbf{a},\mathbf{W}),W_{i}^{s},U_{Y_{i}}), & i=1,\ldots,N,
+\end{array}
+$$
+
+where the equations for $W_i$ were kept unchanged, each $A_i$ was set to $a_{i}$, and each $Y_{i,\mathbf{a}}$ denotes
+the counterfactual outcome of unit $i$, under the network intervention on all $N$ units that sets $\mathbf{A}=\mathbf{a}$.
+In this article, we will refer to $(\mathbf{W},\mathbf{a},\mathbf{Y}_{\mathbf{a}})$ as \emph{counterfactual data} for $N$ units and we define our target causal parameter as a function of such counterfactual data distribution. For example, the average treatment effect (ATE) can be simply expressed as
+$E\left[\mathbf{Y}_{\mathbf{1}}-\mathbf{Y}_{\mathbf{0}}\right]$.
+
+<!-- ************************************************ -->
+# Using simcausal for simulating networks and network-dependent data
+\label{interface}
+<!-- ************************************************ -->
+
+To define the distribution of the data (and to simulate such data), \pkg{simcausal} uses a \code{DAG} object, which will typically consist of a collection of individual *nodes* (random variables). Such nodes are defined each time the user calls the `node()` function. That is, each call to `node()` defines the conditional distribution(s) of either a single or time-varying node. Collectively, these `node()` calls define a single `DAG` object, which parametrizes the distribution of the data that the user wants to simulate. By default, the distribution of any new node for a single observation $i$ can be dependent only on $i'$s values of the previously defined nodes, and not the node values of other observations. As a result, any two observations sampled from such `DAG` object will be independent. However, there are many real-life examples when one wishes to simulate data based on some either a priori known or hypothesized information about the network of connections between different observations. The new functionality we describe here allows the user to specify the distribution of a network graph and then use that network to define the distribution of covariates for each observation $i$ conditionally on the covariates of other observations. For example, if we assume that the observation $j$ is part of $i'$s social or geographical network (or as we will call it, the observation $j$ is a *friend* of $i$), then the nodes of $j$ are allowed to influence the distribution of the nodes of $i$. Moreover, we assume that the functional form of such dependence can be described by some user-specified network-based summary measures. For that purpose, we used the \proglang{R} list subsetting operator "`[[...]]`" and re-defined it specifically for indexing and building of such network summaries based on observations that are friends of $i$ (e.g.,  "`Var[[indx]]`"). We also note that \pkg{simcausal} does not allow simultaneous friend references of the same node, that is, each newly added node can be defined only as a function of the nodes that have been previously added to the `DAG` object. <!-- For example, while defining a new node named "`Var`" one cannot also reference the values of the same node `Var` for $i'$s friends. -->
+
+## Defining the network
+
+In order to perform network-based simulations with the \pkg{simcausal} package, the user has to declare a function which will return a specific network matrix, and we will refer to any such function as the *network generator*. In particular, a network generator is any user-specified function that returns a network profile $\mathbf{F}$ on $N$ observations, defined as a matrix of $N$ rows, each row $i$ containing the set of friends $F_i$ of observation $i$, i.e., row $i$ consists of a vector of observations from $\{1,\ldots,N\}$ that are assumed connected to $i$. The network generator function should accept at least one named argument, \code{n}, and it must return a network matrix with \code{n} rows and \code{Kmax} columns, where \code{Kmax} stands for a maximal possible number of friends for any observation. When observation $i$ happens to have fewer than \code{Kmax} friends, i.e., $|F_i|<$\code{Kmax}, the remainder of the matrix row $i$ must by filled with `NA` (missing) values. Note that an observation $i$ is allowed to have no friends, which is denoted by an empty friend set $F_i$, in which case the row $i$ of the network matrix should only consist of `NA` (missing) values.
+
+Once such a network generator has been defined, the next step is to *add* this network to a specific `DAG` object. This is accomplished by simply calling the `network` function, specifying the name of the network generator as its argument "`netfun`" and adding this network function call to the current `DAG` object with the \proglang{R} operator "`+`". In other words, the `network` function call defines the network and is added to an existing `DAG` object with a syntax "`+network(...)`". Note that this is identical to the \pkg{simcausal} syntax for adding new `node` function calls to a growing `DAG` object when defining data for IID observations. This network can then serve as a backbone for defining the dependent-data structural equation models within such a `DAG` object. More specifically, the previously defined node values of $i'$s friends can be now referenced as part of the new `node` function calls, defining the conditional distribution of the node for each observation $i=1,\ldots,N$. The examples following this section illustrate this functionality for various network models.
+
+Finally, we note that the `network` function can accept any number of user-specified optional arguments, where each of such optional arguments must be an evaluable \proglang{R} expression. These expressions will not be evaluated until the data simulation step, at which point all of them are passed as arguments to the function that defines the network generator. Thus, just like the regular `node` function expressions, the `network` function expressions can refer to any standard or user-specified \proglang{R} functions and can reference any of the previously defined `DAG` nodes (i.e., `DAG` nodes that were added prior to `network` function call). This feature can be useful when, for example, one wishes to simulate the network in which the probability of forming a tie between two units depends on the previously simulated unit-specific variable values (such as the baseline risk factors on each unit).
+
+## Using the syntax `[[...]]` for network-based variable subsetting
+
+Following the `network` function call, subsequent calls to `node` function can employ our re-purposed list subsetting operator "`[[...]]`" for indexing the node values of friends. First, the variable which is to be used for network subsetting is specified in front of the subsetting operator, e.g., "`A[[...]]`". Second, the friend values of the variable `A` are specified by the subsetting index, e.g., "`A[[1:5]]`". This expression will look up the values of node `A` for friends indexed from 1 to 5 and it will be evaluated for all observations $i=1,\ldots,N$. The specific ordering of friends is determined by the column ordering of the network matrix returned by the network generator. Such network-indexing expressions can be also used as inputs of different \proglang{R} functions, enabling evaluation of various network-based summaries. For example, the expression "`sum(A[[1:Kmax]])`" will specify a vector of length $N$ that will consist of a sum of `A` values among all friends of $i$, for each observation $i=1,\ldots,N$. This syntax is fully generalizable towards any function which can operate on matrices, such as the matrix result of the expression "`A[[1:Kmax]]`". Moreover, two of the commonly used \proglang{R} functions, `sum` and `mean`, are automatically replaced with their row-based counterparts: the functions `rowSums` and `rowMeans`. Thus, the expressions "`sum(A[[1:Kmax]])`" and "`rowSums(A[[1:Kmax]])`" can be used interchangeably.
+
+We illustrate this syntax with a simple example. Suppose that we have a `DAG` object, named "`D`" and we use the network generator, named "`rnet.gnp`"[^fn-footnote1]. As shown in the code snippet below, we first define an empty `DAG` object `D`, then we add the network named "`net`" to object `D` and we also define an IID Bernoulli variable named "`Var`".
+
+```{r, eval=TRUE, results='hide', message=FALSE}
+library("simcausal"); library("magrittr")
+D <- DAG.empty() +
+  network("net", netfun = "rnet.gnp", p = 0.1) +
+  node("Var", distr = "rbern", prob = 0.5)
+```
+
+[^fn-footnote1]: Note that the network generator `rnet.gnp` is provided as part of the \pkg{simcausal} package. It uses the \pkg{igraph} \proglang{R} package function `sample_gnp` to sample a network graph and then converts its output into the \pkg{simcausal} network matrix representation. See `?rnet.gnp` for additional information.
+
+Next, we define a new node, named "`Var.F1`", as the value of `Var` for the first friend of each observation $i=1,\ldots,N$. We do this by defining a node with a constant (degenerate) distribution, `distr="rconst"`, and indexing the first friend of each observation with the expression "`Var[[1]]`", as shown in the following example:
+
+```{r, eval=TRUE, results='hide', message=FALSE}
+D <- D + node("Var.F1", distr = "rconst", const = Var[[1]])
+```
+
+Suppose we now wish to list the `Var` values among the first 4 friends from each set $F_i$. This can be accomplished by defining a single multivariate node and using the expression "`Var[[1:4]]`", as shown next:
+
+```{r, eval=TRUE, results='hide', message=FALSE}
+D <- D + node(paste0("Var.F",1:4), distr = "rconst", const = Var[[1:4]])
+```
+
+As our final example, we define a new degenerate node, named "`mean.F1to4`", as the mean of `Var` amongst the first 4 friends, for each $i=1,\ldots,N$.
+We also define a new Bernoulli node, named "`Var.F1to4`", for which the $i$-specific probability of success is also given as the mean of `Var` amongst the first 4 friends in $F_i$. The data for the variables defined thus far can now be simulated by simply calling the functions `set.DAG` and `sim` in sequence and specifying the desired sample size $N$ with the argument "`n`".
+
+
+```{r, eval=TRUE, results='hide', message=FALSE}
+{ D <- D +
+  node("mean.F1to4", distr = "rconst", const = mean(Var[[1:4]], na.rm=TRUE)) +
+  node("Var.F1to4", distr = "rbern", prob = mean(Var[[1:4]], na.rm=TRUE)) } %>%
+set.DAG(n.test = 50) %>%
+sim(n = 50)
+```
+
+In summary, for a given indexing vector `indx`, the network-indexing expression, such as "`Var[[indx]]`", will evaluate to a matrix with $N$ rows and the number of columns determined by the length of `indx`. We note that indexing variable `indx` can be a non-negative integer-valued vector, with values starting from 0 and bounded above by a special reserved constant named "`Kmax`". That is, the variable `Kmax` can be used for finding out the maximal friend index for any given network, as we demonstrate in examples in following sections. In addition, one can use `0` as part of the same friend indexing vector, where the expression "`Var[[0]]`" is equivalent to using "`Var`". This provides a convenient syntax for indexing the actual `Var` value of observation $i$ along with the `Var` values of $i'$s friends, for example, allowing the expressions such as "`sum(Var[[0:Kmax]])`". Furthermore, for a specific observation $i$, the expression "`Var[[k]]`" will evaluate to a missing value (i.e., "`NA`") whenever $i$ has fewer than `k` friends. This default behavior can be also altered by passing a special named argument "`replaceNAw0=TRUE`" to the corresponding `node()` call, in which case all of such missing (`NA`) values are automatically replaced with `0` values. In addition, any node expression can reference a special reserved variable "`nF`", which is a vector of length `n` and it stores the total number of friends for observation $j$ in its $j$th entry.
+
+
+Finally, we note that any function that defines a network-indexing node summary can be similarly applied as a summary of a time-varying node and vice-versa. For example, for a time varying node "`Var.t`", the expression "`sum(Var.t[t_indx])`" is analogous to our previous example of the network summary "`sum(Var[[indx]])`", except that in the former case we are summing the values of a time-varying node `Var.t` for time-points defined by the indexing vector `t_indx`. We also provide some additional examples of such network summaries in the following sections. However, for more in-depth description of this functionality we refer to Section "*Defining node distributions and vectorizing node formula functions*" of the \pkg{simcausal} package vignette "*simcausal Package: Simulations with Complex Longitudinal Data*". Furthermore, both of these indexing operators, i.e., the time indexing operator "`[...]`" and the network indexing operator "`[[...]]`", can be combined to form a single summary applied to a time-varying node, as we demonstrate in Section \ref{sim.longdata}.
+
+<!-- ************************************************ -->
+# Simulation with Erdos-Renyi network
+\label{sim.Example1}
+<!-- ************************************************ -->
+
+## Specifying the structural equation model for dependent data
+
+We describe a simulation study of a hypothetical community of intravenous drug users, considered to be under a high risk for HIV infection. The exposure of interest is the needle exchange program. The outcome is adherence to antiretroviral therapy among those infected with HIV. We also node that this simulation set-up is later extended to a more realistic setting with longitudinal data in Section \ref{sim.longdata}.
+
+For this simulation the network graph is sampled according to the network generator called "`rnet.gnm`", which is provided as part of the \pkg{simcausal} package. This network generator uses the `sample_gnm` function of the `igraph` package [@igraph] to sample a directed random graph according to Erdos-Renyi model [@renyi1959random]. The nodes of the graph returned by the `sample_gnm` function are treated as individual observations and are indexed as $i=1,\ldots,N$. A directed edge from node $j$ pointing to node $i$ implies that the unit $j$ is a friend on unit $i$, and hence $j \in F_i$, but not vice-versa, i.e., $i \in F_j$ only if there is a separate directed edge from node $i$ to node $j$. The function `rnet.gnm` converts this network graph to a matrix of network IDs, where each friend set $F_i$ (matrix row $i$) is determined according to the above described rule. Finally, function `rnet.gnm` accepts two arguments: `n` - the total sample size (number of nodes in a network graph), and `m_pn` - the total number of edges in the network as a fraction of `n`. Note that the argument `n` needs to be the first argument of any network generator, while the argument `m_pn` is optional.
+
+We proceed by first instantiating an empty `DAG` object, which is assigned to variable "`D`" below. We will use this `DAG` object to define the network distribution, as well as to encode the unit-specific distribution of the data. As a next step, we then register the network generator function (`rnet.gnm`), making it a part of the object `D`. This will allow us to: (a) generate a specific network, and (b) use this network as a way to connect nodes defined within the same `DAG` object `D`. Specifically, as we show in the following code snippet, we add a network to the object `D` by using syntax "`D<-D+network()`". The name of the network generator is passed on to the `network()` call with an argument "`netfun`". Note that the `network()` call also requires a "`name`" argument (first argument), which specifies a name of a particular network[^fn-footnote2]. Note that the function `network` allows passing any number of additional arguments, however all of these arguments must be named. These arguments will be passed on to the network generator function (e.g., `rnet.gnm`) during the process of data simulation. Note that one can use such arguments for additional parameterization of the network distribution, such as the argument "`m_pn`" in the example below.
+
+[^fn-footnote2]: The actual value of the `name` argument of `network()` function becomes only relevant when the user wants to either over-write the existing network or use several different networks within the same `DAG` object.
+
+```{r, message=FALSE}
+library("simcausal")
+D <- DAG.empty() + network(name = "ER.net", netfun = "rnet.gnm", m_pn = 5)
+```
+
+As a next step, we define an integer node named "`nF`", a vector with its $j$th entry set equal to the total number of friends for unit $j$. Note that the special reserved variable `nF` is automatically evaluated by the package and thus does not need to be explicitly defined as a separate node.
+
+```{r}
+D <- D + node("nF", distr = "rconst", const = nF)
+```
+
+In our next example we define three IID covariates $W=(W(1),W(2),W(3))$, where $W(1)$ is denoted as a node "`W1`" and it defined a categorical baseline risk factor, $W(2)$ is denoted as a node "`W2`" and it defines a binary confounder positively correlated with `W1`, and $W(3)$ is denoted as a node "`W3`" and it defines a binary indicator of having an HIV infection at baseline.
+
+```{r}
+D <- D +
+  node("W1", distr = "rcat.b1",
+        probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) +
+  node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3)) +
+  node("W3", distr = "rbern", prob = 0.05)
+```
+
+We are finally ready to define the network summaries which will use the network. Specifically, in the example below we introduce three network-based summaries `sumW1`, `sumW2` and `sumW3`, defined as the sums of the unit-specific baseline covariate values of the unit's friends. For example, when the user simulates `n` observations, the variable `sumW1` will evaluate to a vector of length `n`, with the $i$th entry in `sumW1` being defined as $\sum_{j \in F_i} W_j(1)$, which corresponds with the sum of the values of `W1` among all friends of unit $i$[^fn-footnote3]. Note that `sumW3` thus represents the number of friends of each observation who were infected at baseline. The summing order is based on the ordering of the columns in the network matrix returned by the network generator. The last friend index is indicated with `Kmax`, where `Kmax` is a constant reserved by \pkg{simcausal} and it is equal to the maximal number of friends for any unit. As previously described, when the unit $j$ happens to have fewer than `Kmax` friends, the default rule is to return `NA` for such non-existing friend covariate values. However, these none-existing covariate values will be automatically replaced with `0` whenever an additional argument `replaceNAw0 = TRUE` is passed to `node()` call, as we show in the examples below:
+
+[^fn-footnote3]: As previously described, the expression "`sum(W1[[1:Kmax]])`" is automatically converted to an expression `rowSums(W1[[1:Kmax]])`, thus, correctly evaluating the unit-specific sums of the corresponding input matrix rows, such as, `W1[[1:Kmax]]`. However, this functionality does not apply to any other functions besides `sum` and `mean`. It is the responsibility of the user to provide a function which will appropriately handle the matrix evaluation result of `W1[[1:Kmax]]`.
+
+```{r}
+D <- D +
+  node("sumW1", distr = "rconst", const = sum(W1[[1:Kmax]]), replaceNAw0 = TRUE) +
+  node("sumW2", distr = "rconst", const = sum(W2[[1:Kmax]]), replaceNAw0 = TRUE) +
+  node("sumW3", distr = "rconst", const = sum(W3[[1:Kmax]]), replaceNAw0 = TRUE)
+```
+
+Suppose now that we also wanted to obtain the covariate values for specific friends, e.g., the values of covariate `W1`. Below we provide such an example, by defining one multivariate node (5 columns) which contains the values of `W1` among the first 5 friends.  Note that we are no longer using the argument `replaceNAw0 = TRUE`, which should set the evaluation result to `NA` whenever the corresponding friend of rank `k` does not exist.
+
+```{r}
+D <- D + node(paste0("W1.F",c(1:5)), distr = "rconst", const = W1[[1:5]])
+```
+
+Next, we define the conditional distribution for the binary exposure $A$, denoted with node "`A`" below (e.g., indicator of receiving antiretroviral therapy). The probability of success for $A$ is defined as a logit-linear function of `W2` and the above network-based summaries `sumW1`, `sumW2` and `sumW3`.
+
+```{r}
+D <- D +
+  node("A", distr = "rbern",
+    prob = plogis(2 - 4*W2 - 0.1*sumW1 - 0.4*sumW2 + 1.5*sumW3))
+```
+
+Note that the above expression in `prob` argument of node `A` did not need to use the names of the network summaries `sumW1`, `sumW2` and `sumW3`. Thus, the node `A` could have directly defined the network summaries eliminating the need to define separate nodes `sumW1`, `sumW2` and `sumW3`, as we show the following alternative definition of `A`[^fn-footnote3b]:
+
+[^fn-footnote3b]: Note that by adding another `node()` call with the same node name "\code{A}" we over-write the previously defined node \code{A} (where in this particular example the new node `A`  happens to be equivalent to the one we defined previously)
+
+```{r, message=FALSE}
+D <- D +
+  node("A", distr = "rbern",
+    prob = plogis(2 - 4*W2 -
+      0.1*sum(W1[[1:Kmax]]) - 0.4*sum(W2[[1:Kmax]]) + 1.5*sum(W3[[1:Kmax]])),
+    replaceNAw0 = TRUE)
+```
+
+In the following example we define the network-based summary measure "`sumW3A`", which involves an interaction of friend's exposures `A` and friend's baseline covariates `W3`. More specifically, we define the summary measure `sumW3A` for each unit $i$ as $\sum_{j \in F_i} W_{j}(3)(1-A_{j})$, i.e., its the total number of $i'$s friends who were infected at baseline (`W3` was `1`) and were also unexposed (`A` was `0`).
+
+```{r}
+D <- D +
+  node("sumW3A", distr = "rconst",
+    const = sum(W3[[1:Kmax]] * (1 - A[[1:Kmax]])),
+    replaceNAw0 = TRUE)
+```
+
+Next, we define the conditional distribution of the binary outcome $Y$, denoted as a node "`Y`" below. We assume that `Y` is an indicator of adherence to the antiretroviral therapy throughout some pre-specified follow-up period. In the example below, we model this outcome as a function of the above described network summaries. Specifically, for each observation $i$, we assume that the probability of success for `Y` is a logit-linear function of the summaries `sumW3`, `sumW3A` and the baseline covariate value `W2`. We also add another network summary, making the outcome for observation $i$ also dependent on the average exposure of $i$ and the exposures of $i'$s friends, i.e.,
+$(A_{i} + \sum_{j \in F_i} A_j) / (|F_i|+1)$.
+This new summary is defined by the expression `sum(A[[0:Kmax]])/(nF+1))` in the example below. Also note that we are including `0` in the network subsetting of the node `A` (i.e., `A[[0]]`), which is equivalent to just using `A`.
+
+```{r, message=FALSE}
+D1 <- D +
+  node("Y", distr = "rbern",
+    prob = plogis(-1 + 0.5*A + 2*sumW3A - 2*sumW3 + 3*W2 + 0.25*sum(A[[0:Kmax]])/(nF+1)),
+    replaceNAw0 = TRUE)
+```
+
+Note that, just like with an alternative definition of the node `A` above, we could have also defined all of the above network summaries directly inside the definitions of node `Y`. Finally, we finish specifying the observed data-generating distribution by calling the function `set.DAG(D)`, as shown below:
+
+```{r, message=FALSE}
+Dset1 <- set.DAG(D1, n.test = 100)
+```
+
+## Simulating network and observed data
+
+Having defined the network-based distribution of the data with a specific `DAG` object, one can simulate data by simply calling the function `sim`, as we show in the example below. Here we simulate 200 observations from the distribution defined by the above object `Dset1`.
+
+```{r, message=FALSE}
+datnet <- sim(Dset1, n = 100, rndseed = 543)
+head(datnet, 2)
+```
+
+We also note the presence of the missing values (`NA`) for some network covariates in the above simulated data frame (e.g., `W1.F4` and `W1.F5`). As previously stated, these missing network covariates imply that the unit has fewer friends than the index of the syntax `[[...]]` (e.g., `W1.F5=W1[[5]]`). The data frame returned by the `sim()` function can be also used for extracting the simulated network, as we show next. The data frame `datnet` contains an attribute called `netind_cl`, which is an `R6` object of class `NetIndClass`. This object is used for storing the network, as it was returned by the network generator. In particular, the field `NetInd` contains the network matrix and the field `nF` contains the vector with total counts of the simulated friends for each observation, i.e., $\mathbf{F}=(F_1,\ldots,F_N)$ (see `?NetIndClass` for more information).
+
+```{r}
+NetInd_mat <- attributes(datnet)$netind_cl$NetInd
+head(NetInd_mat, 2)
+nF <- attributes(datnet)$netind_cl$nF
+head(nF, 2)
+```
+
+## Plotting network and SEM
+
+The `plot.igraph` function in \pkg{igraph} package can be used for visualizing such simulated network. However, the network ID matrix `NetInd_mat` needs to be first converted back into its original \pkg{igraph} object representation (`g`), as we show below.
+
+```{r, message=FALSE}
+library("igraph")
+g <- sparseAdjMat.to.igraph(NetInd.to.sparseAdjMat(NetInd_mat, nF = nF))
+```
+
+We can now use the `plot.igraph` function of the \pkg{igraph} package to visualize the simulated network structure stored in the object `g`, as shown in Figure \ref{fig:netExample1}.
+
+```{r netplot, fig.pos='H', fig.width=4.5, fig.height=4.5, echo=FALSE, message=FALSE, fig.cap = "Example of a network sampled from the Erdos-Renyi model\\label{fig:netExample1}"}
+par(mar=c(.1,.1,.1,.1))
+plot.igraph(g, layout=layout.fruchterman.reingold, vertex.size=3,
+            vertex.label.cex=.2, edge.arrow.size=.1)
+```
+
+<!-- We can also use the `simcausal` `plotDAG` function to plot the functional relationships between different nodes in the `DAG` object `Dset1`, as shown in the following code snippet, with the resulting plot presented in Figure \ref{fig:DAGExample1}. Note that the function `plotDAG` plots the relationship between nodes as if those were evaluated only on the basis of *one* observation, implying that such results may be misleading when a specific node was defined by using the network-based summaries and the syntax `[[...]]`. For example, in Figure \ref{fig:DAGExample1}, the node `sumW1` appears to be a function of `W1` and the plot provides us with no way to differentiate between whether `sumW1` is a function of only the individual value of `W1` or a function of the network values of `W1`, i.e., `W1[[1:Kmax]]`.
+{r DAGplot, fig.pos='H', fig.width=5, fig.height=4, message=FALSE, fig.cap = "Functional relationships between the nodes of the structural equation model from Example 1\\label{fig:DAGExample1}"}
+plotDAG(Dset1, yjitter = 0.1, vertex_attrs = list(size = 18, label.cex = 0.6))
+ -->
+
+## Using more than one network in a single dataset or over-writing an existing network
+
+Note that additional `network()` calls can be added to the same object `D`. When the same `name` argument in the new `network()` call is used, the old network definition is automatically replaced by the new one. In the example below, we overwrite the previously defined network `"ER.net"` with another network, with the same network generator `rnet.gnm`, but with a different parametrization of the argument `m_pn`.
+
+```{r, message=FALSE}
+D <- D + network(name = "ER.net", netfun = "rnet.gnm", m_pn = 10)
+Dset.alt <- set.DAG(D, n.test = 200)
+datnet <- sim(Dset.alt, n = 200, rndseed = 543)
+```
+
+In contrast, when another `network()` call provides a different `name` argument, e.g., `name = "new.ER.net"`, both networks (old and new) will be present within the same `DAG` object and both networks can be used for constructing the network summaries. Specifically, any node with a network-based summary that is added to `D` *after* the network `new.ER.net`, will be computed on the basis of this new network, while all the network summaries defined previously within `D` *before* `new.ER.net` was added, will continue to use the old network. We illustrate this functionality with the following example, where we use the the same `DAG` object `D` and we add a new network named `new.ER.net`, which is then followed by a new network summary measure defined by the node "`new.sumW1`". Note that the summary defined in `new.sumW1` is exactly the same function as the previously defined summary `sumW1`, i.e., it is the sum of the friend values of the node `W1`. Thus, their unit-specific values should be equivalent when the two summaries use the same network structure. However, in our case the summary in `sumW1` is evaluated on the basis of the network `ER.net`, while the summary `new.sumW1` is evaluated on the basis of the re-sampled network `new.ER.net`. As the example below demonstrates, by using two different networks these two functionally equivalent summaries evaluate to different observation-specific values.
+
+```{r, message=FALSE}
+D <- D +
+  network(name = "new.ER.net", netfun = "rnet.gnm", m_pn = 10) +
+  node("new.sumW1", distr = "rconst", const = sum(W1[[1:Kmax]]), replaceNAw0 = TRUE)
+Dset.alt <- set.DAG(D, n.test = 200)
+datnet <- sim(Dset.alt, n = 200, rndseed = 543)
+head(datnet[,c("sumW1", "new.sumW1")], 2)
+```
+
+We note that this functionality is also demonstrated in a longitudinal simulation study in Section \ref{sim.longdata}.
+
+<!-- ************************************************ -->
+<!-- Example. Simulating dependent-data with more complex custom network -->
+<!-- ************************************************ -->
+<!-- Specifying the structural equation model for dependent data -->
+<!-- message=FALSE, include=FALSE}
+D <- DAG.empty()
+D <- D +
+  node("W1", distr = "rcat.b0",
+        probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) +
+  node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3)) +
+  node("W3", distr = "rbern", prob = 0.6)
+ -->
+<!-- include=FALSE, message=FALSE, results='hide'}
+Kmax <- 6
+normprob <- function(x) x / sum(x)
+p_nF_W1_0 <- normprob(c(0.02, plogis(-3 - c(1:Kmax) / 2)))
+p_nF_W1_1 <- normprob(c(0.02, plogis(-1.5 - c(1:Kmax) / 3)))
+p_nF_W1_2 <- normprob(c(0.02, pnorm(-2*abs(2 - c(1:Kmax)) / 5)))
+p_nF_W1_3 <- normprob(c(0.02, pnorm(-2*abs(3 - c(1:Kmax)) / 5)))
+p_nF_W1_4 <- normprob(c(0.02, plogis(-4 + 2 * (c(1:Kmax) - 2))))
+p_nF_W1_5 <- normprob(c(0.02, plogis(-4 + 2 * (c(1:Kmax) - 3))))
+p.nFbyW1 <- cbind(p_nF_W1_0, p_nF_W1_1, p_nF_W1_2, p_nF_W1_3, p_nF_W1_4, p_nF_W1_5)
+ -->
+<!-- message=FALSE, include=FALSE}
+set.seed(12345)
+normprob <- function(x) x / sum(x)
+p.nFbyW1 <- apply(matrix(runif(7*6), ncol = 6, nrow = 7), 2, normprob)
+colnames(p.nFbyW1) <- paste0("p_nF_W1_", c(0:5))
+colSums(p.nFbyW1)
+ -->
+<!-- message=FALSE, results='hide', include=FALSE}
+create_probs_nF <- function(W1) t(p.nFbyW1[,W1+1])
+vecfun.add("create_probs_nF")
+D <- D + node("def.nF", distr = "rcat.b0", probs = create_probs_nF(W1))
+ -->
+<!-- , message=FALSE, warning=FALSE, results='hide', include=FALSE}
+D <- D + network(name="net.custom", netfun = "genNET", maxFi = 6, bslVar = W1, nF = def.nF)
+ -->
+<!-- include=FALSE}
+gen.k.regular <- function(n, maxFi, ...) {
+  if (n < 20) maxFi <- 5
+  igraph.reg <- sample_k_regular(no.of.nodes = n, k = maxFi, directed = TRUE, multiple = FALSE)
+  sparse_AdjMat <- simcausal::igraph.to.sparseAdjMat(igraph.reg)
+  NetInd_out <- simcausal::sparseAdjMat.to.NetInd(sparse_AdjMat)
+  return(NetInd_out$NetInd_k)
+} -->
+<!-- message=FALSE, warning=FALSE, eval=FALSE, results='hide'}
+D <- D +
+  node("A", distr = "rbern",
+      prob = plogis(2 + -0.5 * W1 +
+                  -0.1 * sum(W1[[1:Kmax]]) - 0.4 * sum(W2[[1:Kmax]]) - 0.7 * sum(W3[[1:Kmax]])),
+      replaceNAw0 = TRUE) +
+  node("Y", distr = "rbern",
+      prob = plogis(-1 + 2 * sum(W2[[1:Kmax]] * (1 - A[[1:Kmax]])) - 1.5 * sum(W3[[1:Kmax]])),
+      replaceNAw0 = TRUE)
+ -->
+
+<!-- ************************************************ -->
+# Simulation with small world network, continuous exposure and a single time point stochastic intervention
+\label{sim.Example2}
+<!-- ************************************************ -->
+
+The simulation study described here is a simplified version of a hypothetical observational study that might have been conducted to evaluate the social influence of healthy living on personal long term health status. We imagined that this study collected data on an interconnected community of $N$ individuals. For each individual $i$, we would have measured their social network $F_i$, baseline covariates $W_i$, an exposure $A_i$ and a binary outcome $Y_i$. The exposure was assessed as a continuous physical activity index and the outcome indicated if the person was obese after some follow-up period. We evaluated the average-causal effect of a stochastic intervention that intervened only on some members of the community by shifting their observed physical activity level by some known constant $shift>0$, while keeping the exposures of others unchanged. More precisely, such stochastic intervention for each a unit $i$ can be defined by a function $\delta(A_i,W_i)$ that assigns the new (intervened) exposure to either $A_i+shift$ or $A_i$, depending on the covariate values $W_i$. Such interventions have been described in the past [@munoz2012population] and they arise naturally in settings with continuous exposures where it is not feasible to intervene on every member of the population. For example, in our hypothetical study it might be infeasible to increase the level of physical activity for an individual with a pre-existing medical condition who is above a certain age. Therefore, as an alternative, we may consider a dynamic interventions that does not intervene on such community members, as determined by the pre-specified function $\delta(A_i,W_i)$. This in turn allows us to define the types of causal parameters which are less likely to violate the positivity assumption (also known as the assumption of experimental treatment assignment (ETA)).
+
+In our simulation, we start by sampling a network graph for $N$ units (nodes) according to the small world model [@watts1998collective], along with three unit-specific baseline covariates,
+$$W_i = (W_i(1),W_i(2),W_i(3)),$$
+for $i=1,\ldots,N$.
+The unit-specific exposure $A_i$ is then was simulated conditionally on $W_i$ as normal with
+$\mu(W_i)= 0.58*W_i(2)+0.33*W_i(3)$ and $\sigma^2=1$. We also let the conditional density of $A_i$ given $W_i$ to be denoted as $g_0(a|w)$. We denote the intervened exposure on $i$ as $A_i^*$, with its corresponding conditional density denoted as $g^*$. Note that $A^*_i$ is set equal to $A_i+shift$, for known constant $shift>0$, only if the following condition holds:
+$$\exp\{shift * (A_i - \mu(W_i) + shift/2)\} \geq trunc \tag{*},$$
+for known truncation constant $trunc>0$, and otherwise, the intervention keeps the observed exposure $A_i$ unchanged. Finally, the binary outcome $Y_i$ is simulated as dependent on all three of $i'$s baseline covariates in $W_i$, $i'$s exposure $A_i$, as well as the baseline covariate values and exposures of $i'$s friends via the following network summaries:
+$1/|F_i|\sum_{j \in F_i}{W_j(1)}\ \mbox{and}\ \sum_{j \in F_i}{A_j}.$ To reiterate, we assume that the probability of success for each binary outcome $Y_i$ is logit-linear function of the summary measures $(A_i^s,W_i^s)$, which are defined as
+$$A_i^s:=(A_i, 1/|F_i|\sum_{j \in F_i}{W_j(1)})\ \mbox{and}\ W_i^s:=(W_i, \sum_{j \in F_i}{A_j}).$$
+
+Our target causal quantity is then defined with respect to $N$ $i$-specific counterfactual outcomes $Y^{*}_i$, under stochastic intervention $g^*$, for $i=1,\ldots,N$. These counterfactual outcomes are generated by replacing the structural equation for generating $N$ exposures $A_i$ with new structural equations for generating intervened exposures $A^*_i$, for $i=1,\ldots,N$, and then sampling the outcomes $Y^*_i$, for $i=1,\ldots,N$ from such a modified data-generating distribution. Note that we are using the new notation $Y^{*}_i$ to denote the fact that the conditional distribution of the observed data $(W_i,A_i,Y_i)$ has been modified by replacing $g_0$ with the intervention $g^*$. Our causal quantity is denoted by $\psi_0$ and we define it as the sample-average of the expected counterfactual outcomes, i.e.,
+$$\psi_0 := 1/n\sum_{i=1}^n{E[Y^*_i]}.$$
+
+## Using \pkg{simcausal} to specify the structural equation model for dependent data
+
+In this simulation study we sample the network graph based on the small world network model [@watts1998collective], where its corresponding network generator function "`rnet.SmWorld`" is provided in the \pkg{simcausal} package. The actual network sampling is performed by calling the function  `sample_smallworld` of the \pkg{igraph} \proglang{R} package. The rest of the code simply converts the \pkg{igraph} output object into the \pkg{simcausal} network representation. We remind the reader that \pkg{simcausal} represents the network as a matrix with $N$ rows, each row $i$ representing the set of friends $F_i$ (social connections of unit $i$), where each $F_i$ may be padded with extra `NA`s to make sure all $F_i$ are of the same length. As in the example in the previous section, the following code snippet instantiates an empty `DAG` object, then uses this `DAG` object to define a network called '`Net`', which is based on the network generator `rnet.SmWorld()`.
+
+```{r, message=FALSE}
+D <- DAG.empty()
+D <- D + network("Net", netfun = "rnet.SmWorld", dim = 1, nei = 9, p = 0.1)
+```
+
+Next, we define the three IID baseline covariates, categorical (0-5) $W_i(1)$ (variable `W1`), binary $W_i(2)$ (variable `W2`) and binary $W_i(3)$ (variable `W3`), as shown below:
+
+```{r, message=FALSE}
+D <- D +
+  node("W1", distr = "rcat.b0", probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) +
+  node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3)) +
+  node("W3", distr = "rbern", prob = 0.6)
+```
+
+In our next step, we define the conditional distribution of a continuous exposure $A_i$ (variable `A`) , sampled as normal, with mean given as a linear combination of  $W_i(2)$ and $W_i(3)$ (variables `W2` and  `W3`) and the standard deviation of 1.
+
+```{r, message=FALSE}
+D <- D + node("A.obs", distr = "rnorm", mean = 0.58 * W2 + 0.33 * W3, sd = 1)
+```
+
+Finally, we model the conditional probability of success for the binary outcome $Y_i$ (variable `Y` below)  as a logit-linear function of $(W_i,A_i)$ and the earlier described summary measures $(W_{i}^s,A_{i}^s)$, where the latter are based on the network of connections in $F_i$ (friends of unit $i$). In more detail, for each unit $i$, $W_{i}^s$ is defined as the mean of covariates $W_j(1)$ for all observations $j$ that are friends with $i$ ($j \in F_i$) and $A_i^s$ is defined as the sum of the exposures of all friends of $i$, i.e., all $A_j$ such that $j$ is in $F_i$.
+
+```{r, message=FALSE}
+D <- D +
+  node("A", distr = "rconst", const = A.obs) +
+  node("Y", distr = "rbern",
+    prob = plogis(+0.35*A +
+                  +0.10*sum(A[[1:Kmax]]) +
+                  -0.5*ifelse(nF > 0, sum(W1[[1:Kmax]])/nF, 0) +
+                  -0.5*W1 - 0.58*W2 - 0.33*W3),
+    replaceNAw0 = TRUE)
+Dset <- set.DAG(D, n.test = 200)
+```
+
+Note that the above object `Dset` has saved the described data-generating distribution, which includes the definition of the network and that of unit-specific data. In other words, `Dset` object saves all the information that is needed in order to be able to simulate: (1) the network graph on $N$ units, and (2) the observations $(W_i,A_i,Y_i)$, for $i=1,\ldots,N$. Also note that such unit-specific data may or may not be dependent (i.e., it may or may not use the network structure), depending on a particular SEM parameterization selected by the user.
+
+## Simulating network and observed data
+
+In our next code example we simulate the observed data on $N$ units from the distribution specified in the above object `Dset`. As before, this is accomplished by calling the function `sim`, where the number of units is specified with the argument `n`. We save the resulting data frame on $N$ observations $(W_i,A_i,Y_i)$ as a variable `datO`, the network matrix as a variable `NetInd_mat` and the vector counting the number of friends for each unit as a variable `nF`.
+
+```{r, message=FALSE}
+nsamp <- 100
+datO <- sim(Dset, n = nsamp, rndseed = 54321)
+NetInd_mat <- attributes(datO)$netind_cl$NetInd
+nF <- attributes(datO)$netind_cl$nF
+```
+
+As in the previous example, we use the `plot.igraph` function in `igraph` package to visualize the simulated network, as shown in Figure \ref{fig:netExample3a}.
+
+```{r netplot3a, fig.pos="H", fig.width=4.5, fig.height=3.5, echo=FALSE, message=FALSE, fig.cap = "Network for 100 observations sampled according to the small world network model\\label{fig:netExample3a}"}
+set.seed(5432221)
+g <- sparseAdjMat.to.igraph(NetInd.to.sparseAdjMat(NetInd_mat, nF = nF))
+par(mar=c(.1,.1,.1,.1))
+plot.igraph(g, layout=layout.fruchterman.reingold, vertex.size=3, vertex.label.cex=.2, edge.arrow.size=.1)
+```
+
+## Defining interventions, simulating counterfactual data and evaluating the true value of the causal quantity
+
+Our next goal is to evaluate the true value of the causal parameter $\psi_0$ under intervention $g^*$ via Monte-Carlo simulation that samples from the distribution of the counterfactual outcomes $Y_i^*$, for $i=1,\ldots,N$. This process consists of two stages. First, as we show in the following code snippet, we define the intervention of interest by modifying the observed data-generating distribution saved in the object `Dset`. Namely, we replace the conditional exposure density $g_0$ with a stochastic intervention given by $g^*$. Note that such interventions are defined by calling the function `action` and *adding* the result of this call to the previously defined object `Dset`. In the example given below, our intervention of interest is named '`gstar`'  and it overrides the previous definition of the observed exposure node `A` with a new intervened definition that is based on the previously described stochastic intervention $g^*$.
+
+```{r, message=FALSE}
+Dset <- Dset +
+  action("gstar",
+    nodes = node("A", distr = "rconst",
+      const = ifelse(exp(shift * (A.obs + shift - (0.58*W2 + 0.33*W3) - shift/2)) > trunc,
+                    A.obs,
+                    A.obs + shift)),
+    trunc = 1, shift = 0.5)
+```
+
+Second, we sample from such intervened (*post-intervention*) distribution defined by the action `gstar` and generate the counterfactual data, as shown in the following code example. We do this by calling the function `sim` and specifying the name of the previously defined action with an argument `actions`. The procedure in `sim` first samples the network of $N=100,000$, proceeded by sampling the counterfactual data. We then evaluate the Monte-Carlo approximation of the true causal parameter by taking the mean of the simulated counterfactual outcomes $Y_i^*$, which provides a Monte-Carlo estimate of  $\psi_0$. We note that this Monte-Carlo evaluated causal parameter defines our *gold standard*: the quantity which we may use for evaluating and comparing the performance of different statistical methods. One possible application of such causal parameters is exhibited in the following section.
+
+
+```{r, message=FALSE, eval=FALSE}
+nfull <- 100000
+datFull <- sim(Dset, actions="gstar", n = nfull, rndseed = 54321)[[1]]
+print(mean(datFull[["Y"]]))
+```
+
+<!-- ************************************************ -->
+# Simulation study comparing performance of dependent-data estimators
+\label{sim.Example3}
+<!-- ************************************************ -->
+
+
+We now describe one possible application for the \pkg{simcausal} package. In particular, we conduct a simulation study that compares the performance of the three dependent-data estimators implemented in the \pkg{tmlenet} \proglang{R} package [@R-tmlenet], based on the data generating distribution described in the previous Section \ref{sim.Example2}. We also note that the estimation algorithms implemented in the \pkg{tmlenet} package have been described elsewhere [@sofryginTechreport]. In particular, the \pkg{tmlenet} package implements three dependent-data estimators: Target Maximum Likelihood Estimator (TMLE), the Inverse Probability Weighted Estimator (IPW) and the G-computation estimator (GCOMP). We also note that our intervention of interest and the corresponding target causal quantity was introduced in the previous section. We will now use this target causal quantity as our *gold standard*, namely, it is the quantity that will generally remain known in a real data-generating process. Our simulation study hence uses this gold standard as a mean of comparing the finite sample performance of these three dependent-data estimators over iterated samples of hypothetical observed data. We also note that the inferential framework used by \pkg{tmlenet} assumes that the target causal quantity is defined conditionally on a particular sample size $N$ and a particular network structure. Thus, the \pkg{simcausal} Monte-Carlo evaluation of our true causal quantity was slightly modified from the previous section as outlined below.
+
+As our first step, we simulate the observed data, as shown below, for 10,000 units. In this example, we set the network-generating process to a fixed random seed and leave the rest of the data-generating procedure random.
+
+
+```{r, message=FALSE}
+datO <-  sim(Dset, n = 10000, rndseed = 544321, rndseed.reset.node = "W1")
+net_obj <- attributes(datO)[["netind_cl"]]
+NetInd_mat <- net_obj[["NetInd"]]
+nF <- net_obj[["nF"]]
+Kmax <- net_obj[["Kmax"]]
+```
+
+As our next step, we define the input parameters for the `tmlenet()` estimation function, as shown in the following code snippets. We define the observed-data baseline summary measures $W_i^s$ by calling the function "`def_sW`" and the exposure summary measures $A_i^s$ by calling the function "`def_sA`". Note, as we show below, these two functions use the syntax that is nearly identical to the \pkg{simcausal} syntax for specifying the network-based variable summaries.
+
+```{r, message=FALSE, results='hide'}
+require("tmlenet")
+def_sW <- def_sW(W1, W2, W3) +
+          def_sW(meanW1 = ifelse(nF > 0, sum(W1[[1:Kmax]])/nF, 0), replaceNAw0 = TRUE)
+def_sA <- def_sA(A, sumA = sum(A[[1:Kmax]]), replaceNAw0 = TRUE)
+```
+
+In the following example we define the intervention of interest by calling the function "`def_new_sA`". We again note the syntactic similarities between the intervention specification in the example below and the specification of the counterfactual action `gstar` in the example from the previous section.
+
+```{r, message=FALSE, results='hide'}
+trunc <- 1; shift <- 0.5
+newA.gstar <-  def_new_sA(A =
+    ifelse(exp(shift * (A + shift - (0.58*W2 + 0.33*W3) - shift/2)) > trunc, A, A + shift))
+```
+
+In our following example we define the regression formulas, where the regression defined by the variable "`Qform`" is used for modeling the conditional outcome $Y_i$ given the summary measures $W_i^s,A_i^s$ and the regression in "`hform`" is used for modeling the conditional probabilities of the observed exposure summaries given the observed baseline summaries, i.e.,  $P(A_i^s|W_i^s)$. We also call `tmlenet_options` to specify additional tuning parameters for the \pkg{tmlenet} package. Finally, we call the estimation routine `tmlenet()`, as shown below.
+
+```{r, message=FALSE, results='hide'}
+Qform <- "Y ~ A + sumA + meanW1 + W1 + W2 + W3"
+hform <- "A + sumA ~ meanW1 + W1 + W2 + W3"
+tmlenet_options(bin.method = "equal.mass", maxNperBin = 200)
+res <- tmlenet(data = datO, sW = def_sW, sA = def_sA,
+                Kmax = Kmax, NETIDmat = NetInd_mat,
+                intervene1.sA = newA.gstar ,
+                Qform = Qform, hform.g0 = hform)
+```
+
+The above function call returns a list containing the three point estimates of the counterfactual sample-average expected outcome under intervention defined by `newA.gstar`, which can be obtained by running the following code (output not shown):
+
+```{r, message=FALSE, results='hide'}
+res[["EY_gstar1"]][["estimates"]]
+```
+
+The `tmlenet` function also returns the corresponding 95% confidence intervals (CIs) for TMLE and IPTW. Note that these CIs are adjusted for the dependence between units based on the input network structure and can be printed by running the following code (output not shown):
+
+```{r, message=FALSE, results='hide'}
+res[["EY_gstar1"]][["IC.CIs"]]
+```
+
+Finally, one can also obtain the 95% CIs which assume complete independence of the observed units, by running the following code (output not shown). One would expect that such independence-based CIs are going to be overly optimistic and will thus provide inadequate asymptotic coverage. The extent of this under-coverage is also explored in our simulation study.
+
+```{r, message=FALSE, results='hide'}
+res[["EY_gstar1"]][["iid.CIs"]]
+```
+
+Our simulation study repeated the above described estimation procedure 1,000 times, each time using a newly sampled dataset that used exactly the same network. The corresponding \proglang{R} code for this simulation study can be found in Appendix A. We evaluated the absolute bias, the mean-squared error (MSE) and the variance of these three estimators, with results presented in Table \ref{simrestab} (all performance metrics were multiplied by 10). In addition, we evaluated the mean of the TMLE variance estimate which adjusted for the dependence among units and the coverage of its corresponding 95% CI, as reported in columns "DEP.VAR" and "DEP.CI.cover" in Table \ref{simrestab.cover}. We also evaluated the mean of the TMLE variance estimate which assumed independence among units, along with its corresponding 95% CI, as reported in columns "IID.VAR" and "IID.CI.cover" of Table \ref{simrestab.cover}. Finally, we compared the relative ratio of the means of these two TMLE variance estimates, as reported in column "Relative.VAR" in Table \ref{simrestab.cover}.  As expected, the IID-based variance estimator resulted in 95% CIs that had inadequate coverage, compared to the nearly nominal coverage probability of 0.95 for the TMLE variance estimator which appropriately adjusted for dependence among the units.
+
+```{r, include = FALSE, message=FALSE}
+library("Hmisc")
+load(file="psi.n.mat.rda")
+psi.n.mat.ests <- psi.n.mat[,c(1:3)]
+bias.n <- abs(colMeans(psi.n.mat.ests) - psi0)
+var.n <- apply(psi.n.mat.ests, 2, var)
+MSE.n <- colMeans((psi.n.mat.ests-psi0)^2)
+results.tab <- data.frame(
+  estimator = c("TMLE", "IPTW", "GCOMP"),
+  bias10.n = sprintf("%.4f",bias.n*10),
+  MSE10.n = sprintf("%.5f",MSE.n*10),
+  var10.n = sprintf("%.5f",var.n*10),
+  stringsAsFactors = FALSE)
+colnames(results.tab) <- c("Estimator", "Bias10", "MSE10", "Variance10")
+```
+
+```{r, echo=FALSE, message=FALSE, results="asis"}
+mylatex <- function (...) {
+    o <- capture.output(latex(...))
+    o <- grep('^%', o, inv=T, value=T)
+    cat(o, sep='\n')
+}
+cat("\n")
+mylatex(results.tab, file = '', where = "H", caption.loc = 'bottom',
+  caption = "Simulation-based performance of the three dependent data estimators across 1,000 simulations, each simulation consisted of $N=10,000$ units. The reported bias, mean squared error (MSE) and variance are all multiplied by 10.",
+  label = 'simrestab', booktabs = TRUE, rowname = NULL, landscape = FALSE,
+  col.just = c("l", rep("r", 3)))
+```
+
+```{r, echo=FALSE, message=FALSE, results="asis"}
+results.tab.cover <-data.frame(
+  DEP.VAR = sprintf("%.6f", mean(psi.n.mat[,"var.TMLE"])),
+  IID.VAR = sprintf("%.6f", mean(psi.n.mat[,"var.iid.TMLE"])),
+  Relative.VAR = sprintf("%.2f", mean(psi.n.mat[,"var.TMLE"]) / mean(psi.n.mat[,"var.iid.TMLE"])),
+  DEP.CI.cover = sprintf("%.3f", mean(psi.n.mat[,"tmle.cover"])),
+  IID.CI.cover = sprintf("%.3f", mean(psi.n.mat[,"IID.tmle.cover"]))
+  )
+cat("\n")
+mylatex(results.tab.cover, file = '', where = "H", caption.loc = 'bottom',
+  caption = "Monte-Carlo approximated mean of the TMLE variance for dependent data ('DEP.VAR'), TMLE variance estimator for IID data ('IID.VAR'), the relative ratio of means of the two variances ('Relative.VAR'), the coverage of the 95\\% CI for dependent data ('DEP.CI.cover') and the coverage of the 95\\% CI for IID data ('IID.CI.cover').",
+  label = 'simrestab.cover', booktabs = TRUE, rowname = NULL, landscape = FALSE,
+  col.just = c(rep("r", 5)))
+```
+
+<!-- ************************************************ -->
+# Extensions to longitudinal data structures
+\label{sim.longdata}
+<!-- ************************************************ -->
+
+In our final example we demonstrate the extension of the \pkg{simcuasal} package towards simulations with longitudinal network data. This simulation is based on the longitudinal NPSEM for connected units and it has been previously described in @vdL2014nets. We omit the description of the technical details of such longitudinal NPSEMs in favor of an applied simulation example. We note that research on statistical methods for causal inference in longitudinal network data is a relatively new area of statistical research. Some of the recent packages that provide descriptive statistics and simulation for dynamic network data include \pkg{tsna} [@R-tsna], \pkg{networkDynamic} [@R-networkDynamic], \pkg{RSiena} [@R-RSiena] and \pkg{netdiffuseR} [@R-netdiffuseR].
+
+In this simulation, we continue with an example first presented in Section \ref{sim.Example1} and demonstrate how it can be expanded towards simulations of dependent processes that also evolve in time over a static network. In particular, we present a simple model for the spread of an HIV epidemic over time based on a static network of 10 independent communities. We also note that another possible application of this type of a simulation study is for modeling the product or service adoption over time among the users of an online social network [@eckles2014design].
+We assume that the study collects data on $N$ individuals over time points $t=0,\ldots,50$, where for each unit $i$ their network of sexual partners is denoted as $F_i$,
+their baseline covariates are denoted as $W_i$,
+and their indicator of receiving antiretroviral therapy is denoted as $A_i$.
+The unit's HIV status at time $t$ is also recorded and is denoted as $Y_i(t)$, and the right-censoring indicator due to death is denoted as $D(t)$.
+We assume that whenever unit $i$ is HIV-positive at $t$ (i.e., $Y_i(t)=1$), there is a non-zero probability of HIV transmission from $i$ to another individuals $j$ at time point $t+1$ if the unit $i$ is in $j'$s friend set
+(i.e., the event $Y_j(t+1)=1$ can occur for all $j$ such that $i \in F_j$).
+The same model also applies at next time cycle $t+1$, when a newly infected individual $j$ can cause new HIV infections for all observations that had $j$ in their friend set, even if some or all of those units were not at risk of getting HIV prior to cycle $t+2$.
+In this manner, any outcome $Y_j(t+2)$ measured at time $t+2$
+is clearly dependent on the outcomes measured at $t+1$ for all units that were immediate sexual partners of $j$, i.e., all outcomes $(Y_k(t+1) : k \in F_j)$.
+However, the outcomes
+$(Y_k(t+1) : k \in F_j)$, and hence $Y_j(t+2)$,
+depend on an ever larger set of units as a function of outcomes measured at $t$, namely, all units within at most a second-degree of connectivity of $j$ or the units in the set $\cup_{k \in F_i}{F_k}$ (friends of friends).
+
+Our example below provides an intentionally simplified simulation of the above described process of contagion, where we use the time-varying Bernoulli node "`Y`" to model $Y(t)$, for $t=0,\ldots,50$. This simulation assumes that the conditional probability that unit $i$ will be newly infected at each cycle $t$
+$(i.e., P(Y_i(t)=1|\cdot))$,
+is a logit-linear function of the total number of friends of $i$ who: (1) were infected at the previous time-point $t-1$
+(all $j \in F_i$
+such that $Y_j(t-1)=1$);
+and (2) did not receive the antiretroviral treatment at baseline
+(all $j \in F_i$ with $A_j=0$).
+In addition, we also model the right-censoring process $D(t)$, for $t=0,...,50$ with a time-varying node "`D`", as shown below.
+Our network is defined by the number of independent clusters (communities), where the number of such clusters is determined by the variable "`nC`" and each cluster is inter-connected by a network sampled from the small world network model
+(the \proglang{R} code provided in Appendix B).
+
+
+```{r, message=FALSE, include=FALSE}
+rnet.SmWrld.nC <- function(n, nC = 1, nei, p, ...) { # maxF = 50,
+  sample_1Comm <- function(size) {
+    g <- igraph::sample_smallworld(dim = 1, size = size, nei = nei, p = p,
+                                  loops = FALSE, multiple = FALSE)
+    g <- igraph::as.directed(g, mode = c("mutual"))
+    NetInd_mat_1C <- sparseAdjMat.to.NetInd(igraph.to.sparseAdjMat(g)) # , trimKmax = maxF
+    return(NetInd_mat_1C[["NetInd_k"]])
+  }
+  padcolsNetMat <- function(NetInd_mat) {
+    if (ncol(NetInd_mat)<maxF) {
+      NetInd_mat <- cbind(NetInd_mat,
+        matrix(NA,nrow=nrow(NetInd_mat),ncol=maxF-ncol(NetInd_mat)))
+    }
+    return(NetInd_mat)
+  }
+  if (n <= 100) {nC <- 1}
+  size_C <- vector(mode="integer", length=nC)
+  for (i in 1:nC) size_C[i] <- as.integer(n / nC)
+  size_C[nC] <- size_C[nC] + (n-sum(size_C))
+  stopifnot(sum(size_C)==n)
+  NetInd_mat_list <- lapply(seq(nC), function(iC) sample_1Comm(size_C[iC]) + (iC - 1)*size_C[1])
+  maxF <- max(unlist((lapply(NetInd_mat_list, ncol))))
+  NetInd_mat_list <- lapply(NetInd_mat_list, padcolsNetMat)
+  NetInd_mat <- do.call('rbind', NetInd_mat_list)
+  return(NetInd_mat)
+}
+```
+
+As before, we first add this new network to the `DAG` object `D1` previously defined in Section \ref{sim.Example1}, naming it as `SmWrld.nC10`. Note that the variables that were already defined in the object `D1` will be based on the previously added network model, however, all of the new variables that we add next will be using this new network `SmWrld.nC10`. The distribution of the exposure `A` (i.e., the indicator of receiving antiretroviral therapy) is unchanged from the simulation example in Section \ref{sim.Example1}.
+
+```{r, message=FALSE}
+D1.l <- D1 + network("SmWrld.nC10", netfun = "rnet.SmWrld.nC", nC = 10, nei = 4, p = 0.05)
+```
+
+We are now ready to define the time-varying structure, using the same `node` function call, but with an additional argument `t`. We also define the summary measure `netYA`, which is equal the number of number of untreated and infected friends at a particular time point. We define the time-varying node "`Y`" as our outcome, where at each time-point $t$, the outcome node `Y[t]` is a logit-linear function of the summary "`netYA[t]`", a function of the exposure "`A`", and finally, a function of the baseline summary "`sumW2`". We also define a time-varying right-censoring node "`D[t]`" (death status), which depends on the baseline value of node "`W1`" and the HIV infection status at time $t$, namely, "`Y[t]`". The following example first defines the distributions of the time-varying nodes at their initial time-point $t=0$.
+
+```{r, message=FALSE, warning=FALSE}
+D1.l <- D1.l +
+  node("Y", t = 0, distr = "rbern",
+    prob = ifelse(W3==1L, 1L,
+      plogis(-4 - 2*sumW2 - 2*A + 1.5*sum(W3[[1:Kmax]]*(1-A[[1:Kmax]])))),
+    replaceNAw0 = TRUE) +
+  node("D", t = 0, distr = "rbern", prob = 0, EFU = TRUE)
+```
+
+The following code example defines the distributions of the time-varying nodes "`netYA`", "`Y`" and "`D`" for time-points $t=1,\ldots,50$:
+
+```{r, message=FALSE}
+D1.l <- D1.l +
+  node("netYA", t = 1:50, distr = "rconst",
+    const = sum(Y[t-1][[1:Kmax]]*(1-A[[1:Kmax]])), replaceNAw0 = TRUE) +
+  node("Y", t = 1:50, distr = "rbern",
+    prob = ifelse(Y[t-1]==1, 1, plogis(-4 - 5*sumW2 - 10*A + 0.5*netYA[t]))) +
+  node("D", t = 1:50, distr = "rbern",
+    prob = plogis(-7.5 + 0.25*W1  + 0.05*A+ 0.25*Y[t]), EFU = TRUE)
+```
+
+We finish defining the above data-generating distribution with a call to `set.DAG` function and we simulate a dataset with 10,000 observations, as shown below:
+
+```{r, message=FALSE}
+Dset <- set.DAG(D1.l, n.test = 1000,
+  latent.v =c("sumW1","sumW2","sumW3","W1.F1","W1.F2","W1.F3","W1.F4","W1.F5","sumW3A"))
+dat <- sim(Dset, n = 10000, LTCF = "D", rndseed = 543)
+```
+
+Below we present a sample of the simulated data for two observations and several time points. We also present the mean number of untreated and infected friends over time in a top plot of Figure \ref{fig:longnet2} and we present the mortality and HIV prevalence over time in a bottom plot of Figure \ref{fig:longnet2}.
+
+```{r, message=FALSE}
+head(dat[c(1:2),1:19])
+```
+
+```{r longsimfig2, fig.pos='H', fig.width=5, fig.height=3.5, echo=FALSE, message=FALSE, fig.cap = "Mean number of untreated and infected friends by time (top figure). Mortality and HIV prevalence by time (bottom figure). \\label{fig:longnet2}"}
+netYA.t <- paste0("netYA_", c(1:50))
+Y.t <- paste0("Y_",c(1:50))
+D.t <- paste0("D_",c(1:50))
+Nfriends_HIV_byt <- colMeans(dat[,netYA.t])
+HIV_prev_byt <- colMeans(dat[,Y.t])*100
+D_byt <- colMeans(dat[,D.t])*100
+par(mgp = c(1.7, 1, 0))
+plot(y=Nfriends_HIV_byt, x=1:50, cex.axis = 0.7, type = 'l', cex.lab = 0.7, xlab = "t, time", ylab = "Mean No. Untreated & Infected Friends")
+
+par(mgp = c(1.7, 1, 0))
+plot(y=D_byt, x=1:50, cex.lab = 0.7, cex.axis = 0.7, type = 'l', xlab = "t, time", ylab = "%, percent")
+lines(y=HIV_prev_byt, x=1:50, type = 'l', col='red')
+legend(x = 20, y = 1.9, cex = 0.7, legend=c("Mortality by time", "HIV prevalence by time"), col = c("black", "red"), lty = 1)
+```
+
+Suppose now that we also want to model the outcome $Y_i[t]$ as a function of another time-varying network summary defined for each unit $i$  as the mean duration of HIV among all friends of observation $i$ up to time $t$.
+Note that the duration of HIV for unit $j$ at cycle $t$ is defined by the total number of cycles since the initial HIV infection
+(first time $Y_j$ jumps to 1).
+Below, we provide an example that defines exactly such a summary, called "`new.S`", by combining the time-indexing and network-indexing summaries into a single expression "`sum(sum(Y[0:(t)])[[0:Kmax]])/nF`". Note that this expression should be read from the inside out as follows: First, the expression "`sum(Y[0:(t)])`" evaluates to a sum of the unit-specific values of the time-varying vector `Y` from time-point $0$ up to the current time-point value in `t`, i.e., the total number of cycles the person had HIV up to this point; Second, the expression "`(...)[[0:Kmax]]`" evaluates the result of the previous expression for a network-based index "`[[0:Kmax]]`", which provides the total duration of HIV among all friends of each unit; Third, the expression "`sum(...)/nF`" is applied to the result of the previous expression to find the mean value (mean duration) of HIV among all friends of each unit.
+
+```{r, message=FALSE, eval=TRUE}
+D1.l <- D1.l +
+    node("new.S", distr = "rconst", t = 1:50, const = sum(sum(Y[0:t])[[0:Kmax]])/nF,
+      replaceNAw0 = TRUE)
+```
+
+Note that the above time-varying node "`new.S`" was added to the previously defined `DAG` object "`D1.l`". In particular, for a given time-point value `t` the node "`new.S[t]`" is added *after* the previously defined nodes "`netYA[t]`", "`Y[t]`" and "`D[t]`". <!-- This can also be seen in the corresponding DAG plot for the first 4 time points shown in Figure \ref{fig:lDAGExample}. --> The following example simulates the observed data with new summary node "`new.S`" and displays its value over time for three selected observations:
+
+```{r, message=FALSE, eval=TRUE}
+Dset.new <- set.DAG(D1.l, n.test = 1000, verbose = FALSE)
+dat.new <- sim(Dset.new, n = 10000, rndseed = 757)
+round(dat.new[c(1,5000, 8000), paste0("new.S_",1:10)],2)
+```
+
+<!-- {r lDAGplot, echo=FALSE, fig.pos='H', fig.width=6, fig.height=5, message=FALSE, fig.cap = "Functional relationships between the nodes of the structural equation model in longitudinal data example. \\label{fig:lDAGExample}"}
+plotDAG(Dset.new, tmax = 3, yjitter = 0.2,
+  excludeattrs =c("nF", "sumW1", "sumW2", "sumW3", "W1.F1", "W1.F2", "W1.F3", "W1.F4", "W1.F5", "sumW3A"))
+ -->
+
+<!-- ************************************************ -->
+# Discussion
+\label{discussion}
+<!-- ************************************************ -->
+
+We described how the \pkg{simcausal} \proglang{R} package can facilitate the conduct of network-based simulation studies in causal inference research, specifically allowing one to model data with known network and known functional form of dependence among units.
+We also described how the package can be used for simulations with longitudinal data structures.
+We described how the \pkg{simcausal} \proglang{R} package allows creating a wide range of artificial datasets often encountered in public health applications of causal inference methods.
+In particular, this includes simulations of causal mechanisms of interference or spillover,
+To simplify the specification of such models we had implemented a novel syntax which allows for a concise and intuitive expression of complex functional dependencies for a large number of nodes.
+We described how this syntax can be used for simplifying the specification and simulation of complex network-based summaries of the data.
+Moreover, we argued that such complex simulations are often necessary when one tries to conduct a realistic simulation study that attempts to replicate a large variety of scenarios one might expect to see from a true data-generating process.
+We also note that our package can work in conjunction with other network simulation tools, as we demonstrated with the example of the \pkg{igraph} \proglang{R} package that was used for performing the actual sampling of the network graphs.
+In addition, the \pkg{simcausal} package allows the user to specify and simulate counterfactual data under various interventions (e.g., static, dynamic, deterministic, or stochastic).
+These interventions may represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of specific monitoring events.
+These simulations provide practical settings with the types of data generating distributions which might be used for validation, testing and comparison of statistical methods for causal inference.
+To the best of our knowledge there are no other tools which implement the specific type of functionality afforded by the network-based syntax that is implemented in \pkg{simcausal} and is described in this article.
+
+We note that one of the distinguishing features of \pkg{simcausal} is that it allows the user to define and compute various causal target parameters, such as, the treatment-specific counterfactual mean, that can then serve as the model-free *gold standard*. That is, the causal parameter is always the same functional of the counterfactual data distribution, regardless of the user-selected parameterization of the structural equation model. For example, the gold standard defined in this manner provides an objective measure of bias that does not depend on the modeling assumptions of a specific statistical method. Coupled with a wide variety of possible data generating distributions that may be specified in \pkg{simcausal}, this package provides statisticians with a powerful tool for testing the validity and accuracy of various statistical methods. For example, one may use our package for validating an implementation of a novel statistical method, using the simulated data with the known truth (the true value of the causal parameter), prior to applying such an algorithm to real data, in which this truth is unknown. As another example, one may use \pkg{simcausal} to simulate data from a variety of data-generating distributions and conduct a simulation study comparing the properties of different statistical procedures (e.g., bias, mean-squared error (MSE), asymptotic confidence interval coverage) against the user-selected causal parameter. We emphasize that the main purpose of our package is not to assess the impact of real-life interventions, but rather to test the validity and performance of statistical methods, which can then be applied to real datasets. <!-- As more complex methods for causal inference research in network data are continued to be developed and applied to answering important public health questions, we believe that \pkg{simcausal} presents a valuable and practical tool for assessing the appropriateness and the validity of such methods for a wide variety of data generating mechanisms. This provides an analysis with an opportunity to design experiments of how such statistical methods might perform  in real-life applications.  --> Moreover, we demonstrated that the \pkg{simcausal} \proglang{R} package is a flexible tool that enables easier communication of assumptions between various practitioners and thus helps improve the transparency about the assumptions of different statistical methods.
+
+We demonstrated the functionality of the \pkg{simcausal} package and its support for a large variety of network-based data generating processes with two single time point intervention simulation studies in Sections \ref{sim.Example1} and \ref{sim.Example2}, as well the simulation study of more complex network-based processes that evolve in time in Section \ref{sim.longdata}. We also showed a real-world application of the \pkg{simcausal} package in Section \ref{sim.Example3}, where we conducted a simulation study that used another \proglang{R} package \pkg{tmlenet} to evaluate the performance of the three estimators of causal effect under interference intervening on the single time-point continuous exposure. We also note that the \pkg{simcausal} package vignette "*simcausal Package: Simulations with Complex Longitudinal Data*" [@R-simcausal] contains additional examples for simulations with IID data and other technical details of \pkg{simcausal} functionality. We also note that the implementation of additional features in future releases of the \pkg{simcausal} package should further expand its utility for methods research. Among such possible improvements is to allow interventions on the network structure and providing a unified interface for changes to friend structure as part of the intervention. Future work will also focus on modeling the changes in network structure over time, for example, by providing an interface for specifying a time-varying analogs of the \code{network} function, modeling the probability of forming a new tie or removing a certain friend over time and allowing one to sample new networks conditional on the previously sampled networks.
+
+<!-- ************************************************ -->
+# Acknowledgments
+<!-- ************************************************ -->
+
+This research was supported by NIH grant R01 AI074345-07.
+
+<!-- ************************************************ -->
+# Appendix A. R code for simulation study.
+<!-- ************************************************ -->
+
+```{r, eval = FALSE, message=FALSE}
+require("doParallel")
+registerDoParallel(cores = detectCores())
+nsamp <- 10000
+n.sim <- 1000
+psi0.reps <- foreach(i.sim = seq(500), .combine = "c") %dopar% {
+  datFull <- sim(Dset, actions="gstar", n = nsamp,
+                 rndseed = 544321, rndseed.reset.node = "W1")[[1]]
+  psi0 <- mean(datFull[["Y"]])
+}
+(psi0 <- mean(psi0.reps)) # 0.2297232
+
+psi.n.mat <- foreach(i.sim = seq(n.sim), .combine = "rbind") %dopar% {
+  datO <- sim(Dset, n = nsamp, rndseed = 544321, rndseed.reset.node = "W1")
+  res <- tmlenet(data = datO, sW = def_sW, sA = def_sA,
+               Kmax = attributes(datO)[["netind_cl"]][["Kmax"]],
+               NETIDmat = attributes(datO)[["netind_cl"]][["NetInd"]],
+               intervene1.sA = newA.gstar,
+               Qform = Qform, hform.g0 = hform)
+  psi.n.vec <- t(res[["EY_gstar1"]][["estimates"]][,1])
+  IID.tmle.CI <- res[["EY_gstar1"]][["iid.CIs"]]["tmle", ]
+  tmle.CI <- res[["EY_gstar1"]][["IC.CIs"]]["tmle", ]
+  IID.tmle.cover <- as.vector(IID.tmle.CI[1] <= psi0 & psi0 <= IID.tmle.CI[2])
+  tmle.cover <- as.vector(tmle.CI[1] <= psi0 & psi0 <= tmle.CI[2])
+  c(psi.n.vec,
+    var.iid.TMLE = res[["EY_gstar1"]][["iid.vars"]]["tmle", ],
+    var.TMLE = res[["EY_gstar1"]][["IC.vars"]]["tmle", ],
+    IID.tmle.cover = IID.tmle.cover, tmle.cover = tmle.cover)
+}
+save(list=c("psi.n.mat", "psi0"), file="psi.n.mat.rda")
+```
+
+<!-- ************************************************ -->
+# Appendix B. R code for additional network generators
+<!-- ************************************************ -->
+
+## Example of a small world network model with independent clusters
+\label{sim.AppendixB1}
+
+Below we provide the R code for a network sampling function used in the simulation example with longitudinal data described in Section \ref{sim.longdata}. Specifically this function samples networks of independent communities, where each community network is distributed according to the small world network model and the number of independent communities is specified with the argument \code{nC}. An example graph of such a network for 1,000 observations is shown in Figure \ref{fig:netExampleAppendixB.1}.
+
+```{r}
+rnet.SmWrld.nC <- function(n, nC = 1, nei, p, ...) { # maxF = 50,
+  sample_1Comm <- function(size) {
+    g <- igraph::sample_smallworld(dim = 1, size = size, nei = nei, p = p,
+                                  loops = FALSE, multiple = FALSE)
+    g <- igraph::as.directed(g, mode = c("mutual"))
+    NetInd_mat_1C <- sparseAdjMat.to.NetInd(igraph.to.sparseAdjMat(g)) # , trimKmax = maxF
+    return(NetInd_mat_1C[["NetInd_k"]])
+  }
+
+  padcolsNetMat <- function(NetInd_mat) {
+    if (ncol(NetInd_mat)<maxF) {
+      NetInd_mat <- cbind(NetInd_mat,
+        matrix(NA,nrow=nrow(NetInd_mat),ncol=maxF-ncol(NetInd_mat)))
+    }
+    return(NetInd_mat)
+  }
+
+  if (n <= 100) {nC <- 1}
+  size_C <- vector(mode="integer", length=nC)
+  for (i in 1:nC) size_C[i] <- as.integer(n / nC)
+  size_C[nC] <- size_C[nC] + (n-sum(size_C))
+  stopifnot(sum(size_C)==n)
+  NetInd_mat_list <- lapply(seq(nC), function(iC) sample_1Comm(size_C[iC]) + (iC - 1)*size_C[1])
+  maxF <- max(unlist((lapply(NetInd_mat_list, ncol))))
+  NetInd_mat_list <- lapply(NetInd_mat_list, padcolsNetMat)
+  NetInd_mat <- do.call('rbind', NetInd_mat_list)
+  return(NetInd_mat)
+}
+```
+
+```{r netplotAppndB1, fig.pos="H", fig.width=5.5, fig.height=4.5, echo=FALSE, message=FALSE, fig.cap = "Network for 100 observations sampled by the custom network generator\\label{fig:netExampleAppendixB.1}"}
+set.seed(12345)
+Netmat <- rnet.SmWrld.nC(n=1000,  nC = 10, nei = 4, p = 0.05)
+smWld_nC10 <- sparseAdjMat.to.igraph(NetInd.to.sparseAdjMat(Netmat, nF = rowSums(!is.na(Netmat))))
+par(mar = c(.1,.1,.1,.1))
+plot.igraph(smWld_nC10, layout = layout.fruchterman.reingold, vertex.size = 5, vertex.label.cex = .4, edge.arrow.size = .1)
+```
+
+
+<!-- ************************************************ -->
+## Example of a custom network generator
+\label{sim.AppendixB2}
+<!-- ************************************************ -->
+
+In this example we demonstrate that the user can define their own custom network sampling function, such as the `genNET` function  provided below. Specifically, we will sample a network for `n` units, where the probability of making a connection (friendship) between two units is defined conditionally on the units' own baseline covariates. The following arguments are passed to the function `genNET()`:
+
+* `maxFi` - The overall maximal number of friends
+* `bslVar` - The baseline covariate which is used for constructing weights for the probability of selecting unit $i$ as someone else's friend (weighted sampling);
+* `nF` - A vector with the total number of friends that needs to be sampled for each unit $i$.
+
+
+```{r, include=TRUE}
+genNET <- function(n, maxFi, bslVar, nF, ...) {
+  prob_F <- plogis(-4.5 + 2.5*c(1:6)/2) / sum(plogis(-4.5 + 2.5*c(1:6)/2))
+  NetInd_k <- matrix(NA_integer_, nrow = n, ncol = maxFi)
+  nFriendTot <- rep(0L, n)
+  for (index in (1:n)) {
+    FriendSampSet <- setdiff(c(1:n), index)
+    nFriendSamp <- max(nF[index] - nFriendTot[index], 0L)
+    if (nFriendSamp > 0) {
+      if (length(FriendSampSet) == 1)  {
+        friends_i <- FriendSampSet
+      } else {
+        friends_i <- sort(sample(FriendSampSet, size = nFriendSamp,
+                          prob = prob_F[bslVar[FriendSampSet] + 1]))
+      }
+      NetInd_k[index, ] <- c(as.integer(friends_i),
+                            rep_len(NA_integer_, maxFi - length(friends_i)))
+      nFriendTot[index] <- nFriendTot[index] + nFriendSamp
+    }
+  }
+  return(NetInd_k)
+}
+```
+
+Next, we define the matrix of categorical probabilities `p.nFbyW1`. We will use this matrix for sampling the total number of friends (`nF`), conditionally on the value of the baseline covariate `W1`. Specifically, if `W1` is equal to 0, the observation's number of friends, 0 to 6, is sampled according to the probabilities in the first column of the matrix `p.nFbyW1`, and so on, each observation-specific value of `W1` being used to look up observation-specific categorical probabilities from `p.nFbyW1`.
+
+
+```{r, message=FALSE}
+set.seed(544321)
+normprob <- function(x) x / sum(x)
+p.nFbyW1 <- apply(matrix(runif(7*6), ncol = 6, nrow = 7), 2, normprob)
+colnames(p.nFbyW1) <- paste0("p.nFbyW1_", c(0:5))
+print(p.nFbyW1[c(1:2),])
+```
+
+In this simulation, the baseline covariate `W1` is added to the `DAG` object prior to registering the network generator. The network will be sampled later and the sampling process will be performed conditional on the value of the categorical `W1`, which is passed as an argument `bslVar` to the network generator function `genNET()`.
+
+```{r, message=FALSE, results='hide'}
+create_probs_nF <- function(W1) t(p.nFbyW1[,W1+1])
+vecfun.add("create_probs_nF")
+```
+
+```{r, message=FALSE}
+D <- DAG.empty()
+D <- D +
+  node("W1", distr = "rcat.b0", probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546))
+```
+
+Next, we define the node for the total number of friends (`nF`) according to the rule described above. We pass `W1` to function `create_probs_nF`[^fn-footnote4], which then looks-up the unit-specific vector of categorical probabilities from matrix `p.nFbyW1`, depending on the specific value of `W1`.
+
+[^fn-footnote4]: Note that prior to defining a categorical node "`nF`", we called `vecfun.add(...)`, to define the vectorized function `create_probs_nF`. See the package vignette "*simcausal Package: Simulations with Complex Longitudinal Data*", Section 3.6, Subsection *Vectorizing node formula functions* for the description of why this needs to be done. Next, we add the network generator `genNET` to `D`, passing it the above defined observation-specific variables, i.e., the total number of friends `nF` and the categorical `W1`.
+
+```{r, message=FALSE}
+D <- D +
+  node("nF", distr = "rcat.b0", probs = create_probs_nF(W1)) +
+  network(name = "net.custom", netfun = "genNET", maxFi = 6, bslVar = W1, nF = nF)
+  Dset <- set.DAG(D, n.test = 200)
+```
+
+We then simulate $100$ observations by calling the function `sim`, as shown below.
+
+```{r, message=FALSE}
+nsamp <- 100
+datO <- sim(Dset, n = nsamp, rndseed = 54321)
+NetInd_mat <- attributes(datO)$netind_cl$NetInd
+nF <- attributes(datO)$netind_cl$nF
+```
+
+We use the `plot.igraph` function in `igraph` package to visualize the simulated network, as shown in Figure \ref{fig:netExampleAppendixB.2}.
+
+```{r netplotAppndB2, fig.pos="H", fig.width=4.5, fig.height=3.5, echo=FALSE, message=FALSE, fig.cap = "Network for 100 observations sampled by the custom network generator\\label{fig:netExampleAppendixB.2}"}
+g <- sparseAdjMat.to.igraph(NetInd.to.sparseAdjMat(NetInd_mat, nF = nF))
+par(mar=c(.1,.1,.1,.1))
+plot.igraph(g, layout=layout.fruchterman.reingold, vertex.size=3, vertex.label.cex=.2, edge.arrow.size=.1)
+```
+
+<!-- ************************************************ -->
+<!-- \bibliographystyle{unsrtnat} -->
+
+\bibliography{SimCausal_Networks_2016.bib}
+
+<!-- \bibliography{R-Pckgs,TMLE_networks_2014,SimCausal_2014} -->
+<!-- \bibliography{R-Pckgs} -->
+<!-- % \bibliographystyle{unsrt} -->
+<!-- % \bibliography{SimCausal_2014,R-Pckgs} -->
+<!-- ************************************************ -->
