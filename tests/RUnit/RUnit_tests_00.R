@@ -243,6 +243,22 @@ test.EFUeval <- function(){
   checkEquals(nrow(Odatsim.1obs),1)
 }
 
+test.long.wide.simobs <- function() {
+    library("simcausal"); options(simcausal.verbose=FALSE)
+    t_end <- 5
+    D <- DAG.empty() +
+      node("W", distr="rbern", prob=0.05) +
+      node("L1", t=0:t_end, distr="rbern", prob=0.25) +
+      node("L2", t=0:t_end, distr="rconst", const=L1[t] + W) +
+      node("Y",  t=0:t_end,  distr="rbern", prob=plogis(-6.5 + L1[t] + 2*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
+    Dset <- set.DAG(D)
+    Odat1 <- sim(Dset, n=500, wide = TRUE, rndseed = 123)
+    Odat1 <- simobs(Dset, n=500, wide = TRUE, rndseed = 123)
+    Odat1 <- sim(Dset, n=500, wide = FALSE, rndseed = 123)
+    Odat1 <- simobs(Dset, n=500, wide = FALSE, rndseed = 123)
+}
+
+
 
 # DAG2 (from tech specs): defining actions with a new constructor and passing attributes
 test.set.DAG_DAG2b_newactions <- function() {
@@ -2595,6 +2611,7 @@ test.set.DAG_DAG3_wlong <- function() {
 
     simODAG_wtest <- sim(datgendist_DAG2_longtest, n=n, wide=TRUE, rndseed = 123)
     simODAG_ltest <- sim(datgendist_DAG2_longtest, n=n, wide=FALSE, rndseed = 123)
+    simODAG_ltest <- simobs(datgendist_DAG2_longtest, n=n, wide=FALSE, rndseed = 123)
     simODAG_ltest_2 <- DF.to.long(simODAG_wtest)
     simODAG_ltest_2DT <- DF.to.longDT(simODAG_wtest)
 
@@ -2618,23 +2635,22 @@ test.faster_tolongdata <- function() {
     #-------------------------------------------------------------
     # Testing the converter to long format that is based on package data.table
     #-------------------------------------------------------------
-    t_end <- 16
-    library(simcausal)
+    library("simcausal")
 
-    D <- DAG.empty()
-    D <- D + node("L2", t=0,        distr="rbern", prob=0.05, order=1)
-    D <- D + node("L1", t=0,        distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2)
-    D <- D + node("A1", t=0,        distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3)
-    D <- D + node("A2", t=0,        distr="rbern", prob=0, order=4, EFU=TRUE)
-    D <- D + node("Y",  t=0,        distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE)
-    D <- D + node("L2", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1)))
-    D <- D + node("A1", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1)))
-    D <- D + node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), order=8+4*(0:(t_end-1)), EFU=TRUE) # informative censoring
+    t_end <- 16
+    D <- DAG.empty() +
+      node("L2", t=0,        distr="rbern", prob=0.05, order=1) +
+      node("L1", t=0,        distr="rbern", prob=ifelse(L2[0]==1,0.5,0.1), order=2) +
+      node("A1", t=0,        distr="rbern", prob=ifelse(L1[0]==1 & L2[0]==0, 0.5, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.9, 0.5))), order=3) +
+      node("A2", t=0,        distr="rbern", prob=0, order=4, EFU=TRUE) +
+      node("Y",  t=0,        distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[0] + 0.05*I(L2[0]==0)), order=5, EFU=TRUE) +
+      node("L2", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 0.1, ifelse(L2[t-1]==1, 0.9, min(1,0.1 + t/16))), order=6+4*(0:(t_end-1))) +
+      node("A1", t=1:t_end,  distr="rbern", prob=ifelse(A1[t-1]==1, 1, ifelse(L1[0]==1 & L2[0]==0, 0.3, ifelse(L1[0]==0 & L2[0]==0, 0.1, ifelse(L1[0]==1 & L2[0]==1, 0.7, 0.5)))), order=7+4*(0:(t_end-1))) +
+      node("A2", t=1:t_end,  distr="rbern", prob=plogis(-3.5 + 0.5*A1[t]+0.5*L2[t]), order=8+4*(0:(t_end-1)), EFU=TRUE) # informative censoring
 
     # this takes longer (6 sec longer for 1Mil obs)
     # D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), order=9+4*(0:(t_end-1)), EFU=TRUE)
     D <- D + node("Y",  t=1:t_end,  distr="rbern", prob=plogis(-6.5 + L1[0] + 4*L2[t] + 0.05*(sum(L2[0:t])==0)), order=9+4*(0:(t_end-1)), EFU=TRUE)
-    lDAG3 <- set.DAG(D)
 
     #-------------------------------------------------------------
     # Adding dynamic actions (indexed by a real-valued parameter)
