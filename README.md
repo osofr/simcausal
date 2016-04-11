@@ -50,7 +50,7 @@ news(package = "simcausal")
 Below is an example simulating data with 4 covariates specified by 4 structural equations (nodes). New equations are added by using successive calls to `+ node()` function and data are simulated by calling `sim` function:
 
 ```R
-library(simcausal)
+library("simcausal")
 D <- DAG.empty() + 
   node("CVD", distr="rcategor.int", probs = c(0.5, 0.25, 0.25)) +
   node("A1C", distr="rnorm", mean = 5 + (CVD > 1)*10 + (CVD > 2)*5) +
@@ -69,7 +69,7 @@ plotDAG(D)
 To allow the above nodes `A1C`, `TI` and `Y` to change over time, for time points t = 0,...,7, and keeping `CVD` the same, simply add `t` argument to `node` function and use the square bracket `[...]` vector indexing to reference time-varying nodes inside the `node` function expressions:
 
 ```R
-library(simcausal)
+library("simcausal")
 D <- DAG.empty() + 
   node("CVD", distr="rcategor.int", probs = c(0.5, 0.25, 0.25)) +
   node("A1C", t=0, distr="rnorm", mean=5 + (CVD > 1)*10 + (CVD > 2)*5) + 
@@ -89,59 +89,45 @@ In addition, the functions `set.targetE`, `set.targetMSM` and `eval.target` prov
 
 ### Using networks in SEMs
 
-Function `network` provies support for networks simulations, in particular it enables defining and simulating SEM for dependent data. For example, a network sampling function like `generate.igraph.ER` defined below can be used to specify and simulate dependent data from a network-based SEM:
+Function `network` provies support for networks simulations, in particular it enables defining and simulating SEM for dependent data. For example, a network sampling function like `rnet.gnm` (provided by the package, see `?rnet.gnm`) can be used to specify and simulate dependent data from a network-based SEM.  Start defining a SEM that uses the this network, with a `+network` syntax and providing "`rnet.gnm`" as a "`netfun`" argument to `network` function:
 
 ```R
-#--------------------------------------------------------------------------------------------------
-# Example of a network sampler that will supplied as "netfun" argument to network(, netfun=);
-# Returns (n,Kmax) matrix of net IDs (friends) by row;
-# Each row i will contain the IDs (row numbers) of observation i's friends;
-#--------------------------------------------------------------------------------------------------
-gen.ER <- function(n, m_pn, ...) {
-  m <- as.integer(m_pn*n)
-  if (n<=10) m <- 20
-  igraph.ER <- igraph::sample_gnm(n = n, m = m, directed = TRUE)
-  sparse_AdjMat <- igraph.to.sparseAdjMat(igraph.ER)
-  NetInd_out <- sparseAdjMat.to.NetInd(sparse_AdjMat)
-  return(NetInd_out$NetInd_k)
-}
+library("simcausal")
+library("magrittr")
+D <- DAG.empty() + network("ER.net", netfun = "rnet.gnm", m_pn = 50)
 ```
 
-Next step is to start defining a SEM that uses the above network, with a `+network` syntax and providing `generate.igraph.ER` to `netfun` argument:
+First define two IDD nodes `W1` (categorical) and `W2` (Bernoulli):
 
 ```R
-D <- DAG.empty()
-# Define the network function and define its parameter(s) (m_pn):
-D <- D + network("ER.net", netfun = "gen.ER", m_pn = 50)
-# W1 - categorical (6 categories, 1-6):
-D <- D + node("W1", distr = "rcategor.int", probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546))
-# W2 - binary infection status, positively correlated with W1:
-D <- D + node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3))
+D <- D + 
+  node("W1", distr = "rcat.b1", probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) + 
+  node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3))
 ```
 
-New nodes (structural equations) can now be specified conditional on the past node values of observations connected to each unit `i` (friends of `i`). The friends will be defined by the network ID matrix that is returned by the above network generator `gen.ER`. Double square bracket syntax `[[...]]` allows referencing the node values of connected friends. Two special variables `Kmax` and `nF` can be used along-side indexing `[[...]]`. `Kmax`  defines the maximal number of friends (maximal friend index) for all observation. When `kth` friend referenced by `Var[[k]]` doesn't exist, the default is to set that value to `NA`. Adding the argument `replaceNAw0=TRUE` to `node` function changes such values from `NA` to `0`. `nF` is another special variable, which is a vector of length `n` and each `nF[i]` is equal to the current number of friends for unit `i`. Any kind of summary function that can be applied to multiple time-varying nodes can be similarly applied to network-indexed nodes. For additional details, see the package documentation for the network function (`?network`).
+New nodes (structural equations) can now be specified conditional on the past node values of observations connected to each unit `i` (*friends* of `i`). The friends are defined by the network matrix that is returned by the above network generator `rnet.gnm`. Double square bracket syntax "`[[...]]`" allows referencing the node values of connected friends. Two special variables, "`Kmax`" and "`nF`" can be used along-side indexing "`[[...]]`". `Kmax`  defines the maximal number of friends (maximal friend index) for all observation. When `kth` friend referenced in "`Var[[k]]`" doesn't exist, the default is to set that value to "`NA`". Adding the argument "`replaceNAw0=TRUE`" to `node` function changes such values from `NA` to `0`. `nF` is another special variable, which is a vector of length `n` and each `nF[i]` is equal to the current number of friends for unit `i`. Any kind of summary function that can be applied to multiple time-varying nodes can be similarly applied to network-indexed nodes. For additional details, see the package documentation for the network function (`?network`) and the package vignette on conducting network simulations.
+
+Define network variable "`netW1`" as the `W1` values of the first friend and define binary exposure "`A`" so that probability of success for each unit 'i' for `A` is a logit-linear function of:
+1. `W1[i]`,
+2. Sum of `W1` values among all friends of `i`,
+3. Mean value of `W2` among all friends of `i`.
 
 ```R
-# Define network variable netW1 as the W1 values of first friends across all observations:
-D <- D + node("netW1.F1", distr = "rconst", const = W1[[1]])
-# Define the probability of each exposure A[i] being equal to 1 as a logit-linear function of:
-# (1) W1[i]
-# (2) sum of W1 values among all friends of i
-# (3) mean value of W2 among all friends of i
-D <- D + node("A", distr = "rbern",
+dat.net <- {
+  D + node("netW1.F1", distr = "rconst", const = W1[[1]]) +
+  node("A", distr = "rbern",
               prob = plogis(2 + -0.5 * W1 +
                             -0.1 * sum(W1[[1:Kmax]]) +
                             -0.7 * ifelse(nF > 0, sum(W2[[1:Kmax]])/nF, 0)),
-              replaceNAw0 = TRUE)
-Dset <- set.DAG(D)
-dat.net <- sim(Dset, n=1000)
+              replaceNAw0 = TRUE)} %>%
+set.DAG() %>%
+sim(n=1000)
 ```
 
-The simulated data frame returned by `sim()` also contains the simulated network object, saved as a separate attribute. The network is saved as an `R6` object of class `NetIndClass`, under attribute called `netind_cl`. The field `NetInd` contains the network matrix, the field `Kmax` contains the maximum number of friends (number of columns in `NetInd`) and the field `nF` contains the vector for total number of friends for each observation (see `?NetIndClass` for more information).
+The simulated data frame returned by `sim()` also contains the simulated network object, saved as a separate attribute. The network is saved as an `R6` object of class `NetIndClass`, under attribute called "`netind_cl`". The field "`NetInd`" contains the network matrix, the field "`Kmax`" contains the maximum number of friends (number of columns in `NetInd`) and the field "`nF`" contains the vector for total number of friends for each observation (see `?NetIndClass` for more information).
 
 ```{r}
-Kmax <- attributes(dat.net)$netind_cl$Kmax
-Kmax
+(Kmax <- attributes(dat.net)$netind_cl$Kmax)
 NetInd_mat <- attributes(dat.net)$netind_cl$NetInd
 head(NetInd_mat)
 nF <- attributes(dat.net)$netind_cl$nF
