@@ -669,7 +669,7 @@ for random sampling from some commonly employed distributions. These routines
 can be passed directly to the \code{distr}\textbf{ }argument of the node
 function with the relevant distributional parameters on which they depend.
 These built-in functions can be listed at any time by calling \code{distr.list()}.
-In particular, the routines \code{"rbern"}, \code{"rconst"}, and \code{"rcategor"}
+In particular, the routines \code{"rbern"}, \code{"rconst"}, and \code{"rcat.b1"}
 can be used for specifying a Bernoulli distribution, a degenerate distribution
 (constant at a given value), and a categorical distribution, respectively.
 One can also use any of the standard random generating \proglang{R} functions,
@@ -903,7 +903,7 @@ that builds upon the \pkg{igraph} \proglang{R} package \citep{igraph} to visuali
 The example below shows how to specify a structural equation model with six nodes to represent a single time point
 intervention study: one categorical baseline covariate with 3 categories (\code{race}), one normally distributed
 baseline confounder (\code{W1}), one uniformly distributed baseline confounder (\code{W2}), one binary baseline
-confounder (\code{W3}), one binary exposure (\code{Anode}), and one binary outcome (\code{Y}). This example uses pre-defined \proglang{R} functions \code{rcategor},  \code{rbern}, \code{rnorm} and \code{runif} for sampling from the
+confounder (\code{W3}), one binary exposure (\code{Anode}), and one binary outcome (\code{Y}). This example uses pre-defined \proglang{R} functions \code{rcat.b1},  \code{rbern}, \code{rnorm} and \code{runif} for sampling from the
 categorical, Bernoulli, normal, and uniform distributions, respectively. For details and examples on writing sampling
 functions for arbitrary distributions see Section~\ref{custom}. We also refer to Section~\ref{custom} for a description
 on how to specify node formulas (distributional parameters), such as with the use of \proglang{R} expressions specified
@@ -914,7 +914,7 @@ library("simcausal")
 D <- DAG.empty()
 D <- D +
   node("race",
-        distr = "rcategor",
+        distr = "rcat.b1",
         probs = c(0.5, 0.25, 0.25)) +
   node("W1",
         distr = "rnorm",
