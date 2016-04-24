@@ -26,7 +26,7 @@ vector_math_fcns <- c("I","abs","sign","sqrt","round","signif","floor","ceil","c
 # b) find baseline var calls;
 # c) parse the tree at most 10 times and evaluate all atomic expressions
 # d) modify calls to summary (non-vectorized) function to apply(DF, 1, func_name), adding cbind to calls with more than 1 arg
-nodeform_parsers = function(node_form_call, data.env, user.env)  {
+nodeform_parsers = function(node_form_call, data.env, user.env, self)  {
   # combine all default vectorized funs + the user-specified vectorized function in global :
   vector_fcns_all <- c(vector_fcns, vector_ops_fcns, vector_math_fcns, vecfun.get())
   curr.dfvarnms <- data.env[["ANCHOR_ALLVARNMS_VECTOR_0"]]
@@ -121,7 +121,9 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
         x	# Leave unchanged
       } else if (is.call(x)) {
         # reached '[', '[[' or 'c' functions, don't need to parse any deeper, return this subtree intact
-        if (((identical(x[[1]], quote(`[`)) || identical(x[[1]], quote(`[[`))) && is.name(x[[2]])) || identical(x[[1]], quote(c)) || identical(x[[1]], quote(.)) || identical(x[[1]], quote(eval))) {
+        if (identical(x[[1]], quote(.)) || identical(x[[1]], quote(eval))) { # Call to .() or eval(), so evaluate and don't go any deeper
+          eval(x[[2]], envir = data.env, enclos = user.env)
+        } else if (((identical(x[[1]], quote(`[`)) || identical(x[[1]], quote(`[[`))) && is.name(x[[2]])) || identical(x[[1]], quote(c))) {  #|| identical(x[[1]], quote(.)) || identical(x[[1]], quote(eval))
           x # Leave unchanged
         } else {
           atomargs_test <- sapply(2:length(x), function(i) is.atomic(x[[i]]))
@@ -223,28 +225,40 @@ nodeform_parsers = function(node_form_call, data.env, user.env)  {
     }
   }
 
+
   # eval_atom_call <- node_form_call						      # don't evaluate any atomic expressions
   eval_atom_call <- eval_all_atomic(node_form_call)		# pre-evaluate all atomic expressions
+  dprint("after atomic evalulation:"); dprint(eval_atom_call)
+
+  # If t is present (defined) for current node, replace all "t" in node formula by its actual value:
+  if (!is.null(self$cur.node$t)) {
+    eval_atom_call <- eval(substitute(substitute(e, list(t = eval(self$cur.node$t))), list(e = eval_atom_call)))
+  }
+  # If network is present replace all "Kmax" in the node formula by the actual network Kmax value:
+  if (!is.null(self$netind_cl) && ("NetIndClass" %in% class(self$netind_cl))) {
+    eval_atom_call <- eval(substitute(substitute(e, list(Kmax = eval(self$netind_cl$Kmax))), list(e = eval_atom_call)))
+  }
+
+  dprint("after atomic evalulation and substitution:"); dprint(eval_atom_call)
+
 
   # Parses the formula and gets all the variable names referenced as [] or as.name==TRUE
   Vnames <- find_FormVars(eval_atom_call, vartype="non_TD")	# returns unique names of none TD vars that were called as VarName
   TD_vnames <- find_FormVars(eval_atom_call, vartype="TD")	# returns unique names TDVar that were called as TDVar[indx]
   TD_t_vnames <- find_FormVars(eval_atom_call, vartype="TD_t") # returns unique names TDVar_t that were called as TDVar[indx]
-
   dprint("Vnames: "); dprint(Vnames)
   dprint("TD_vnames: "); dprint(TD_vnames)
   dprint("TD_t_vnames: "); dprint(TD_t_vnames)
 
   modified_call <- modify_call(eval_atom_call) 			# parse current call and replace any non-vectorized function with apply call (adding cbind_mod if more than one arg)
-
-  dprint("modified_call"); dprint(modified_call)
+  dprint("modified_call:"); dprint(modified_call)
 
   return(list(Vnames = Vnames, TD_vnames = TD_vnames, TD_t_vnames = TD_t_vnames, modified_call = modified_call))
 }
 
 eval.nodeform.full <- function(expr_call, expr_str, self, data.env) {
   # traverse the node formula call, return TDvar & Var names (node parents) and modify subst_call to handle non-vectorized (summary functions):
-  parse_res <- nodeform_parsers(node_form_call = expr_call, data.env = data.env, user.env = self$user.env)
+  parse_res <- nodeform_parsers(node_form_call = expr_call, data.env = data.env, user.env = self$user.env, self = self)
 
   # set the local variables in the formula node to their character values:
   Vnames  <- parse_res$Vnames
@@ -359,7 +373,6 @@ eval.nodeform.out <- function(expr.idx, self, data.df) {
   if (!is.null(self$cur.node$t)) {
     expr_call <- eval(substitute(substitute(e, list(t = eval(self$cur.node$t))), list(e = expr_call)))
   }
-
   # If network is present replace all "Kmax" in the node formula by the actual network Kmax value:
   if (!is.null(self$netind_cl) && ("NetIndClass" %in% class(self$netind_cl))) {
     expr_call <- eval(substitute(substitute(e, list(Kmax = eval(self$netind_cl$Kmax))), list(e = expr_call)))
@@ -465,7 +478,6 @@ Define_sVar <- R6Class("Define_sVar",
         env <- parent.frame()
         # t <- env$t
         t <- env$self$cur.node$t
-
         var <- substitute(var)
         var.chr <- as.character(var)
 

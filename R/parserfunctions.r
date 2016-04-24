@@ -151,8 +151,8 @@ nodeform_parsers.depr <- function(node_form_call) {
   eval_atom_call <- eval_all_atomic(node_form_call)		# pre-evaluate all atomic expressions
 
   Vnames <- find_FormVars(eval_atom_call, vartype="non_TD")	# returns unique names of none TD vars that were called as VarName
-  TD_vnames <- find_FormVars(eval_atom_call, vartype="TD")	# returns unique names TDVar that were called as TDVar[indx]	
-  TD_t_vnames <- find_FormVars(eval_atom_call, vartype="TD_t") # returns unique names TDVar_t that were called as TDVar[indx]	
+  TD_vnames <- find_FormVars(eval_atom_call, vartype="TD")	# returns unique names TDVar that were called as TDVar[indx]
+  TD_t_vnames <- find_FormVars(eval_atom_call, vartype="TD_t") # returns unique names TDVar_t that were called as TDVar[indx]
 
   # dprint("Vnames"); dprint(Vnames)
   # dprint("TD_vnames"); dprint(TD_vnames)
@@ -167,7 +167,7 @@ nodeform_parsers.depr <- function(node_form_call) {
 # 2) finds all time-dep var names (Var[]) and non-time dep var names (Var)
 # 3) replaces all summary function calls, s.a., func(Var) with apply(Var, 1, func)
 # 4) replaces all calls to functions with several vectors, s.a., func(X1,X2,X3) with func(cbind(X1,X2,X3))
-# 5) evaluates final expression in a special environment where: 
+# 5) evaluates final expression in a special environment where:
 	# -) variables that have been simulated so far in obs.df are accessible
 	# -) the subset vector function '[' is replaces with its specialized version, with syntax TDVar[t_range] for subsetting columns of the observed data by time
 	# -) vecapply() function that is a wrapper for apply, converts vector to a 1 col matrix
@@ -202,7 +202,7 @@ eval_nodeform.depr <- function(expr_str, cur.node, env=parent.frame()) {
       # anchor_evn$ANCHOR_VARS_OBSDF <- append(anchor_evn$ANCHOR_VARS_OBSDF, list(TDvars)) # only needed for debugging
       if (!all(check_exist)) stop("undefined time-dependent variable(s): "%+%TDvars[which(!check_exist)])
       # dprint("TDvars in '[': "); dprint(TDvars)
-      # dprint("exprs text in '[': "); 
+      # dprint("exprs text in '[': ");
       # dprint(paste0("cbind(",paste0(TDvars, collapse=","),")"))
       TDvars_eval <- eval(parse(text=paste0("cbind(",paste0(TDvars, collapse=","),")")), envir = env)
       return(TDvars_eval)
@@ -232,7 +232,7 @@ eval_nodeform.depr <- function(expr_str, cur.node, env=parent.frame()) {
 
   f_tovect <- function(X) {	# turn one column matrix to vector
     if (length(dim(X))>1) {
-      if (dim(X)[2]==1) X <- as.vector(X)	
+      if (dim(X)[2]==1) X <- as.vector(X)
     }
     X
   }
