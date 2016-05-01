@@ -4,6 +4,7 @@ allNA = function(x) all(is.na(x))
 
 # Adding test for latent vars
 test.MV <- function() {
+  require("mvtnorm")
   D <- DAG.empty()
   mvName <- c("X1", "X2", "X3")
   # multivar node with no t:
@@ -11,11 +12,6 @@ test.MV <- function() {
   # multivar node with with t:
   test.node_wt <- node(mvName, t = 0:20, distr = "rconst", const = 1)
 
-  D <- D + node(c("X1","X2","X3"), distr = "rmvnorm", mean = .(c(0,1,2)))
-
-  rmvnorm(n = 100, mean = matrix(c(0,1,2), nrow = 100))
-
-  require("mvtnorm")
   D <- DAG.empty()
   # 3 dimensional normal (uncorrelated) using rmvnorm function from rmvnorm package:
   D <- D + node(c("X1","X2","X3"), distr = "rmvnorm",

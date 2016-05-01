@@ -1010,15 +1010,32 @@ test.condrcat.factor <- function() {
                 probs = (W == 0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
   Dset1 <- set.DAG(D)
 
-  # THIS no longer works, because the dimensions of catprob.W0 and catprob.W1 (1 row) do not match the dims of W (n rows)
+  # THIS doesn't work, because R doesn't know how to multipy 1 row matrix by a vector.
+  # The dimensions of catprob.W0 and catprob.W1 (1 row) do not match the dims of W (n length vector)
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
   catprob.W1 <- cbind(0.2,0.1,0.7)
   D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*.(catprob.W0) + (W==1)*.(catprob.W1))
+  checkException(Dset2 <- set.DAG(D))
+
+  # Same thing here
+  D <- DAG.empty()
+  D <- D + node("W", distr = "rbern", prob = 0.3)
+  catprob.W0 <- cbind(0.7,0.1,0.2)
+  catprob.W1 <- cbind(0.2,0.1,0.7)
+  D <- D + node("Cat3", distr = "rcat.b1", probs = .((W==0)*catprob.W0) + .((W==1)*catprob.W1))
+  checkException(Dset2 <- set.DAG(D))
+
+  # This works, because simcausal gets a chance to parse c(0.7,0.1,0.2) into a matrix with appropriate number of rows:
+  D <- DAG.empty()
+  D <- D + node("W", distr = "rbern", prob = 0.3)
+  catprob.W0 <- c(0.7,0.1,0.2)
+  catprob.W1 <- c(0.2,0.1,0.7)
+  D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*.(catprob.W0) + (W==1)*.(catprob.W1))
   Dset2 <- set.DAG(D)
 
-  # This works however, because simcausal gets a chance to parse c(0.7,0.1,0.2) into a matrix with appropriate number of rows:
+  # This also works, for the same reason
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
@@ -1026,13 +1043,14 @@ test.condrcat.factor <- function() {
   D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
   Dset2 <- set.DAG(D)
 
-  # THIS still doesn't work, since catprob.W0 gets evaluated INSIDE eval, parser sees catprob.W0 as a name, hence can't modify what's inside it
+  # THIS doesn't give an error but works incorrectly! catprob.W0 stays a vector!
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
-  catprob.W0 <- cbind(0.7,0.1,0.2)
-  catprob.W1 <- cbind(0.2,0.1,0.7)
+  catprob.W0 <- c(0.7,0.1,0.2)
+  catprob.W1 <- c(0.2,0.1,0.7)
   D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*catprob.W0 + (W==1)*catprob.W1)
   # Dset3 <- set.DAG(D)
+
   # catprob.W0 <- c(0.7,0.1,0.2); catprob.W1 <- c(0.2,0.1,0.7)
   # D <- D + node("Cat3", distr = "rcat.b1",
   #               probs = ifelse(W==0, catprob.W0, catprob.W1))
