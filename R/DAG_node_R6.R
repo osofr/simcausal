@@ -1,21 +1,5 @@
-## ---------------------------------------------------------------------
-#' @title Class for storing a node object (the data generating distribution specified by the SEM)
-#' @docType class
-#' @format An R6 class object.
-#' @name Node_Class
-#' @details Following fields are created during initialization
-#' \itemize{
-#' \item{nodes} ...
-#' \item{subset_regs} ...
-#' \item{sA_nms} ...
-#' \item{sW_nms} ...
-#' \item{Kmax} ...
-#' }
-#' Description...
-#' Description...
 #' @importFrom R6 R6Class
 #' @importFrom assertthat assert_that
-# @export
 Node_Class <- R6Class("Node_Class",
   class = TRUE,
   portable = TRUE,
@@ -50,24 +34,9 @@ Node_Class <- R6Class("Node_Class",
   )
 )
 
-## ---------------------------------------------------------------------
-#' @title Class for storing a DAG object (the data generating distribution specified by the SEM)
-#' @docType class
-#' @format An R6 class object.
-#' @name DAG_Class
-#' @details Following fields are created during initialization
-#' \itemize{
-#' \item{nodes} ...
-#' \item{subset_regs} ...
-#' \item{sA_nms} ...
-#' \item{sW_nms} ...
-#' \item{Kmax} ...
-#' }
-#' Description...
-#' Description...
+
 #' @importFrom R6 R6Class
 #' @importFrom assertthat assert_that
-# @export
 DAG_Class <- R6Class("DAG_Class",
   class = TRUE,
   portable = TRUE,

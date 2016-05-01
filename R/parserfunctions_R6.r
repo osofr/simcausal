@@ -166,7 +166,7 @@ nodeform_parsers = function(node_form_call, data.env, user.env, self)  {
   # * modify the call tree with apply for non-vectorized (summary) functions, also adding cbind_mod() for calls with more than one arg
   # * TO ADD: if call tree starts with '{' need to process each argument as a separate call and return a list of calls instead
   modify_call <- function (x, where = parent.frame()) {
-    if (is.atomic(x) & length(x)>1) {
+    if (is.atomic(x) & length(x)>1 & !is.matrix(x)) {
       x <- parse(text = deparse(x, width.cutoff = 500))[[1]]
       modify_call(x, where = where)	# continue parsing recursively, turning result back into call
     }

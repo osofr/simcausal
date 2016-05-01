@@ -232,3 +232,15 @@ D <- D +
   node("A", t = 2:10, distr = "rconst", const = .(coefAi[t]) * A[t-1])
 Dset8 <- set.DAG(D)
 sim(Dset8, n = 10)
+
+#---------------------------------------------------------------------------------------
+# TWO equivalent ways of creating a multivariate node (just repeating W1 and W2):
+#---------------------------------------------------------------------------------------
+D <- DAG.empty()
+D <- D + node("W1", distr = "rbern", prob = 0.45)
+D <- D + node("W2", distr = "rconst", const = 1)
+D <- D + node(c("W1.copy1", "W2.copy1"), distr = "rconst", const = c(W1, W2))
+create_mat <- function(W1, W2) cbind(W1, W2)
+D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = .(create_mat(W1, W2)))
+Dset <- set.DAG(D)
+sim(Dset, n=10, rndseed=1)
