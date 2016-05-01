@@ -101,14 +101,21 @@ rconst <- function(n, const) {
 #' @seealso \code{\link{rcat.b1}}, \code{\link{rcat.b0}}
 #' @export
 rcat.factor <- function(n, probs) {
-	as.factor(rcategor.int(n = n, probs = probs))
+	as.factor(rcat.b1(n = n, probs = probs))
 }
 
 #' @describeIn rcat.factor (Deperecated) Random Sample of a Categorical Factor
 #' @export
 rcategor <- function(n, probs) {
-	warning("This function is deprecated, please use rcat.factor() instead.")
-	as.factor(rcategor.int(n = n, probs = probs))
+  warning("This function is deprecated, please use rcat.factor() instead.")
+  as.factor(rcategor.int(n = n, probs = probs))
+}
+
+#' @describeIn rcat.b1 (Deperecated) Random Sample from Base 1 Categorical (Integer) Distribution
+#' @export
+rcategor.int <- function(n, probs) {
+  warning("This function is deprecated, please use rcat.b1() instead.")
+  rcat.b1(n, probs)
 }
 
 #' Random Sample from Base 1 (rcat.b1) or Base 0 (rcat.b0) Categorical (Integer) Distribution
@@ -161,13 +168,6 @@ rcat.b1 <- function(n, probs) {
 #' @describeIn rcat.b1 Random Sample from Base 0 Categorical (Integer) Distribution
 #' @export
 rcat.b0 <- function(n, probs) rcat.b1(n, probs) - 1
-
-#' @describeIn rcat.b1 (Deperecated) Random Sample from Base 1 Categorical (Integer) Distribution
-#' @export
-rcategor.int <- function(n, probs) {
-	warning("This function is deprecated, please use rcat.b1() instead.")
-	rcat.b1(n, probs)
-}
 
 #' List All Custom Distribution Functions in \code{simcausal}.
 #'

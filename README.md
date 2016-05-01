@@ -52,7 +52,7 @@ Below is an example simulating data with 4 covariates specified by 4 structural 
 ```R
 library("simcausal")
 D <- DAG.empty() + 
-  node("CVD", distr="rcategor.int", probs = c(0.5, 0.25, 0.25)) +
+  node("CVD", distr="rcat.b1", probs = c(0.5, 0.25, 0.25)) +
   node("A1C", distr="rnorm", mean = 5 + (CVD > 1)*10 + (CVD > 2)*5) +
   node("TI", distr="rbern", prob = plogis(-0.5 - 0.3*CVD + 0.2*A1C)) +
   node("Y", distr="rbern", prob = plogis(-3 + 1.2*TI + 0.1*CVD + 0.3*A1C))
@@ -71,7 +71,7 @@ To allow the above nodes `A1C`, `TI` and `Y` to change over time, for time point
 ```R
 library("simcausal")
 D <- DAG.empty() + 
-  node("CVD", distr="rcategor.int", probs = c(0.5, 0.25, 0.25)) +
+  node("CVD", distr="rcat.b1", probs = c(0.5, 0.25, 0.25)) +
   node("A1C", t=0, distr="rnorm", mean=5 + (CVD > 1)*10 + (CVD > 2)*5) + 
   node("TI", t=0, distr="rbern", prob=plogis(-5 - 0.3*CVD + 0.5*A1C[t])) +
 

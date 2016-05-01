@@ -26,7 +26,7 @@ D <- DAG.empty()
 D <- D + network("ER.net", netfun = "gen.ER", m_pn = 50)
 # W1 - categorical (6 categories, 1-6):
 D <- D +
-  node("W1", distr = "rcategor.int",
+  node("W1", distr = "rcat.b1",
         probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) +
 # W2 - binary infection status, positively correlated with W1:
   node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3)) +
@@ -107,11 +107,10 @@ genNET <- function(n, K, bslVar, nF, ...) {
   return(NetInd_k)
 }
 
-rcategor.int.base0 <- function(n, probs) rcategor.int(n, probs)-1
 D <- DAG.empty()
 D <- D +
 # W1 - categorical or continuous confounder (5 categories, 0-4):
-  node("W1", distr = "rcategor.int.base0",
+  node("W1", distr = "rcat.b0",
         probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) +
 # W2 - binary infection status at t=0, positively correlated with W1:
   node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3)) +
@@ -126,7 +125,7 @@ p_nF_W1_mat <- apply(matrix(runif((K+1)*6), ncol = 6, nrow = (K+1)), 2, normprob
 colnames(p_nF_W1_mat) <- paste0("p_nF_W1_", c(0:5))
 create_probs_nF <- function(W1) t(p_nF_W1_mat[,W1+1])
 vecfun.add("create_probs_nF")
-D <- D + node("def.nF", distr = "rcategor.int.base0", probs = create_probs_nF(W1))
+D <- D + node("def.nF", distr = "rcat.b0", probs = create_probs_nF(W1))
 
 # Adding the network generator that depends on nF and categorical W1:
 D <- D + network(name="net.custom", netfun = "genNET", K = K, bslVar = W1, nF = def.nF)

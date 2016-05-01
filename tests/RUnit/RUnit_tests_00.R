@@ -119,10 +119,10 @@ test.t.error <- function() {
 # testing n.test arg to set.DAG(), including when n.test=0L
 test.Nsamp.n.test <- function() {
   # testing categorical for no errors and no warnings with empty returns (n=0)
-  checkEquals(length(rcategor.int(n=0, probs = c(0.3,0.3,0.4))),0)
-  checkEquals(length(rcategor(n=0, probs = c(0.3,0.3,0.4))),0)
-  checkEquals(length(rcategor.int(n=0, probs = matrix(data=c(0.3,0.3,0.4), nrow=5,ncol=3))),0)
-  checkEquals(length(rcategor(n=0, probs = matrix(data=c(0.3,0.3,0.4), nrow=5,ncol=3))),0)
+  checkEquals(length(rcat.b1(n=0, probs = c(0.3,0.3,0.4))),0)
+  checkEquals(length(rcat.factor(n=0, probs = c(0.3,0.3,0.4))),0)
+  checkEquals(length(rcat.b1(n=0, probs = matrix(data=c(0.3,0.3,0.4), nrow=5,ncol=3))),0)
+  checkEquals(length(rcat.factor(n=0, probs = matrix(data=c(0.3,0.3,0.4), nrow=5,ncol=3))),0)
 
   D <- DAG.empty()
   D <- D + node("A", distr = "rbern", prob=0.5) +
@@ -138,12 +138,34 @@ test.Nsamp.n.test <- function() {
   Dset.0obs <- set.DAG(D, n.test = 0L)
 }
 
+# Adding test for latent vars
+test.substitute <- function() {
+  node_expr1 <- substitute(plogis(-0.5 + 0.7*W1 + 0.3*W2 - 0.2*I))
+  node_expr2 <- substitute(plogis(+4.2 - 0.5*W1 + 0.2*W2/2 + 0.2*W3))
+
+  D <- DAG.empty()
+  D <- D +
+  node("I", distr = "rcat.b1",
+    probs = c(0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1)) +
+  node("W1", distr = "rnorm",
+    mean = ifelse(I == 1, 0, ifelse(I == 2, 3, 10)) + 0.6 * I, sd = 1) +
+  node("W2", distr = "runif",
+    min = 0.025*I, max = 0.7*I) +
+  node("W3", distr = "rbern",
+    prob = .(node_expr1)) +
+  node("A", distr = "rbern",
+    prob = eval(node_expr2))
+
+  D <- set.DAG(D)
+  dat <- sim(D, n = 50)
+}
+
 
 # Adding test for latent vars
 test.latent <- function() {
   D <- DAG.empty()
   D <- D +
-  node("I", distr = "rcategor.int",
+  node("I", distr = "rcat.b1",
     probs = c(0.1, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1)) +
   node("W1", distr = "rnorm",
     mean = ifelse(I == 1, 0, ifelse(I == 2, 3, 10)) + 0.6 * I, sd = 1) +
@@ -392,9 +414,9 @@ test.set.DAG_DAG2b_newactions <- function() {
     D_cat <- D_cat + node("W3", distr="rbern", prob=plogis(-0.5 + 0.7*W1 + 0.3*W2), order=3)
     D_cat <- D_cat + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*W3), order=4)
 
-    D_cat_1 <- D_cat + node("Y", distr="rcategor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*W3); plogis(-0.5 + 0.7*W1)}, order=5)
-    D_cat_2 <- D_cat + node("Y", distr="rcategor", probs={0.3;0.4}, order=5)
-    D_cat_3 <- D_cat + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
+    D_cat_1 <- D_cat + node("Y", distr="rcat.factor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*W3); plogis(-0.5 + 0.7*W1)}, order=5)
+    D_cat_2 <- D_cat + node("Y", distr="rcat.factor", probs={0.3;0.4}, order=5)
+    D_cat_3 <- D_cat + node("Y", distr="rcat.factor", probs={0.2; 0.1; 0.5}, order=5)
 
     D_cat_1 <- set.DAG(D_cat_1)
     D_cat_2 <- set.DAG(D_cat_2)
@@ -428,9 +450,9 @@ test.set.DAG_DAG2b_newactions <- function() {
     D_unif <- D_unif + node("W3", distr="runif", min=plogis(-0.5 + 0.7*W1 + 0.3*W2), max=10, order=3)
     D_unif <- D_unif + node("Anode", distr="rbern", prob=plogis(-0.5 - 0.3*W1 - 0.3*W2 - 0.2*sin(W3)), order=4)
 
-    D_cat_1 <- D_unif + node("Y", distr="rcategor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*cos(W3)); plogis(-0.5 + 0.7*W1)}, order=5)
-    D_cat_2 <- D_unif + node("Y", distr="rcategor", probs={0.3;0.4}, order=5)
-    D_cat_3 <- D_unif + node("Y", distr="rcategor", probs={0.2; 0.1; 0.5}, order=5)
+    D_cat_1 <- D_unif + node("Y", distr="rcat.factor", probs={plogis(-0.1 + 1.2*Anode + 0.3*W1 + 0.3*W2 + 0.2*cos(W3)); plogis(-0.5 + 0.7*W1)}, order=5)
+    D_cat_2 <- D_unif + node("Y", distr="rcat.factor", probs={0.3;0.4}, order=5)
+    D_cat_3 <- D_unif + node("Y", distr="rcat.factor", probs={0.2; 0.1; 0.5}, order=5)
 
     D_unif <- set.DAG(D_unif)
     D_unif_0obs <- set.DAG(D_unif, n.test=0)
@@ -931,36 +953,36 @@ test.longparse <- function() {
 
   D <- DAG.empty()
   D2 <- D + node('group',
-                 distr = 'rcategor.int',
+                 distr = 'rcat.b1',
                  probs = rep(1/55, 55))
   D2 <- set.DAG(D2)
   datD2 <- sim(D2, n = 100, rndseed = 123)
 
 
   D3 <- D + node('group',
-                 distr = 'rcategor.int',
+                 distr = 'rcat.b1',
                  probs = rep(1/1933, 1933))
   D3 <- set.DAG(D3)
   datD3 <- sim(D3, n = 100, rndseed = 123)
   datD3
 
-  # testing that rep with rcategor.int returns an error (rep functionality not implemented yet):
-  # 04/08/16: This no longer errors, because the responsibility now is on rcategor.int to catch if something is wrong.
+  # testing that rep with rcat.b1 returns an error (rep functionality not implemented yet):
+  # 04/08/16: This no longer errors, because the responsibility now is on rcat.b1 to catch if something is wrong.
   D.error <- D +
     node('A', distr = 'rconst', const = 1/3) +
       # This expresssion is correct in simcausal syntax, the result of this evaluation is a single vector of length n*3
-      # rcategor.int and rcategor can accept vectors and will think that its being asked to simulate a categorical with
+      # rcat.b1 and rcat.factor can accept vectors and will think that its being asked to simulate a categorical with
       # n*3 different categories
-    node('group', distr = 'rcategor.int', probs = rep(A, 3))
+    node('group', distr = 'rcat.b1', probs = rep(A, 3))
   # checkException(set.DAG(D.error))
   sim(set.DAG(D.error), n = 20)
 
-  # using c instead of rep with rcategor.int works as cbind(A,A,A):
+  # using c instead of rep with rcat.b1 works as cbind(A,A,A):
   D.noerror <- D + node('A',
                  distr = 'rconst',
                  const = 1/3)
   D.noerror <- D.noerror + node('group',
-                  distr = 'rcategor.int',
+                  distr = 'rcat.b1',
                   probs = c(A, A, A))
   D.noerror <- set.DAG(D.noerror)
   sim(D.noerror, n = 100)
@@ -975,16 +997,16 @@ test.distr <- function() {
 
 }
 
-test.condrcategor <- function() {
+test.condrcat.factor <- function() {
   #-------------------------------------------------------------
-  # BUG WITH CONDITIONAL CATEGORICAL DISTRIBUTIONS (e.g., rcategor.int)
+  # BUG WITH CONDITIONAL CATEGORICAL DISTRIBUTIONS (e.g., rcat.b1)
   # probs arg should be evaluated to a matrix of probabilities, instead its a vector of length n
   #-------------------------------------------------------------
   # library(simcausal)
   # THIS WORKS FINE, SINCE call to 'c' fun gets replaced with cbind:
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
-  D <- D + node("Cat3", distr = "rcategor.int",
+  D <- D + node("Cat3", distr = "rcat.b1",
                 probs = (W == 0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
   Dset1 <- set.DAG(D)
 
@@ -993,15 +1015,15 @@ test.condrcategor <- function() {
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
   catprob.W1 <- cbind(0.2,0.1,0.7)
-  D <- D + node("Cat3", distr = "rcategor.int", probs = (W==0)*.(catprob.W0) + (W==1)*.(catprob.W1))
-  checkException(Dset2 <- set.DAG(D))
+  D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*.(catprob.W0) + (W==1)*.(catprob.W1))
+  Dset2 <- set.DAG(D)
 
   # This works however, because simcausal gets a chance to parse c(0.7,0.1,0.2) into a matrix with appropriate number of rows:
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
   catprob.W1 <- cbind(0.2,0.1,0.7)
-  D <- D + node("Cat3", distr = "rcategor.int", probs = (W==0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
+  D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
   Dset2 <- set.DAG(D)
 
   # THIS still doesn't work, since catprob.W0 gets evaluated INSIDE eval, parser sees catprob.W0 as a name, hence can't modify what's inside it
@@ -1009,12 +1031,12 @@ test.condrcategor <- function() {
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
   catprob.W1 <- cbind(0.2,0.1,0.7)
-  D <- D + node("Cat3", distr = "rcategor.int", probs = (W==0)*catprob.W0 + (W==1)*catprob.W1)
+  D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*catprob.W0 + (W==1)*catprob.W1)
   # Dset3 <- set.DAG(D)
   # catprob.W0 <- c(0.7,0.1,0.2); catprob.W1 <- c(0.2,0.1,0.7)
-  # D <- D + node("Cat3", distr = "rcategor.int",
+  # D <- D + node("Cat3", distr = "rcat.b1",
   #               probs = ifelse(W==0, catprob.W0, catprob.W1))
-  # D <- D + node("Cat3", distr = "rcategor.int",
+  # D <- D + node("Cat3", distr = "rcat.b1",
   #               probs = {if (W==0) {catprob.W0} else {catprob.W1}} )
   # catprob.W0 <- matrix(c(0.7,0.1,0.2), nrow = 10, ncol = 3, byrow=TRUE)
   # catprob.W1 <- matrix(c(0.2,0.1,0.7), nrow = 10, ncol = 3, byrow=TRUE)
@@ -1233,18 +1255,18 @@ test.bugfixes <- function() {
     #-------------------------------------------------------------
     # (DONE) Enabled categoricals with probs=c(...,...) (in addition to probs={...,...})
       # new categorical syntax:
-      D <- DAG.empty() + node("race",t=0,distr="rcategor",probs=c(0.2,0.4),order=1)
+      D <- DAG.empty() + node("race",t=0,distr="rcat.factor",probs=c(0.2,0.4),order=1)
       D <- set.DAG(D)
       sim1b <- sim(D, n=100, rndseed=10)
       sim1b_sim <- sim(D, n=100, rndseed=10)
       checkIdentical(sim1b,sim1b_sim)
-      D <- DAG.empty() + node("race",t=0,distr="rcategor",probs=c(0.2,0.1,0.4,0.15,0.05,0.1),order=1)
+      D <- DAG.empty() + node("race",t=0,distr="rcat.factor",probs=c(0.2,0.1,0.4,0.15,0.05,0.1),order=1)
       D <- set.DAG(D)
       sim1a <- sim(D, n=100, rndseed=10)
       sim1a_sim <- sim(D, n=100, rndseed=10)
       checkIdentical(sim1a,sim1a_sim)
       # old categorical syntax:
-      D <- DAG.empty() + node("race",t=0,distr="rcategor",probs={0.2;0.1;0.4;0.15;0.05;0.1},order=1)
+      D <- DAG.empty() + node("race",t=0,distr="rcat.factor",probs={0.2;0.1;0.4;0.15;0.05;0.1},order=1)
       D <- set.DAG(D)
       sim1b <- sim(D, n=100, rndseed=10)
       sim1b_sim <- sim(D, n=100, rndseed=10)
@@ -1253,7 +1275,7 @@ test.bugfixes <- function() {
       # new cat syntax with formula:
       D <- DAG.empty() +  node("L0", distr="rnorm", mean=10, sd=5) +
                           node("L1", distr="rnorm", mean=10, sd=5) +
-                          node("L2", distr="rcategor", probs=c(abs(1/L0), abs(1/L1)))
+                          node("L2", distr="rcat.factor", probs=c(abs(1/L0), abs(1/L1)))
       D <- set.DAG(D)
       sim2a <- sim(D, n=100, rndseed=10)
       sim2a_sim <- sim(D, n=100, rndseed=10)
@@ -1261,7 +1283,7 @@ test.bugfixes <- function() {
       # old cat syntax with formula:
       D <- DAG.empty() +  node("L0", distr="rnorm", mean=10, sd=5) +
                           node("L1", distr="rnorm", mean=10, sd=5) +
-                          node("L2", distr="rcategor", probs={abs(1/L0); abs(1/L1)})
+                          node("L2", distr="rcat.factor", probs={abs(1/L0); abs(1/L1)})
       D <- set.DAG(D)
       sim2b <- sim(D, n=100, rndseed=10)
       checkIdentical(as.matrix(sim2a), as.matrix(sim2b))
@@ -1410,14 +1432,14 @@ test.node <- function() {
     simconst <- sim(D, n=20, rndseed=1)
     # categorical distribution with constant probs
     D <- DAG.empty()
-    D <- D + node("L0", distr="rcategor", probs={0.1;0.2;0.7})
+    D <- D + node("L0", distr="rcat.factor", probs={0.1;0.2;0.7})
     D <- set.DAG(D)
     sim(D, n=20, rndseed=1)
     # categorical distribution with probs depending on previous nodes
     D <- DAG.empty()
     D <- D + node("L0", distr="rnorm", mean=10, sd=5)
     D <- D + node("L1", distr="rnorm", mean=10, sd=5)
-    D <- D + node("L2", distr="rcategor", probs={abs(1/L0); abs(1/L1)})
+    D <- D + node("L2", distr="rcat.factor", probs={abs(1/L0); abs(1/L1)})
     D <- set.DAG(D)
     sim(D, n=20, rndseed=1)
     # 3 node DAG with bernoulli nodes defined via rbinom() R function
@@ -2370,7 +2392,7 @@ test.set.DAG_general <- function() {
     # datgendist_out <- set.DAG(testDAG_names3)
 
     # test for correct distribution names (rbern, cat, rnorm)
-    testDAG_dist <- list(a=list(name="node1", time=0, distr="rcategor", order=1),
+    testDAG_dist <- list(a=list(name="node1", time=0, distr="rcat.factor", order=1),
                             a=list(name="node", time=0, distr="rnorm", order=2))
     checkException(set.DAG(testDAG_dist))
 
