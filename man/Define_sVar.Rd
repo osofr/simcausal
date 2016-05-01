@@ -8,6 +8,9 @@
 \usage{
 Define_sVar
 }
+\description{
+Evaluates and and stores arbitrary summary measure expressions. The expressions (exprs_list) are evaluated in the environment of the input data.frame.
+}
 \details{
 Following fields are created during initialization
 \itemize{
@@ -17,8 +20,6 @@ Following fields are created during initialization
 \item{sW_nms} ...
 \item{Kmax} ...
 }
-Evaluates and and stores arbitrary summary measure expressions.
-The expressions (exprs_list) are evaluated in the environment of the input data.frame.
 }
 \keyword{datasets}
 

@@ -406,6 +406,7 @@ parse.sVar.out <- function(sVar.idx, self, data.df) {
 
 ## ---------------------------------------------------------------------
 #' @title Class for defining and evaluating user-specified summary measures (exprs_list)
+#' @description Evaluates and and stores arbitrary summary measure expressions. The expressions (exprs_list) are evaluated in the environment of the input data.frame.
 #' @docType class
 #' @format An R6 class object.
 #' @name Define_sVar
@@ -417,8 +418,6 @@ parse.sVar.out <- function(sVar.idx, self, data.df) {
 #' \item{sW_nms} ...
 #' \item{Kmax} ...
 #' }
-#' Evaluates and and stores arbitrary summary measure expressions.
-#' The expressions (exprs_list) are evaluated in the environment of the input data.frame.
 #' @importFrom R6 R6Class
 #' @importFrom assertthat assert_that
 # @export
