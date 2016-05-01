@@ -165,6 +165,14 @@ D <- D +
 Dset1 <- set.DAG(D, verbose = TRUE)
 sim(Dset1, n = 10)
 
+# On the other hand this syntax wont work,
+# since simcausal will parse c(0,1) into a two column matrix:
+\dontrun{
+D <- DAG.empty()
+D <- D + node(c("X1","X2"), distr = "rmvnorm", mean = .(c(0,1)))
+Dset1 <- set.DAG(D, verbose = TRUE)
+}
+
 D <- DAG.empty()
 # Bivariate normal (correlation coef 0.75):
 D <- D +

@@ -33,8 +33,8 @@ When order is left unspecified it will be automatically inferred based on the or
 \item{asis.params}{(ADVANCED USE) A list of additional named distributional parameters that will be evaluated "as is",
 inside the currently simulated data.frame + the calling environment, without any modifications to the R expression strings inside the \code{asis.params} list.
 There is no error-checking for existing node names and no parent node name extraction (the arrows from parents will not appear in \code{plotDAG}).
-Time varying nodes should be referenced by their names as they appear in the simulated data, as in \code{TVar_t}.
-The equivalent syntax is to wrap the original expression with \code{.(...)} or \code{eval(...)}. See the details description below, also see examples 7 and 8.}
+Time varying nodes should be referenced by their names as they appear in the simulated data, as in \code{"TVar_t"}.
+See details and examples 7 and 8 below.}
 }
 \value{
 A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
@@ -85,24 +85,26 @@ Furthermore, simcausal will over-ride the standard `c` function, with its own de
 with their row-matrix counterpart functions \code{rowSums} and \code{rowMeans}.
 When programming with \code{simcausal} (such as passing node arguments inside a function, prior to defining the node), it may be helpful to instead pass
 such node arguments as character strings, rather than as R expressions. In this case one should use the argument \code{params}
-by adopting the following syntax \code{node(...,params = list(mean="A+B"))}, which has an equivalent functionality to using: \code{node(..., mean = A+B)}.
+by adopting the following syntax \code{node(...,params = list(mean="A+B"))}, which in this case is equivalent to: \code{node(..., mean = A+B)}.
 
 There are also instances when it might be desirable to retain the original behavior of all \code{R} expressions and functions and evaluate a particular node argument "as is".
-For example, the user may wish to evaluate a certain value or a certain function, using only the user calling environment and the environment of the simulated data, but keeping the
-original \code{R} functionality of all operators, including those of \code{[...]} and \code{[[...]]}.
+For example, the user may wish to retain the
+original \code{R} functionality of all its operators, including those of \code{[...]} and \code{[[...]]}.
 In this case the node argument (or a specific part of the node argument) should be wrapped in \code{.()} or \code{eval()}.
 Note that once the expression has been wrapped with \code{.(...)} (or \code{eval(...)}), the \code{simcausal} definitions of operators \code{[...]} and \code{[[...]]} no
-longer apply to such expressions and no error checking for "correctness" of these node arguments will be performed.
-An alternative and equivalent way to achieve this functionality is provide the expression as a character string and pass it along in a named list argument \code{asis.params}.
-See Example 7 below for additional details.
+longer apply to these expressions and no error checking for "correctness" of these node arguments will be performed.
 
 The forced-evaluation operator \code{.()} can be also used as part of an expression,
-which will prevent the typical \code{simcausal} evaluation on only that specific part. Example 8 below demonstrates the following use case
+which will prevent the typical \code{simcausal} evaluation on only that specific part of the expression. Example 8 below demonstrates the following use case
 for the expression \code{.(coefAi[t]) * A[t-1]},
 which will look for vector \code{coefAi} and then subset it by current value of \code{t} (and return a scalar),
 while \code{A[t-1]} will evaluate to the entire column vector of variable \code{A} for time point \code{t-1}.
 Such an expression will multiply the entire time-varying vector \code{A[t-1]} by scalar value determined
 by current value of \code{t} and the previously defined vector \code{coefAi}.
+
+Furthermore, even when a vector or a matrix is wrapped in .(...) it still will be automatically re-parsed into K column matrix with n rows.
+When this is not desired, for example, when defining a multivariate node distribution, the user may pass such vector or matrix node arguments as a character string
+in a list argument \code{asis.params}. See Example 7 and 8 below for additional details.
 }
 
 \section{Multivariate random variables (multivariate nodes)}{
@@ -289,6 +291,14 @@ D <- D +
   node(c("X1.copy", "X2.copy"), distr = "rconst", const = c(X1, X2))
 Dset1 <- set.DAG(D, verbose = TRUE)
 sim(Dset1, n = 10)
+
+# On the other hand this syntax wont work,
+# since simcausal will parse c(0,1) into a two column matrix:
+\dontrun{
+D <- DAG.empty()
+D <- D + node(c("X1","X2"), distr = "rmvnorm", mean = .(c(0,1)))
+Dset1 <- set.DAG(D, verbose = TRUE)
+}
 
 D <- DAG.empty()
 # Bivariate normal (correlation coef 0.75):
