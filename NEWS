@@ -73,4 +73,6 @@ simcausal 0.5.1
 
 * More consistent control over non-standard evaluation. Can wrap any R expression supplied as the node argument in .() or eval() to skip all of simcausal non-standard evaluation and checks, this will evaluate the expression in the environment of the data + user calling environment. The default R subsetting operators for '[...]' and '[[...]]' will be applied to all expressions wrapped in .() and hence the simcausal operators for time-varying nodes and networks will not longer be applied. See a separate section in ?node and examples 7,8 for details. One can apply the operator .() to only part of the expression, to avoid simcausal parsing on that specific part as shown in Example 8 with `.(coefAi[t]) * A[t-1]`.
 
+* Switching to new naming convention for categorical distributions (rcat.b0, rcat.b1 and rcat.factor). Old rcategor.int and rcategor are still available and are deprecated.
+
 
