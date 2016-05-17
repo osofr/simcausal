@@ -189,72 +189,82 @@ sim(Dset1, n = 10, rndseed = 1)
 #---------------------------------------------------------------------------------------
 # EXAMPLE 7: Multivariate random variables
 #---------------------------------------------------------------------------------------
-require("mvtnorm")
-D <- DAG.empty()
-# 2 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
-D <- D +
-  node(c("X1","X2"), distr = "rmvnorm", asis.params = list(mean = "c(0,1)")) +
-# Can define a degenerate (rconst) multivariate node:
-  node(c("X1.copy", "X2.copy"), distr = "rconst", const = c(X1, X2))
-Dset1 <- set.DAG(D, verbose = TRUE)
-sim(Dset1, n = 10)
+if (requireNamespace("mvtnorm", quietly = TRUE)) {
+  D <- DAG.empty()
+  # 2 dimensional normal (uncorrelated), using rmvnorm function from rmvnorm package:
+  D <- D +
+    node(c("X1","X2"), distr = "mvtnorm::rmvnorm",
+      asis.params = list(mean = "c(0,1)")) +
+  # Can define a degenerate (rconst) multivariate node:
+    node(c("X1.copy", "X2.copy"), distr = "rconst", const = c(X1, X2))
+  Dset1 <- set.DAG(D, verbose = TRUE)
+  sim(Dset1, n = 10)
+}
 
 # On the other hand this syntax wont work,
 # since simcausal will parse c(0,1) into a two column matrix:
 \dontrun{
 D <- DAG.empty()
-D <- D + node(c("X1","X2"), distr = "rmvnorm", mean = .(c(0,1)))
+D <- D + node(c("X1","X2"), distr = "mvtnorm::rmvnorm", mean = .(c(0,1)))
 Dset1 <- set.DAG(D, verbose = TRUE)
 }
 
-D <- DAG.empty()
-# Bivariate normal (correlation coef 0.75):
-D <- D +
-  node(c("X1","X2"), distr = "rmvnorm",
-    asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)")) +
-# Can use any component of such multivariate nodes when defining new nodes:
-  node("A", distr = "rconst", const = 1 - X1)
-Dset2 <- set.DAG(D, verbose = TRUE)
-sim(Dset2, n = 10)
+if (requireNamespace("mvtnorm", quietly = TRUE)) {
+  D <- DAG.empty()
+  # Bivariate normal (correlation coef 0.75):
+  D <- D +
+    node(c("X1","X2"), distr = "mvtnorm::rmvnorm",
+      asis.params = list(mean = "c(0,1)",
+        sigma = "matrix(c(1,0.75,0.75,1), ncol=2)")) +
+  # Can use any component of such multivariate nodes when defining new nodes:
+    node("A", distr = "rconst", const = 1 - X1)
+  Dset2 <- set.DAG(D, verbose = TRUE)
+  sim(Dset2, n = 10)
+}
 
 # Time-varying multivar node (3 time-points, 2 dimensional normal)
 # plus changing the mean over time, as as function of t:
-D <- DAG.empty()
-D <- D +
-  node(c("X1", "X2"), t = 0:2, distr = "rmvnorm",
-    asis.params = list(
-      mean = "c(0,1) + t",
-      sigma = "matrix(rep(0.75,4), ncol=2)"))
-Dset5b <- set.DAG(D)
-sim(Dset5b, n = 10)
+if (requireNamespace("mvtnorm", quietly = TRUE)) {
+  D <- DAG.empty()
+  D <- D +
+    node(c("X1", "X2"), t = 0:2, distr = "mvtnorm::rmvnorm",
+      asis.params = list(
+        mean = "c(0,1) + t",
+        sigma = "matrix(rep(0.75,4), ncol=2)"))
+  Dset5b <- set.DAG(D)
+  sim(Dset5b, n = 10)
+}
 
 # Two ways to define the same bivariate uniform copula:
-require("copula")
-D <- DAG.empty()
-D <- D +
-# with a warning since normalCopula() returns an object unknown to simcausal:
-  node(c("X1","X2"), distr = "rCopula", copula = .(normalCopula(0.75, dim = 2))) +
-# same, but with no warning:
-  node(c("X1.dup","X2.dup"), distr = "rCopula",
-    asis.params = list(copula = "normalCopula(0.75, dim = 2)"))
-vecfun.add("qbinom")
-# Bivariate binomial derived from previous copula, with same correlation:
-D <- D +
-  node(c("A.Bin1", "A.Bin2"), distr = "rconst",
-    const = c(qbinom(X1, 10, 0.5), qbinom(X2, 15, 0.7)))
-Dset3 <- set.DAG(D)
-sim(Dset3, n = 10)
+if (requireNamespace("copula", quietly = TRUE)) {
+  D <- DAG.empty()
+  D <- D +
+  # with a warning since normalCopula() returns an object unknown to simcausal:
+    node(c("X1","X2"), distr = "copula::rCopula",
+      copula = .(normalCopula(0.75, dim = 2))) +
+  # same, but with no warning:
+    node(c("X1.dup","X2.dup"), distr = "copula::rCopula",
+      asis.params = list(copula = "normalCopula(0.75, dim = 2)"))
+  vecfun.add("qbinom")
+  # Bivariate binomial derived from previous copula, with same correlation:
+  D <- D +
+    node(c("A.Bin1", "A.Bin2"), distr = "rconst",
+      const = c(qbinom(X1, 10, 0.5), qbinom(X2, 15, 0.7)))
+  Dset3 <- set.DAG(D)
+  sim(Dset3, n = 10)
+}
 
 # Same as "A.Bin1" and "A.Bin2", but directly using rmvbin function in bindata package:
-require("bindata")
-D <- DAG.empty()
-D <- D +
-  node(c("B.Bin1","B.Bin2"), distr = "rmvbin",
-    asis.params = list(
-      margprob = "c(0.5, 0.5)",
-      bincorr = "matrix(c(1,0.75,0.75,1), ncol=2)"))
-Dset4b <- set.DAG(D)
-sim(Dset4b, n = 10)
+if (requireNamespace("bindata", quietly = TRUE)) {
+  D <- DAG.empty()
+  D <- D +
+    node(c("B.Bin1","B.Bin2"), distr = "bindata::rmvbin",
+      asis.params = list(
+        margprob = "c(0.5, 0.5)",
+        bincorr = "matrix(c(1,0.75,0.75,1), ncol=2)"))
+  Dset4b <- set.DAG(D)
+  sim(Dset4b, n = 10)
+}
 
 #---------------------------------------------------------------------------------------
 # EXAMPLE 8: Combining simcausal non-standard evaluation with .() forced evaluation
