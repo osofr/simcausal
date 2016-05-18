@@ -131,7 +131,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
         if (verbose) message(distr %+% ": note this distribution could not be located in package namespace, simulating from user-defined distribution found under the same name")
       } else {
         namespace_distr <- unlist(strsplit(distr, "::"))
-        distr.fun <- tryCatch(getFromNamespace(x = namespace_distr[2], ns = namespace_distr[1], envir = env))
+        distr.fun <- tryCatch(getFromNamespace(x = namespace_distr[2], ns = namespace_distr[1], envir = user.env))
         if (inherits(distr.fun, "try-error")) stop(distr %+% ": this node distribution function could not be located")
         # stop(distr %+%": this distribution function can\'t be found")
       }
