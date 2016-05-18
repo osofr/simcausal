@@ -28,7 +28,6 @@ Imports:
     Matrix,
     methods
 Suggests:
-    ltmle,
     tmlenet,
     RUnit,
     knitr,

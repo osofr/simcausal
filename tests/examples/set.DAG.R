@@ -207,10 +207,10 @@ if (requireNamespace("copula", quietly = TRUE)) {
   D <- D +
   # with a warning since normalCopula() returns an object unknown to simcausal:
     node(c("X1","X2"), distr = "copula::rCopula",
-      copula = .(normalCopula(0.75, dim = 2))) +
+      copula = .(copula::normalCopula(0.75, dim = 2))) +
   # same, but with no warning:
     node(c("X1.dup","X2.dup"), distr = "copula::rCopula",
-      asis.params = list(copula = "normalCopula(0.75, dim = 2)"))
+      asis.params = list(copula = "copula::normalCopula(0.75, dim = 2)"))
   vecfun.add("qbinom")
   # Bivariate binomial derived from previous copula, with same correlation:
   D <- D +
