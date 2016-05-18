@@ -167,7 +167,9 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
   # new check that also checks for distr in the calling environment:
   if (!exists(distr)) {
     if (!exists(distr, envir = env)) {
-      stop(distr %+% ": this node distribution function could not be located")
+      namespace_distr <- unlist(strsplit(distr, "::"))
+      res <- tryCatch(getFromNamespace(x = namespace_distr[2], ns = namespace_distr[1], envir = env))
+      if (inherits(res, "try-error")) stop(distr %+% ": this node distribution function could not be located")
     }
   }
 
