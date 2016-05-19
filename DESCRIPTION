@@ -30,6 +30,7 @@ Imports:
 Suggests:
     tmlenet,
     RUnit,
+    ltmle,
     knitr,
     ggplot2,
     Hmisc,

@@ -6,24 +6,24 @@
 \alias{simcausal-package}
 \title{Simulating Longitudinal Data with Causal Inference Applications}
 \description{
-The \pkg{simcausal} R package is a tool for specification and simulation of complex longitudinal data structures that are 
-based on structural equation models. The package provides a flexible tool for conducting transparent and reproducible 
-simulation studies, with a particular emphasis on the types of data and interventions frequently encountered in typical 
+The \pkg{simcausal} R package is a tool for specification and simulation of complex longitudinal data structures that are
+based on structural equation models. The package provides a flexible tool for conducting transparent and reproducible
+simulation studies, with a particular emphasis on the types of data and interventions frequently encountered in typical
 causal inference problems, such as, observational data with time-dependent confounding, selection bias, and random monitoring processes.
-The package interface allows for concise expression of complex functional dependencies between a large number of nodes, 
-where each node may represent a time-varying random variable. 
-The package allows for specification and simulation of counterfactual data under various user-specified interventions 
-(e.g., static, dynamic, deterministic, or stochastic). 
-In particular, the interventions may represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring 
-events, or of clinical monitoring events. \pkg{simcausal} enables the computation of a selected set of user-specified 
-features of the distribution of the counterfactual data that represent common causal quantities of interest, 
-such as, treatment-specific means, the average treatment effects and coefficients from working marginal structural models. 
+The package interface allows for concise expression of complex functional dependencies between a large number of nodes,
+where each node may represent a time-varying random variable.
+The package allows for specification and simulation of counterfactual data under various user-specified interventions
+(e.g., static, dynamic, deterministic, or stochastic).
+In particular, the interventions may represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring
+events, or of clinical monitoring events. \pkg{simcausal} enables the computation of a selected set of user-specified
+features of the distribution of the counterfactual data that represent common causal quantities of interest,
+such as, treatment-specific means, the average treatment effects and coefficients from working marginal structural models.
 For additional details and examples please see the package vignette and the function-specific documentation.
 }
 \section{Documentation}{
 
 \itemize{
-\item To see the package vignette use: \code{vignette("simcausal_vignette", package="simcausal")} 
+\item To see the package vignette use: \code{vignette("simcausal_vignette", package="simcausal")}
 \item To see all available package documentation use: \code{help(package = 'simcausal')}
 }
 }
@@ -34,18 +34,18 @@ The following routines will be generally invoked by a user, in the same order as
 \describe{
 \item{\code{\link{DAG.empty}}}{Initiates an empty \code{DAG} object that contains no nodes.}
 \item{\code{\link{node}}}{Defines node(s) in the structural equation model and its conditional distribution(s) using a language of vector-like R expressions. A call to \code{node} can specify either a single node or multiple nodes at once.}
-\item{\code{\link{add.nodes}} or \code{+\link{node}}}{Provide two equivalent ways of growing the structural equation model by adding new nodes and their conditional distributions. 
+\item{\code{\link{add.nodes}} or \code{+\link{node}}}{Provide two equivalent ways of growing the structural equation model by adding new nodes and their conditional distributions.
 Sequentially define nodes in the \code{DAG} object, with each node representing the outcomes of one or more structural equation(s), altogether making-up the causal model of interest.}
 \item{\code{\link{set.DAG}}}{Performs consistency checks and locks the \code{DAG} object so that no additional nodes can be subsequently added to the structural equation model.}
 \item{\code{\link{sim}} or \code{\link{simobs}}}{Simulates iid observations of the complete node sequence defined by the \code{DAG} object. The output dataset is stored as a \code{data.frame} and is referred to as the \emph{observed data}.}
 \item{\code{\link{add.action}} or \code{+\link{action}}}{Provide two equivalent ways to define one or more actions.
-Each action modifies the conditional distribution for a subset of nodes in the original \code{DAG} object. The resulting data generating distribution is referred to as the post-intervention distribution. 
+Each action modifies the conditional distribution for a subset of nodes in the original \code{DAG} object. The resulting data generating distribution is referred to as the post-intervention distribution.
 It is saved in the \code{DAG} object alongside the original structural equation model (\code{DAG} object).}
-\item{\code{\link{sim}} or \code{\link{simfull}}}{Simulates independent observations from one or more post-intervention distribution(s). 
-Produces a named list of \code{data.frame}s, collectively referred to as the \emph{full data}. 
+\item{\code{\link{sim}} or \code{\link{simfull}}}{Simulates independent observations from one or more post-intervention distribution(s).
+Produces a named list of \code{data.frame}s, collectively referred to as the \emph{full data}.
 The number of output \code{data.frame}s is equal to the number of post-intervention distributions specified in the \code{actions} argument, where each \code{data.frame} object is an iid sample from a particular post-intervention distribution.}
-\item{\code{\link{set.targetE}} and \code{\link{set.targetMSM}}}{Define two distinct types of target causal parameters. 
-The function \code{set.targetE} defines causal parameters as the expected value(s) of \code{DAG} node(s) under one post-intervention distribution or the contrast of such expected value(s) from two post-intervention distributions. 
+\item{\code{\link{set.targetE}} and \code{\link{set.targetMSM}}}{Define two distinct types of target causal parameters.
+The function \code{set.targetE} defines causal parameters as the expected value(s) of \code{DAG} node(s) under one post-intervention distribution or the contrast of such expected value(s) from two post-intervention distributions.
 The function \code{set.targetMSM} defines causal parameters based on a user-specified \bold{working} marginal structural model.}
 \item{\code{\link{eval.target}}}{Evaluates the previously defined causal parameter using simulated full data}
 }
@@ -58,7 +58,7 @@ The following most common types of output are produced by the package:
 \item \emph{parameterized causal \code{DAG} model} - object that specifies the structural equation model, along with interventions and the causal target parameter of interest.
 \item \emph{observed data} - data simulated from the (pre-intervention) distribution specified by the structural equation model.
 \item \emph{full data} - data simulated from one or more post-intervention distributions defined by actions on the structural equation model.
-\item \emph{causal target parameter} - the true value of the causal target parameter evaluated with full data. 
+\item \emph{causal target parameter} - the true value of the causal target parameter evaluated with full data.
 }
 }
 

@@ -145,7 +145,6 @@ means, the average treatment effects and coefficients from working marginal stru
   # require(knitr)
   # require(data.table)
   # require(ggplot2)
-  # require(ltmle)
   # require(igraph)
   # require(lavaan); require(lavaan.survey); require(sem); require(semPLS);
   # # require(OpenMx)
