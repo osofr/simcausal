@@ -488,7 +488,7 @@ check_expanded <- function(inputDAG) {
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/examples/set.DAG.R
 #' @export
-set.DAG <- function(DAG, vecfun, latent.v, n.test = 100, verbose = getOption("simcausal.verbose")) {
+set.DAG <- function(DAG, vecfun, latent.v, n.test = 10, verbose = getOption("simcausal.verbose")) {
   assertthat::assert_that(assertthat::is.count(n.test) || as.integer(n.test)==0L)
   # Parent environment is saved as a DAG attribute and then passed to formula parser for evaluation as: eval(form, envir = df, enclos = env)
   user.env <- parent.frame()
