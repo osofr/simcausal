@@ -105,7 +105,7 @@ bquote2 <- function (x, where = parent.frame()) {
 #' Starting from v.0.5, a single \code{node} call can be used for defining a multivariate (and possibly correlated) random vector.
 #' To define a random vector that has more than 1 dimension, use the argument \code{name} to specify a vector with names for each dimension, e.g.,
 #'
-#'\code{node(c("X1","X2"), distr = "rmvnorm", mean = c(0,1)), sigma = matrix(c(1,0.75,0.75,1), ncol=2)}
+#'\code{node(c("X1","X2"), distr = "mvtnorm::rmvnorm", asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)"))}
 #'
 #' will define a bi-variate (correlated) normally distributed node,
 #' the simulated data set will contain this bi-variately distributed random variable in columns "X1" and "X2".
@@ -114,7 +114,7 @@ bquote2 <- function (x, where = parent.frame()) {
 #'
 #' Note that one can also define time-varying multivariate nodes, e.g.,
 #'
-#'\code{node(c("X1","X2"), t=0:5, distr = "rmvnorm", mean = c(0,1))}.
+#'\code{node(c("X1","X2"), t=0:5, distr = "mvtnorm::rmvnorm", asis.params = list(mean = "c(0,1)"))}.
 #'
 #' @return A list containing node object(s) (expanded to several nodes if t is an integer vector of length > 1)
 #' @example tests/examples/set.DAG.R
@@ -129,8 +129,8 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
   # collect all distribution parameters with delayed evaluation (must be named):
   dist_params <- eval(substitute(alist(...)))
   if (length(dist_params)>0) {
-    # dist_params <- lapply(dist_params, function(x) deparse(bquote2(x, env)))
-    dist_params <- lapply(dist_params, function(x) deparse(x))
+    dist_params <- lapply(dist_params, function(x) deparse(bquote2(x, env)))
+    # dist_params <- lapply(dist_params, function(x) deparse(x))
   }
 
   # add params from params list:
@@ -158,8 +158,8 @@ node <- function(name, t, distr, EFU, order, ..., params = list(), asis.params =
   }
 
   if (!missing(EFU)) {
-    EFU <- deparse(substitute(EFU))
-    # EFU <- deparse(bquote2(substitute(EFU), env))
+    # EFU <- deparse(substitute(EFU))
+    EFU <- deparse(bquote2(substitute(EFU), env))
   } else {
     EFU <- NULL
   }

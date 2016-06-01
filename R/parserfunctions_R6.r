@@ -225,7 +225,6 @@ nodeform_parsers = function(node_form_call, data.env, user.env, self)  {
     }
   }
 
-
   # eval_atom_call <- node_form_call						      # don't evaluate any atomic expressions
   eval_atom_call <- eval_all_atomic(node_form_call)		# pre-evaluate all atomic expressions
   dprint("after atomic evalulation:"); dprint(eval_atom_call)

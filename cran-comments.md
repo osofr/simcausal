@@ -1,3 +1,8 @@
+## Resubmission
+simcausal 0.5.1
+==============
+This is a resubmission. This should fix the reverse dependency fail with the 'tmlenet' package.
+
 ## First submission of the new version
 simcausal 0.5.1
 ==============
@@ -12,8 +17,9 @@ simcausal 0.5.1
 * no ERRORs or WARNINGs.
 * no NOTEs.
 
-
 ## Resubmission
+simcausal 0.5.0
+==============
 This is a resubmission. In this version I have:
 
 * Fixed the reverse dependency error for 'tmlenet' package

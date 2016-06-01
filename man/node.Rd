@@ -113,7 +113,7 @@ in a list argument \code{asis.params}. See Example 7 and 8 below for additional 
 Starting from v.0.5, a single \code{node} call can be used for defining a multivariate (and possibly correlated) random vector.
 To define a random vector that has more than 1 dimension, use the argument \code{name} to specify a vector with names for each dimension, e.g.,
 
-\code{node(c("X1","X2"), distr = "rmvnorm", mean = c(0,1)), sigma = matrix(c(1,0.75,0.75,1), ncol=2)}
+\code{node(c("X1","X2"), distr = "mvtnorm::rmvnorm", asis.params = list(mean = "c(0,1)", sigma = "matrix(c(1,0.75,0.75,1), ncol=2)"))}
 
 will define a bi-variate (correlated) normally distributed node,
 the simulated data set will contain this bi-variately distributed random variable in columns "X1" and "X2".
@@ -122,7 +122,7 @@ Note that the multivariate sampling distribution function (such as function \cod
 
 Note that one can also define time-varying multivariate nodes, e.g.,
 
-\code{node(c("X1","X2"), t=0:5, distr = "rmvnorm", mean = c(0,1))}.
+\code{node(c("X1","X2"), t=0:5, distr = "mvtnorm::rmvnorm", asis.params = list(mean = "c(0,1)"))}.
 }
 \examples{
 #---------------------------------------------------------------------------------------
@@ -298,7 +298,7 @@ if (requireNamespace("mvtnorm", quietly = TRUE)) {
 # since simcausal will parse c(0,1) into a two column matrix:
 \dontrun{
 D <- DAG.empty()
-D <- D + node(c("X1","X2"), distr = "mvtnorm::rmvnorm", mean = .(c(0,1)))
+D <- D + node(c("X1","X2"), distr = "mvtnorm::rmvnorm", mean = c(0,1))
 Dset1 <- set.DAG(D, verbose = TRUE)
 }
 
@@ -334,9 +334,9 @@ if (requireNamespace("copula", quietly = TRUE)) {
   D <- D +
   # with a warning since normalCopula() returns an object unknown to simcausal:
     node(c("X1","X2"), distr = "copula::rCopula",
-      copula = .(copula::normalCopula(0.75, dim = 2))) +
-  # same, but with no warning:
-    node(c("X1.dup","X2.dup"), distr = "copula::rCopula",
+      copula = eval(copula::normalCopula(0.75, dim = 2))) +
+  # same, as above:
+    node(c("X3","X4"), distr = "copula::rCopula",
       asis.params = list(copula = "copula::normalCopula(0.75, dim = 2)"))
   vecfun.add("qbinom")
   # Bivariate binomial derived from previous copula, with same correlation:
@@ -360,25 +360,31 @@ if (requireNamespace("bindata", quietly = TRUE)) {
 }
 
 #---------------------------------------------------------------------------------------
-# EXAMPLE 8: Combining simcausal non-standard evaluation with .() forced evaluation
+# EXAMPLE 8: Combining simcausal non-standard evaluation with eval() forced evaluation
 #---------------------------------------------------------------------------------------
 coefAi <- 1:10
 D <- DAG.empty()
 D <- D +
   node("A", t = 1, distr = "rbern", prob = 0.7) +
-  node("A", t = 2:10, distr = "rconst", const = .(coefAi[t]) * A[t-1])
+  node("A", t = 2:10, distr = "rconst", const = eval(coefAi[t]) * A[t-1])
 Dset8 <- set.DAG(D)
 sim(Dset8, n = 10)
 
 #---------------------------------------------------------------------------------------
-# TWO equivalent ways of creating a multivariate node (just repeating W1 and W2):
+# TWO equivalent ways of creating a multivariate node (combining nodes W1 and W2):
 #---------------------------------------------------------------------------------------
 D <- DAG.empty()
 D <- D + node("W1", distr = "rbern", prob = 0.45)
 D <- D + node("W2", distr = "rconst", const = 1)
+
+# option 1:
 D <- D + node(c("W1.copy1", "W2.copy1"), distr = "rconst", const = c(W1, W2))
+
+# equivalent option 2:
 create_mat <- function(W1, W2) cbind(W1, W2)
-D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = .(create_mat(W1, W2)))
+vecfun.add("create_mat")
+D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = create_mat(W1, W2))
+
 Dset <- set.DAG(D)
 sim(Dset, n=10, rndseed=1)
 }

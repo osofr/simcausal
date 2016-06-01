@@ -1010,21 +1010,20 @@ test.condrcat.factor <- function() {
                 probs = (W == 0)*c(0.7,0.1,0.2) + (W==1)*c(0.2,0.1,0.7))
   Dset1 <- set.DAG(D)
 
-  # THIS doesn't work, because R doesn't know how to multipy 1 row matrix by a vector.
-  # The dimensions of catprob.W0 and catprob.W1 (1 row) do not match the dims of W (n length vector)
+  # THIS works now starting from version v.5.2
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
   catprob.W1 <- cbind(0.2,0.1,0.7)
   D <- D + node("Cat3", distr = "rcat.b1", probs = (W==0)*.(catprob.W0) + (W==1)*.(catprob.W1))
-  checkException(Dset2 <- set.DAG(D))
+  Dset2 <- set.DAG(D)
 
-  # Same thing here
+  # This will not work however:
   D <- DAG.empty()
   D <- D + node("W", distr = "rbern", prob = 0.3)
   catprob.W0 <- cbind(0.7,0.1,0.2)
   catprob.W1 <- cbind(0.2,0.1,0.7)
-  D <- D + node("Cat3", distr = "rcat.b1", probs = .((W==0)*catprob.W0) + .((W==1)*catprob.W1))
+  D <- D + node("Cat3", distr = "rcat.b1", probs = eval((W==0)*catprob.W0) + eval((W==1)*catprob.W1))
   checkException(Dset2 <- set.DAG(D))
 
   # This works, because simcausal gets a chance to parse c(0.7,0.1,0.2) into a matrix with appropriate number of rows:

@@ -42,9 +42,10 @@ rbern <- function(n, prob) {
 #'
 #'# TWO equivalent ways of creating a multivariate node (just repeating W1 and W2):
 #'create_mat <- function(W1, W2) cbind(W1, W2)
+#'vecfun.add("create_mat")
 #'
 #'D <- D + node(c("W1.copy1", "W2.copy1"), distr = "rconst", const = c(W1, W2))
-#'D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = .(create_mat(W1, W2)))
+#'D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = create_mat(W1, W2))
 #'Dset <- set.DAG(D)
 #'sim(Dset, n=10, rndseed=1)
 #' @export
