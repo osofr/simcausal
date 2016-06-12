@@ -188,7 +188,12 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
   obs.df <- data.frame(ID = seq(vector(length = Nsamp))) # obs.df <- data.frame(ID = seq(1:Nsamp))
   obs.dt <- data.table(obs.df)
 
-  alloc.col(obs.dt, max(min(length(DAG)+1, 1000), 200)) # need to allocate columns in DT to maximum number of variables
+  # for efficiency, allocate columns in DT to maximum number of variables, if it exceeds 1025 (default)
+  DT.cols <- (length(DAG)+1)
+  if (DT.cols > 1025) {
+    alloc.col(obs.dt, DT.cols)
+  }
+  # alloc.col(obs.dt, max(min(length(DAG)+1, 1000), 200))
 
   #---------------------------------------------------------------------------------
   # CHECKS PERFORMED DURING EVALUTION:
