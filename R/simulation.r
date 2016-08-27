@@ -740,6 +740,8 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
   dprint("all_ts"); dprint(all_ts)
   dprint("node_nms"); dprint(node_nms)
 
+  if (exists("setthreads")) setthreads(1)
+
   # if there are no time-points (t) attributes, then the long vs. wide format is undefined.
   if (length(all_ts)==0) return(df_wide)
   #******************************************************************************************************
