@@ -399,7 +399,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
     excl.cols <- colnames(obs.dt)%in%latent.v
     if (sum(excl.cols) > 0) {
       # obs.df <- obs.df[,!excl.cols]
-      obs.dt[,(colnames(obs.dt)[excl.cols]):=NULL]
+      obs.dt[,(colnames(obs.dt)[excl.cols]) := NULL]
     }
   }
 
@@ -762,14 +762,14 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
       # DT_melt <- data.table::melt(dat_df, id.vars="ID", measure.vars=value_vars, variable.factor=TRUE, na.rm=FALSE)
       var_nm_rep <- rep.int(var_nm, nrow(DT_melt))
       t_rep <- rep(t_pts, each=nrow(dat_df))
-      DT_melt[, c("LVname","t"):= list(var_nm_rep,t_rep)]
+      DT_melt[, c("LVname","t") := list(var_nm_rep,t_rep)]
       DT_l <- data.table::dcast.data.table(DT_melt, t + ID ~ LVname)
       data.table::setkeyv(DT_l, c("ID", "t"))
       # data.table::setkey(DT_l, ID, t)
       if (which(lvars%in%var_nm)==1) {
         DT_l_fin <- DT_l
       } else {
-        DT_l_fin[,var_nm:=DT_l[[var_nm]], with=FALSE]
+        DT_l_fin[, (var_nm) := DT_l[[var_nm]]]
       }
     }
     if (!is.null(bslvars)) {
@@ -808,7 +808,7 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
       ts_to_NAs <- all_ts[!all_ts%in%node_t_vals]
       ts_not_NAs <- all_ts[all_ts%in%node_t_vals]
       NA_nodenames <- cur_node_name%+%"_"%+%ts_to_NAs # define these node names as missing and add them to df
-      df_wide[, NA_nodenames:=NA, with=FALSE]
+      df_wide[, (NA_nodenames) := NA]
       all_vnames <- cur_node_name%+%"_"%+%all_ts
       varying <- c(varying, list(all_vnames))
       v.names <- c(v.names, cur_node_name)
