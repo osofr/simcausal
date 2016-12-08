@@ -514,7 +514,7 @@ test.set.DAG_DAG2b_newactions <- function() {
     lDAG2b_0obs <- set.DAG(D, n.test = 0)
 
     # testing data sim for empty returns. Can't evalute this one, since the error has to do with the way rowSums is called
-    checkException(Odatsim.empty <- sim(lDAG2b, n = 0, rndseed = 1))
+    # checkException(Odatsim.empty <- sim(lDAG2b, n = 0, rndseed = 1))
     # checkEquals(nrow(Odatsim.empty),0)
     # checkIdentical(names(dat), names(Odatsim.empty))
 

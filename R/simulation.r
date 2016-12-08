@@ -529,6 +529,9 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndsee
 sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose")) {
   # *) check if actions argument is missing -> simulate observed data from the DAG
   # *) if actions consist of characters, try to extract those actions from the DAG and simulate full data
+  if (!is.integerish(n)) stop("n must be an integer")
+  # if (!(n >= 1)) stop("n must be a positive integer")
+
   # SIMULATE OBSERVED DATA FROM DAG (if no actions)
   if (missing(actions)) {
     if (!is.DAG(DAG)) stop("DAG argument must be an object of class DAG")
