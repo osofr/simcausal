@@ -1,8 +1,8 @@
 simcausal
 ==========
 
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/simcausal)](http://cran.rstudio.com/web/packages/simcausal/index.html)
-[![](http://cranlogs.r-pkg.org/badges/simcausal)](http://cran.rstudio.com/web/packages/simcausal/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/simcausal)](http://cran.rstudio.com/web/packages/simcausal/index.html)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/simcausal)](https://cran.rstudio.com/web/packages/simcausal/index.html)
+[![](http://cranlogs.r-pkg.org/badges/simcausal)](https://cran.rstudio.com/web/packages/simcausal/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/simcausal)](https://cran.rstudio.com/web/packages/simcausal/index.html)
 [![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal)
 [![Coverage Status](https://coveralls.io/repos/osofr/simcausal/badge.svg?branch=master&service=github)](https://coveralls.io/github/osofr/simcausal?branch=master)
 
@@ -24,7 +24,7 @@ devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
 
 ### Documentation
 
-Once the package is installed, see the [vignette](https://cran.r-project.org/web/packages/simcausal/vignettes/simcausal_vignette.pdf), consult the internal package documentation and examples. 
+Once the package is installed, see the [vignette](https://CRAN.R-project.org/package=simcausal/vignettes/simcausal_vignette.pdf), consult the internal package documentation and examples. 
 
 * To see the vignette in R:
 
