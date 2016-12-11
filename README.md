@@ -1,8 +1,8 @@
 simcausal
 ==========
 
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/simcausal)](https://cran.rstudio.com/web/packages/simcausal/index.html)
-[![](http://cranlogs.r-pkg.org/badges/simcausal)](https://cran.rstudio.com/web/packages/simcausal/index.html) [![](http://cranlogs.r-pkg.org/badges/grand-total/simcausal)](https://cran.rstudio.com/web/packages/simcausal/index.html)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/simcausal)](https://CRAN.R-project.org/package=simcausal)
+[![](http://cranlogs.r-pkg.org/badges/simcausal)](https://CRAN.R-project.org/package=simcausal) [![](http://cranlogs.r-pkg.org/badges/grand-total/simcausal)](https://CRAN.R-project.org/package=simcausal)
 [![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal)
 [![Coverage Status](https://coveralls.io/repos/osofr/simcausal/badge.svg?branch=master&service=github)](https://coveralls.io/github/osofr/simcausal?branch=master)
 
