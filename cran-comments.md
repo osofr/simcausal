@@ -1,3 +1,18 @@
+## First submission of the new version
+simcausal 0.5.3
+==============
+This version fixes a CRAN test error on R devel and a bug identified due to upcoming version of the data.table dependency. 
+## Test environments:
+
+## Test environments:
+* local OS X install, R 3.3.1
+* ubuntu 12.04 (on travis-ci), R 3.3.1
+* win-builder
+
+## R CMD check --as-cran results:
+* no ERRORs or WARNINGs.
+* no NOTEs.
+
 ## Resubmission
 simcausal 0.5.1
 ==============
