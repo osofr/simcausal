@@ -76,3 +76,9 @@ simcausal 0.5.1
 * Switching to new naming convention for categorical distributions (rcat.b0, rcat.b1 and rcat.factor). Old rcategor.int and rcategor are still available and are deprecated.
 
 
+simcausal 0.5.3
+==============
+
+* Fixing a bug in that was identified due to changes to data.table (eval.MSM() was incorrectly checking for NA outcomes)
+* Fixing a CRAN error in test on R devel.
+

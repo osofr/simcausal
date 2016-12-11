@@ -473,8 +473,10 @@ eval.MSM <- function(DAG, df_full, outnodes, outnode_nms, params.MSM, attrs, ver
     }
   }
 
-  naout_byaction <- sapply(df_full, function(df) any(is.na(df[,outcome]))) # CHECK THAT NO OUTCOME NODES ARE MISSING (NA)
-  if (any(naout_byaction)) stop("Unable to evaluate MSMs outcome "%+%outcome%+% ", for action(s) ", paste(names(df_full)[naout_byaction], collapse=","), ", some observations are censored before the outcome, check DAG(s) defining the action(s)")
+  naout_byaction <- sapply(df_full, function(df) any(is.na(df[[outcome]]))) # CHECK THAT NO OUTCOME NODES ARE MISSING (NA)
+  if (any(naout_byaction)) stop("Unable to evaluate MSMs outcome "%+%outcome%+% ", for action(s) ",
+                                paste(names(df_full)[naout_byaction], collapse=","),
+                                ", some observations are censored before the outcome, check DAG(s) defining the action(s)")
 
   # * Combine all actions into one dataframe and convert to long format
   df_combine <- data.table::rbindlist(df_full, fill=TRUE)
