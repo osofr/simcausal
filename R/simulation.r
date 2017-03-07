@@ -142,7 +142,8 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
     dprint("before standardize newNodeParams$dist_params:"); dprint(newNodeParams$dist_params)
     if (!asis.samp) {
       for (idx in seq_along(newNodeParams$dist_params)) {
-        if (!asis.flags[[idx]]) newNodeParams$dist_params[[idx]] <- standardize_param(newNodeParams$dist_params[[idx]])
+        if (!asis.flags[[idx]] || (is.vector(newNodeParams$dist_params[[idx]]) && length(newNodeParams$dist_params[[idx]]) == Nsamp))
+          newNodeParams$dist_params[[idx]] <- standardize_param(newNodeParams$dist_params[[idx]])
       }
     }
     dprint("after standardize newNodeParams$dist_params:"); dprint(newNodeParams$dist_params)
@@ -350,7 +351,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
       # 2 ways to assign several new vars with data.table (1st is the fastest)
       if (is.matrix(newVar)) {
         for (col in cur.node$mv.names) {
-          obs.dt[, (col) := newVar[, col]]
+          obs.dt[!EFUP.prev, (col) := newVar[, col]]
           # obs.df <- within(obs.df, {assign(col, newVar[, col])})
         }
       } else {
@@ -372,7 +373,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
           # EFUP.now <- (obs.df[,ncol(obs.df)]%in%1) & (EFU.TRUE)
           EFUP.now <- (obs.dt[[cur.node$name[1]]]%in%1) & (EFU.TRUE)
           EFUP.prev <- (EFUP.prev | EFUP.now)
-          if ((!is.null(LTCF)) && (LTCF%in%gnodename) && is.null(prev.data)) { # is this node the one to be carried forward (LTCF node)? mark the observations with value = 1 (carry forward)
+          if ((!is.null(LTCF)) && (LTCF%in%gnodename[1]) && is.null(prev.data)) { # is this node the one to be carried forward (LTCF node)? mark the observations with value = 1 (carry forward)
             LTCF.prev <- (LTCF.prev | EFUP.now)
           }
         }
@@ -583,26 +584,48 @@ doLTCF <- function(data, LTCF) {
   #------------------------------------------------------------------------
   # Loop over nodes in DAG and keep track of EFUP observations in the data (already sampled)
   #------------------------------------------------------------------------
+  # all_node_names <- as.character(unlist(lapply(DAG, "[[", "mv.names")))
+  # [[1]][["mv.names"]]
+  # for (cur.node in DAG) {
+  #   print(cur.node[["name"]])
+  # }
   for (cur.node in DAG) {
+  # for (cur.node %in% all_node_names)
+    # gnodename <- as.character(unlist(strsplit(cur.node$name, "_"))[1])
+    # cur.node.name <- cur.node[["mv.names"]]
+    gnodename <- as.character(unlist(lapply(strsplit(cur.node[["mv.names"]], "_"), "[[", 1)))
+    # gnodename <- as.character(unlist(strsplit(cur.node[["mv.names"]], "_"))[1])
+    # gnodename <- as.character(unlist(strsplit(cur.node, "_"))[1])
+
     t <- cur.node$t # define variable for a current time point t
     t_new <- !(t%in%t_pts) # set to TRUE when switch to new time point t occurs otherwise FALSE
     t_pts <- c(t_pts,t); t_pts <- as.integer(unique(t_pts)) # vector that keeps track of unique timepoints t
-    gnodename <- as.character(unlist(strsplit(cur.node$name, "_"))[1])
-    if (gnodename%in%LTCF) { # if this generic node name is the outcome we need to carry forward this observation when it evaluates to 1
+    if (gnodename[1]%in%LTCF) { # if this generic node name is the outcome we need to carry forward this observation when it evaluates to 1
       cur.outcome <- TRUE
     } else {
       cur.outcome <- FALSE
     }
-    if (!is.null(t)) {	# check time points were specified by user
+    if (!is.null(t)) {  # check time points were specified by user
       # check current t is past the first time-point & we want to last time-point carried forward (LTCF)
       if ((sum(LTCF.prev) > 0) & (t > t_pts[1])) { # Carry last observation forward for those who reached EFUP (outcome value = 1)
-        data[LTCF.prev, cur.node$name] <- data[LTCF.prev, (gnodename%+%"_"%+%(t-1))]
+        if (!gnodename[1]%+%"_"%+%(t-1) %in% names(data)){
+          stop("Cannot perform last time point carry forward (LTCF) imputation. No node name '" %+% gnodename%+%"_"%+%(t-1) %+% "' found. Please make sure to define appropriate time-point for this node.")
+        }
+        for (name in gnodename)
+          data[LTCF.prev, name%+%"_"%+%(t)] <- data[LTCF.prev, (name%+%"_"%+%(t-1))]
       }
     }
     if  (is.EFUP(cur.node)&(cur.outcome)) { # if cur.node is EFUP=TRUE type set all observations that had value=1 to LTCF.prev[indx]=TRUE
       LTCF.prev <- (LTCF.prev | (data[,cur.node$name]%in%1))
     }
+    # browser()
+    # if (!is.null(cur.node[["mv.names"]])) {
+    #   for (cur.node in cur.node[["mv.names"]]) {
+    #   }
+    # }
   }
+
+
 
   if (sum(LTCF.prev)>0) {	# only change the LTCF attribute if outcome carry forward imputation was carried out for at least one obs
     LTCF_flag <- LTCF
@@ -732,9 +755,14 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
   Nsamp <- nrow(df_wide)
   all_ts <- get_allts(df_wide) # calculate actual time values used in the simulated data
   attnames <- attr(df_wide, "attnames")
-  node_nms <- attr(df_wide, "node_nms")
+  # node_nms <- attr(df_wide, "node_nms")
+  node_nms <- colnames(df_wide)
+  # browser()
   node_nms_split <- strsplit(node_nms, "_")
+  # node_nms_split2 <- strsplit(node_nms, '.', fixed = TRUE)
   node_nms_vec <- sapply(node_nms_split, '[', 1)
+  # sapply(node_nms_split2, '[', 1)
+
   node_nms_unq <- unique(node_nms_vec)
   varying <- list()
   v.names <- NULL
