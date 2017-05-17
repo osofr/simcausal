@@ -11,6 +11,19 @@
 #
 # Validate your .travis.yml file at http://lint.travis-ci.org/
 #----------------------------------------------------------------
+# sudo: required
+# r_binary_packages:
+#   - knitr
+#   - data.table
+#   - RUnit
+#   - igraph
+#   - ggplot2
+#   - Hmisc
+#   - mvtnorm
+#   - copula
+# r_packages:
+#   - ltmle
+#   - bindata
 
 language: r
 warnings_are_errors: false
@@ -19,28 +32,12 @@ warnings_are_errors: false
 r_build_args: "--no-build-vignettes --no-manual"
 r_check_args: "--no-build-vignettes --no-manual --as-cran"
 
-sudo: required
-
 os:
   - linux
   # - osx
 
-r_binary_packages:
-  - knitr
-  - data.table
-  - RUnit
-  - igraph
-  - ggplot2
-  - Hmisc
-  - mvtnorm
-  - copula
-
 r_github_packages:
   - jimhester/covr
-
-r_packages:
-  - ltmle
-  - bindata
 
 env:
  global:
