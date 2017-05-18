@@ -40,6 +40,13 @@ r_packages:
 r_github_packages:
   - jimhester/covr
 
+addons:
+  apt:
+    packages:
+      - libgsl-dev
+      - libicu-dev
+      - pandoc
+
 env:
  global:
    - CRAN: http://cran.rstudio.com
