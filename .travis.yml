@@ -22,6 +22,8 @@
 #   - mvtnorm
 #   - copula
 #   - bindata
+# r_packages:
+#   - copula
 
 language: r
 warnings_are_errors: false
@@ -34,20 +36,16 @@ os:
   - linux
   # - osx
 
-r_packages:
-  - copula
-
 r_github_packages:
   - jimhester/covr
 
 addons:
   apt:
     packages:
+      - libgsl0-dev
       - gsl-bin
       - libicu-dev
       - pandoc
-
-# libgsl-dev
 
 env:
  global:
