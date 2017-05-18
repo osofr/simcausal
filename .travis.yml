@@ -21,8 +21,6 @@
 #   - Hmisc
 #   - mvtnorm
 #   - copula
-# r_packages:
-#   - ltmle
 #   - bindata
 
 language: r
@@ -35,6 +33,9 @@ r_check_args: "--no-build-vignettes --no-manual --as-cran"
 os:
   - linux
   # - osx
+
+r_packages:
+  - copula
 
 r_github_packages:
   - jimhester/covr
