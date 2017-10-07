@@ -37,4 +37,3 @@ D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = create_mat(W1
 Dset <- set.DAG(D)
 sim(Dset, n=10, rndseed=1)
 }
-

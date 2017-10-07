@@ -1,0 +1,21 @@
+bibentry(bibtype = "Article",
+  title        = "{simcausal} {R} Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data",
+  author       = c(person(given = "Oleg",
+                          family = "Sofrygin",
+                          email = "oleg.sofrygin@gmail.com"),
+                   person(given = c("Mark", "J."),
+                          family = "van der Laan",
+                          email = "laan@berkeley.edu"),
+                   person(given = "Romain",
+                          family = "Neugebauer",
+                          email = "Romain.S.Neugebauer@kp.org")),
+  journal      = "Journal of Statistical Software",
+  year         = "2017",
+  volume       = "81",
+  number       = "2",
+  pages        = "1--47",
+  doi          = "10.18637/jss.v081.i02",
+
+  header       = "To cite simcausal in publications use:"
+)
+

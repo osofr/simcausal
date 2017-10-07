@@ -29,4 +29,3 @@ D <- D + node("W3", distr="rbern", prob=ifelse(W1==1,0.5,0.1))
 Dset <- set.DAG(D)
 simdat <- sim(Dset, n=200, rndseed=1)
 }
-

@@ -86,6 +86,7 @@ For example, use \code{sum(VarName[[net_indx]])} to define a summary measure as 
 Similarly, use \code{mean(VarName[[net_indx]])} to define a summary measure as a mean of \code{VarName} values of friends in \code{F_i[net_indx]}, across all \code{i}.
 For more details on defining such summary functions see the \code{simcausal} vignette.
 }
+
 \examples{
 #--------------------------------------------------------------------------------------------------
 # EXAMPLE 1. USING igraph R PACKAGE TO SIMULATE NETWORKS
@@ -249,4 +250,3 @@ plotDAG(Dset)
 \seealso{
 \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}
 }
-

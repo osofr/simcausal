@@ -20,4 +20,3 @@ Any node formula calling a function on this list will be evaluated "as is", the 
 be written to accept arguments as either vectors of length \code{n} or as matrices with \code{n} rows.
 Adding function to this list will effects simulation from all DAG objects that call this function. See vignette for more details.
 }
-

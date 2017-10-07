@@ -28,4 +28,3 @@ Convert network represented by a sparse adjacency matrix into \code{simcausal} n
 \seealso{
 \code{\link{network}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}}; \code{\link{igraph.to.sparseAdjMat}};
 }
-

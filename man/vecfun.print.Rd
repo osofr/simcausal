@@ -12,4 +12,3 @@ A vector of vectorized function names
 \description{
 Print current user-defined vectorized function names.
 }
-

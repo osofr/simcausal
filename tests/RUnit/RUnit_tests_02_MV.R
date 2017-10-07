@@ -24,7 +24,7 @@ test.MV <- function() {
   plotDAG(Dset1)
   dat1 <- sim(Dset1, n = 200)
 
-  # Bivariate uniform copula using rCopula function from rCopula package (correlation coef 0.75), with a warning:
+  # Bivariate uniform copula using rCopula function from copula package (correlation coef 0.75), with a warning:
   require("copula")
   D <- DAG.empty()
   D <- D + node(c("Y1","Y2"), distr = "rCopula", copula = eval(normalCopula(0.75, dim = 2)))

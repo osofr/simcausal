@@ -30,4 +30,3 @@ A(D)
 # Select action "A1" only
 A(D)["A1"]
 }
-

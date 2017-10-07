@@ -157,6 +157,9 @@ subset_dat_long <- function(dt, t_sel) {
 #' @return A modified DAG object with the target parameter saved as part of the DAG,
 #'this DAG can now be passed as an argument to \code{\link{eval.target}} function for actual Monte-Carlo evaluation of the target parameter. See Examples.
 #' @example tests/examples/set.targetE.examples.R
+#' @references Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+#' "simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+#' Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 #' @export
 # function to set the target as expectation of several nodes indexed by time, saves target obj in DAG until evaluation
 set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
@@ -206,6 +209,9 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
 #' @param attr Additional attributes (to be used in future versions)
 #' @return A modified DAG object with well-defined target parameter saved as part of the DAG, this DAG can now be passed as an argument to \code{eval.target} function for actual Monte-Carlo evaluation of the target parameter. See Examples.
 #' @example tests/examples/MSM.examples.R
+#' @references Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+#' "simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+#' Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 #' @export
 # function to set MSM as the target, saves target obj in DAG until evaluation
 set.targetMSM <- function(DAG, outcome, t, formula, family="quasibinomial", hazard, ...,  attr=list()) {

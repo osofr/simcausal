@@ -295,4 +295,8 @@ D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = create_mat(W1
 Dset <- set.DAG(D)
 sim(Dset, n=10, rndseed=1)
 }
-
+\references{
+Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+"simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
+}

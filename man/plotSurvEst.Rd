@@ -26,4 +26,3 @@ Can be specified by keyword or as a named list with (x,y), uses the same convent
 \description{
 Plot discrete survival curves from a list of discrete survival probabilities by calling \code{\link{plot}} with \code{type='b'}.
 }
-

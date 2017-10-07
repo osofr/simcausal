@@ -27,4 +27,3 @@ D <- D + node(name="Y", distr="rbern", prob=plogis(-0.1 + 1.2*A + 0.3*W1 + 0.3*W
 D <- set.DAG(D)
 parents(D, c("W2", "A", "Y"))
 }
-

@@ -15,4 +15,3 @@ An old vector of user-defined vectorized function names
 \description{
 Remove user-defined function names from a global list of custom vectorized functions. See vignette for more details.
 }
-

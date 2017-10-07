@@ -12,4 +12,3 @@ A vector of build-in and user-defined vectorized function names
 \description{
 Print all vectorized function names (build-in and user-defined).
 }
-

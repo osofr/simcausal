@@ -67,3 +67,8 @@ The following most common types of output are produced by the package:
 Check for updates and report bugs at \url{http://github.com/osofr/simcausal}.
 }
 
+\references{
+Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+"simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
+}

@@ -12,4 +12,3 @@ An old vector of user-defined vectorized function names
 \description{
 Reset a listing of user-defined vectorized functions.
 }
-

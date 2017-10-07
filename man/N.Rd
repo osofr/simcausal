@@ -26,4 +26,3 @@ N(D)
 #Returns node W1 from DAG D
 N(D)["W1"]
 }
-

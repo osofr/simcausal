@@ -236,6 +236,9 @@ plotSurvEst <- function(surv = list(), xindx = NULL, ylab = '', xlab = 't', ylim
 # @param latentv A character vector of latent (unobserved) DAG nodes which: 1) will be colored in grey; 2) will be enclosed in a circle; and 3) have dashed directed edges.
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console.
 #'  Turn this off by default using options(simcausal.verbose=FALSE).
+#' @references Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+#' "simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+#' Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 #' @export
 plotDAG <- function(DAG, tmax = NULL, xjitter, yjitter, node.action.color, vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs, verbose = getOption("simcausal.verbose")) {
   if (!requireNamespace("igraph", quietly = TRUE)) {
@@ -487,6 +490,9 @@ check_expanded <- function(inputDAG) {
 #' @param verbose Set to \code{TRUE} to print messages on status and information to the console. Turn this off by default using options(simcausal.verbose=FALSE).
 #' @return A DAG (S3) object, which is a list consisting of node object(s) sorted by their temporal order.
 #' @example tests/examples/set.DAG.R
+#' @references Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+#' "simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+#' Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 #' @export
 set.DAG <- function(DAG, vecfun, latent.v, n.test = 10, verbose = getOption("simcausal.verbose")) {
   assertthat::assert_that(assertthat::is.count(n.test) || as.integer(n.test)==0L)

@@ -9,4 +9,3 @@ DAG.empty()
 \description{
 Initialize an empty DAG object
 }
-

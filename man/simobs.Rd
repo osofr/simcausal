@@ -34,7 +34,6 @@ This function simulates observed data from a DAG object.
 \seealso{
 \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
-Other simulation.functions: \code{\link{simfull}},
+Other simulation functions: \code{\link{simfull}},
   \code{\link{sim}}
 }
-

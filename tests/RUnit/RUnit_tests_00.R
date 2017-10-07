@@ -265,23 +265,6 @@ test.EFUeval <- function(){
   checkEquals(nrow(Odatsim.1obs),1)
 }
 
-test.long.wide.simobs <- function() {
-    library("simcausal"); options(simcausal.verbose=FALSE)
-    t_end <- 5
-    D <- DAG.empty() +
-      node("W", distr="rbern", prob=0.05) +
-      node("L1", t=0:t_end, distr="rbern", prob=0.25) +
-      node("L2", t=0:t_end, distr="rconst", const=L1[t] + W) +
-      node("Y",  t=0:t_end,  distr="rbern", prob=plogis(-6.5 + L1[t] + 2*L2[t] + 0.05*sum(I(L2[0:t]==rep(0,(t+1))))), EFU=TRUE)
-    Dset <- set.DAG(D)
-    Odat1 <- sim(Dset, n=500, wide = TRUE, rndseed = 123)
-    Odat1 <- simobs(Dset, n=500, wide = TRUE, rndseed = 123)
-    Odat1 <- sim(Dset, n=500, wide = FALSE, rndseed = 123)
-    Odat1 <- simobs(Dset, n=500, wide = FALSE, rndseed = 123)
-}
-
-
-
 # DAG2 (from tech specs): defining actions with a new constructor and passing attributes
 test.set.DAG_DAG2b_newactions <- function() {
     library(simcausal)

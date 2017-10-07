@@ -28,7 +28,6 @@ Observations with all NA's for all time-varying covariates are removed.
 When removing NA's the time-varying covariates that are attributes (attnames) are not considered.
 }
 \seealso{
-Other data.manipulation.functions: \code{\link{DF.to.long}},
+Other data manipulation functions: \code{\link{DF.to.long}},
   \code{\link{doLTCF}}
 }
-

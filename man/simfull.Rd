@@ -34,7 +34,6 @@ This function simulates full data based on a list of intervention DAGs, returnin
 \seealso{
 \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
-Other simulation.functions: \code{\link{simobs}},
+Other simulation functions: \code{\link{simobs}},
   \code{\link{sim}}
 }
-

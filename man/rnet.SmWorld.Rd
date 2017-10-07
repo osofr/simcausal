@@ -26,4 +26,3 @@ The loop edges aren't allowed (\code{loops = FALSE}) and the multiple edges aren
 \seealso{
 \code{\link{rnet.gnp}}, \code{\link{rnet.gnm}}
 }
-

@@ -23,4 +23,3 @@ Uses \code{graph_from_adjacency_matrix} function from the \code{igraph} package 
 \seealso{
 \code{\link{network}}; \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}};
 }
-

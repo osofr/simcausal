@@ -23,4 +23,3 @@ Convert \code{simcausal} network ID matrix (\code{NetInd_k}) into a network repr
 \seealso{
 \code{\link{network}}; \code{\link{sparseAdjMat.to.igraph}}; \code{\link{igraph.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.NetInd}};
 }
-

@@ -20,4 +20,3 @@ Call \code{igraph::sample_gnp} and convert the output to \code{simcausal} networ
 \seealso{
 \code{\link{rnet.gnm}}
 }
-

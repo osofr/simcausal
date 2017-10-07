@@ -40,6 +40,7 @@ The end of follow-up event occurs when a binary node of type \code{EFU=TRUE} is 
 To forward impute the values of the time-varying nodes after the occurrence of the \code{EFU} event, set the LTCF argument to a name of the EFU node representing this event.
 For additional details and examples see the vignette and \code{\link{doLTCF}} function.
 }
+
 \examples{
 t_end <- 10
 lDAG <- DAG.empty()
@@ -73,10 +74,14 @@ Odat.wideLTCF2 <- doLTCF(data = Odat.wide, LTCF = "Y")
 Odat.wideLTCF2[c(21,47), 1:18]
 # all.equal(Odat.wideLTCF, Odat.wideLTCF2)
 }
+\references{
+Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+"simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
+}
 \seealso{
 \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
-Other simulation.functions: \code{\link{simfull}},
+Other simulation functions: \code{\link{simfull}},
   \code{\link{simobs}}
 }
-

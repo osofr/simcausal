@@ -33,4 +33,3 @@ The formulas are evaluated inside the environment of the simulated data and are 
 distribution functions as vectors.
 The output of the distribution function is expected to be a vector of length n of the sampled covariates.
 }
-

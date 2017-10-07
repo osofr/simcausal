@@ -28,6 +28,7 @@ Illustration of the use of the LTCF imputation functionality are provided in the
 The first example below shows the default data format of the \code{sim} function after an end of the follow-up event and how this behavior can be modified to generate data with LTCF imputation by either using the \code{LTCF} argument of the
 \code{sim} function or by calling the \code{doLTCF} function. The second example demonstrates how to use the \code{doLTCF} function to perform LTCF imputation on already existing data simulated with the \code{sim} function based on its default non-imputation behavior.
 }
+
 \examples{
 t_end <- 10
 lDAG <- DAG.empty()
@@ -64,7 +65,6 @@ Odat.wideLTCF2[c(21,47), 1:18]
 \seealso{
 \code{\link{sim}}, \code{\link{simobs}} and \code{\link{simfull}} for simulating data with and without carry forward imputation.
 
-Other data.manipulation.functions: \code{\link{DF.to.longDT}},
+Other data manipulation functions: \code{\link{DF.to.longDT}},
   \code{\link{DF.to.long}}
 }
-

@@ -32,4 +32,3 @@ This function estimates the true value of the previously set target parameter (\
 \details{
 For examples and additional details see documentation for \code{\link{set.targetE}} or \code{\link{set.targetMSM}}
 }
-

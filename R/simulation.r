@@ -526,6 +526,9 @@ simfull <- function(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndsee
 #' @family simulation functions
 #' @seealso \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 #' @example tests/examples/sim.impute.examples12.R
+#' @references Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+#' "simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+#' Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 #' @export
 sim <- function(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL, rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose")) {
   # *) check if actions argument is missing -> simulate observed data from the DAG
@@ -771,6 +774,8 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
   dprint("all_ts"); dprint(all_ts)
   dprint("node_nms"); dprint(node_nms)
 
+  # browser()
+
   if (exists("setDTthreads")) setDTthreads(1)
 
   # if there are no time-points (t) attributes, then the long vs. wide format is undefined.
@@ -786,6 +791,7 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
     t_vec <- "_"%+%(t_pts)
     for (var_nm in lvars) { # one TV var at a time approach
       value_vars <- var_nm%+%t_vec
+      # browser()
       SuppressAllWarnings(
         DT_melt <- melt(dat_df, id.vars = "ID", measure.vars = value_vars, variable.factor = TRUE, na.rm = FALSE)
       )

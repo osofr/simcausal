@@ -9,4 +9,3 @@ net.list()
 \description{
 List All Custom Network Generator Functions in \code{simcausal}.
 }
-

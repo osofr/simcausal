@@ -27,7 +27,6 @@ When removing NA's the time-varying covariates that are attributes (attnames) ar
 \seealso{
 \code{\link{DF.to.longDT}} - a faster version of \code{DF.to.long} that uses \code{data.table} package
 
-Other data.manipulation.functions: \code{\link{DF.to.longDT}},
+Other data manipulation functions: \code{\link{DF.to.longDT}},
   \code{\link{doLTCF}}
 }
-

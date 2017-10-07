@@ -30,6 +30,7 @@ The number of categories generated is equal to \code{ncol(probs)+1}, the levels 
 \itemize{
 \item \code{rcategor}: (Deperecated) Random Sample of a Categorical Factor
 }}
+
 \examples{
 
 #---------------------------------------------------------------------------------------
@@ -55,4 +56,3 @@ simdat <- sim(Dset, n=200, rndseed=1)
 \seealso{
 \code{\link{rcat.b1}}, \code{\link{rcat.b0}}
 }
-

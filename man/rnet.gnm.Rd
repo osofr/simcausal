@@ -21,4 +21,3 @@ The parameter \code{m} of \code{igraph::sample_gnm} is derived from \code{n} and
 \seealso{
 \code{\link{rnet.gnp}}
 }
-

@@ -124,6 +124,7 @@ Note that one can also define time-varying multivariate nodes, e.g.,
 
 \code{node(c("X1","X2"), t=0:5, distr = "mvtnorm::rmvnorm", asis.params = list(mean = "c(0,1)"))}.
 }
+
 \examples{
 #---------------------------------------------------------------------------------------
 # EXAMPLE 1A: Define some Bernoulli nodes, survival outcome Y and put it together in a
@@ -388,4 +389,8 @@ D <- D + node(c("W1.copy2", "W2.copy2"), distr = "rconst", const = create_mat(W1
 Dset <- set.DAG(D)
 sim(Dset, n=10, rndseed=1)
 }
-
+\references{
+Sofrygin O, van der Laan MJ, Neugebauer R (2017).
+"simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
+Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
+}

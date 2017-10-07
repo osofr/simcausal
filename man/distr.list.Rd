@@ -9,4 +9,3 @@ distr.list()
 \description{
 List All Custom Distribution Functions in \code{simcausal}.
 }
-

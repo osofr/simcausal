@@ -36,6 +36,6 @@ a matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
   name to a single column matrix in \code{self$nF}.}
 }
 }
+
 \keyword{R6}
 \keyword{class}
-

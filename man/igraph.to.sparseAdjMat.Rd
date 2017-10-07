@@ -20,4 +20,3 @@ Convert igraph network object into its sparse adjacency matrix representation us
 \seealso{
 \code{\link{network}}; \code{\link{sparseAdjMat.to.NetInd}}; \code{\link{NetInd.to.sparseAdjMat}}; \code{\link{sparseAdjMat.to.igraph}};
 }
-
