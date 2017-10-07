@@ -774,8 +774,6 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
   dprint("all_ts"); dprint(all_ts)
   dprint("node_nms"); dprint(node_nms)
 
-  # browser()
-
   if (exists("setDTthreads")) setDTthreads(1)
 
   # if there are no time-points (t) attributes, then the long vs. wide format is undefined.
@@ -789,9 +787,9 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
   #******************************************************************************************************
   DF.to.longDT_run <- function(dat_df, t_pts, lvars, bslvars=NULL) {
     t_vec <- "_"%+%(t_pts)
+
     for (var_nm in lvars) { # one TV var at a time approach
       value_vars <- var_nm%+%t_vec
-      # browser()
       SuppressAllWarnings(
         DT_melt <- melt(dat_df, id.vars = "ID", measure.vars = value_vars, variable.factor = TRUE, na.rm = FALSE)
       )
@@ -810,7 +808,7 @@ DF.to.longDT <- function(df_wide, return_DF = TRUE) {
       }
     }
     if (!is.null(bslvars)) {
-      DT_l_bsl <- dat_df[,c("ID",bslvars), with=FALSE]
+      DT_l_bsl <- dat_df[,unique(c("ID",bslvars)), with=FALSE]
       # data.table::setkey(DT_l_bsl, ID)  # needs to be sorted
       data.table::setkeyv(DT_l_bsl, "ID")  # needs to be sorted
       DT_l_fin <- DT_l_bsl[DT_l_fin]
