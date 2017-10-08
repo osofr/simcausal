@@ -18,10 +18,12 @@ if(FALSE) {
   # CHECK AND BUILD PACKAGE:
   getwd()
   # setwd("./simcausal"); setwd(".."); getwd()
-  devtools::check() # runs full check
+  devtools::check(cran = TRUE) # runs full check
+  devtools::check(cran = TRUE, args = c("--no-vignettes")) # runs full check
   devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs faster
   devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
   devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
+  devtools::check_built(cran = TRUE)
   # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
   # devtools::build() # build package tarball
 

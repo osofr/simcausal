@@ -45,7 +45,8 @@ addons:
       - libgsl0-dev
       - gsl-bin
       - libicu-dev
-      - pandoc
+
+# - pandoc
 
 env:
  global:

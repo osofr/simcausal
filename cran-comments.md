@@ -1,4 +1,18 @@
 ## First submission of the new version
+simcausal 0.5.4
+==============
+This update includes CITATION for the forcoming JSS simcausal publication. Note from JSS editor: "The DOI in the CITATION is for a new JSS publication that will be registered after publication on CRAN.""
+
+## Test environments:
+* local OS X install, R 3.3.1
+* ubuntu 12.04 (on travis-ci), R 3.3.1
+* win-builder
+
+## R CMD check --as-cran results:
+* no ERRORs or WARNINGs.
+* one NOTE: "The DOI in the CITATION is for a new JSS publication that will be registered after publication on CRAN."
+
+## First submission of the new version
 simcausal 0.5.3
 ==============
 This version fixes a CRAN test error on R devel and a bug identified due to upcoming version of the data.table dependency. 
