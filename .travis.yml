@@ -24,8 +24,11 @@
 #   - bindata
 # r_packages:
 #   - copula
+# - libgsl0-dev
+# - gsl-bin
 
 language: r
+cache: packages
 warnings_are_errors: false
 # r_build_args: "--compact-vignettes"
 # r_check_args: "--as-cran"
@@ -39,14 +42,14 @@ os:
 r_github_packages:
   - jimhester/covr
 
+r_packages:
+  - covr
+
 addons:
   apt:
     packages:
-      - libgsl0-dev
-      - gsl-bin
       - libicu-dev
-
-# - pandoc
+      - pandoc
 
 env:
  global:
