@@ -28,7 +28,8 @@
 # - gsl-bin
 
 language: r
-sudo: false
+# sudo: false
+sudo: required
 cache: packages
 warnings_are_errors: false
 # r_build_args: "--compact-vignettes"
@@ -55,6 +56,7 @@ r_github_packages:
 addons:
   apt:
     packages:
+      - libgsl0-dev
       - libicu-dev
       - pandoc
 
