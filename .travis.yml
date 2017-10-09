@@ -28,6 +28,7 @@
 # - gsl-bin
 
 language: r
+sudo: false
 cache: packages
 warnings_are_errors: false
 # r_build_args: "--compact-vignettes"
@@ -35,17 +36,21 @@ warnings_are_errors: false
 r_build_args: "--no-build-vignettes --no-manual"
 r_check_args: "--no-build-vignettes --no-manual --as-cran"
 
-os:
-  - linux
-  # - osx
-
-r_github_packages:
-  - jimhester/covr
+before_install:
+  Rscript -e 'update.packages(ask = FALSE)'
+  - export RGL_USE_NULL=TRUE
 
 r_packages:
   - covr
-  - ggplot2
   - copula
+
+r:
+  - oldrel
+  - release
+  - devel
+
+r_github_packages:
+  - jimhester/covr
 
 addons:
   apt:
@@ -56,6 +61,7 @@ addons:
 env:
  global:
    - CRAN: http://cran.rstudio.com
+   - RGL_USE_NULL=TRUE
 
 after_success:
   - Rscript -e 'covr::coveralls()'
