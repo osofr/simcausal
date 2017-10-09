@@ -31,7 +31,7 @@ language: r
 # sudo: false
 sudo: required
 cache: packages
-warnings_are_errors: false
+warnings_are_errors: true
 # r_build_args: "--compact-vignettes"
 # r_check_args: "--as-cran"
 # r_build_args: "--no-build-vignettes --no-manual"
