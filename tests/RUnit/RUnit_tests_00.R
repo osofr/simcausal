@@ -18,7 +18,6 @@ if(FALSE) {
   # CHECK AND BUILD PACKAGE:
   getwd()
   # setwd("./simcausal"); setwd(".."); getwd()
-  devtools::check(cran = TRUE) # runs full check
   devtools::check(cran = TRUE, args = c("--no-vignettes")) # runs full check
   devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs faster
   devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
