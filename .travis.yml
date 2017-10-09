@@ -44,6 +44,8 @@ r_github_packages:
 
 r_packages:
   - covr
+  - ggplot2
+  - copula
 
 addons:
   apt:
