@@ -1,3 +1,17 @@
+## First submission of the new version
+simcausal 0.5.5
+==============
+This update tries to put simcusal back on CRAN.
+
+## Test environments:
+* local OS X install, R 3.5.2
+* ubuntu 12.04 (on travis-ci), R 3.5.2
+* R-hub
+* win-builder
+
+## R CMD check --as-cran results:
+* no ERRORs or WARNINGs.
+
 ## Resubmission
 simcausal 0.5.4
 ==============

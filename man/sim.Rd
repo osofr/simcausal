@@ -85,3 +85,4 @@ Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 Other simulation functions: \code{\link{simfull}},
   \code{\link{simobs}}
 }
+\concept{simulation functions}

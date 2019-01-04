@@ -37,3 +37,4 @@ This function simulates observed data from a DAG object.
 Other simulation functions: \code{\link{simfull}},
   \code{\link{sim}}
 }
+\concept{simulation functions}

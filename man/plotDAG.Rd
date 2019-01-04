@@ -5,8 +5,8 @@
 \title{Plot DAG}
 \usage{
 plotDAG(DAG, tmax = NULL, xjitter, yjitter, node.action.color,
-  vertex_attrs = list(), edge_attrs = list(), excludeattrs, customvlabs,
-  verbose = getOption("simcausal.verbose"))
+  vertex_attrs = list(), edge_attrs = list(), excludeattrs,
+  customvlabs, verbose = getOption("simcausal.verbose"))
 }
 \arguments{
 \item{DAG}{A DAG object that was specified by calling \code{\link{set.DAG}}}

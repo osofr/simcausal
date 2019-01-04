@@ -68,3 +68,4 @@ Odat.wideLTCF2[c(21,47), 1:18]
 Other data manipulation functions: \code{\link{DF.to.longDT}},
   \code{\link{DF.to.long}}
 }
+\concept{data manipulation functions}

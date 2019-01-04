@@ -4,7 +4,8 @@
 \alias{node}
 \title{Create Node Object(s)}
 \usage{
-node(name, t, distr, EFU, order, ..., params = list(), asis.params = list())
+node(name, t, distr, EFU, order, ..., params = list(),
+  asis.params = list())
 }
 \arguments{
 \item{name}{Character node name or a vector of names when specifying a multivariate node. For time-dependent nodes the names will be automatically expanded to a scheme "name_t" for each t provided specified.}

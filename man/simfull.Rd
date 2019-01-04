@@ -37,3 +37,4 @@ This function simulates full data based on a list of intervention DAGs, returnin
 Other simulation functions: \code{\link{simobs}},
   \code{\link{sim}}
 }
+\concept{simulation functions}

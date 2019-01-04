@@ -30,3 +30,4 @@ When removing NA's the time-varying covariates that are attributes (attnames) ar
 Other data manipulation functions: \code{\link{DF.to.longDT}},
   \code{\link{doLTCF}}
 }
+\concept{data manipulation functions}

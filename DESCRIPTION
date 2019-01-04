@@ -1,6 +1,6 @@
 Package: simcausal
 Type: Package
-Version: 0.5.4
+Version: 0.5.5
 Title: Simulating Longitudinal Data with Causal Inference Applications
 Authors@R: c(
     person("Oleg", "Sofrygin", role=c("aut", "cre"), email="oleg.sofrygin@gmail.com"),
@@ -29,7 +29,6 @@ Imports:
     methods
 Suggests:
     copula,
-    tmlenet,
     RUnit,
     ltmle,
     knitr,
@@ -39,4 +38,4 @@ Suggests:
     bindata
 VignetteBuilder: knitr
 License: GPL-2
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1

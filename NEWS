@@ -82,3 +82,8 @@ simcausal 0.5.3
 * Fixing a bug in that was identified due to changes to data.table (eval.MSM() was incorrectly checking for NA outcomes)
 * Fixing a CRAN error in test on R devel.
 
+simcausal 0.5.4
+==============
+
+* Updating the package for new CRAN release
+

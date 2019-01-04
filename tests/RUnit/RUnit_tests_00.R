@@ -1,67 +1,72 @@
 ### --- Test setup ---
 
 if(FALSE) {
-  library("RUnit")
-  library("roxygen2")
-  library("devtools")
-  setwd(".."); setwd(".."); getwd()
-  document()
-  load_all("./") # load all R files in /R and datasets in /data. Ignores NAMESPACE:
-  # simcausal:::debug_set() # SET TO DEBUG MODE
+  # library("RUnit")
+  # library("roxygen2")
+  # library("devtools")
+  # setwd(".."); setwd(".."); getwd()
+  # document()
+  # load_all("./") # load all R files in /R and datasets in /data. Ignores NAMESPACE:
+  # # simcausal:::debug_set() # SET TO DEBUG MODE
 
-  setwd("..");
-  install("simcausal", build_vignettes = FALSE, dependencies = FALSE) # INSTALL W/ devtools:
+  # setwd("..");
+  # install("simcausal", build_vignettes = FALSE, dependencies = FALSE) # INSTALL W/ devtools:
 
-  # system("echo $PATH") # see the current path env var
-  # system("R CMD Rd2pdf simcausal")  # just create the pdf manual from help files
+  # # system("echo $PATH") # see the current path env var
+  # # system("R CMD Rd2pdf simcausal")  # just create the pdf manual from help files
 
-  # CHECK AND BUILD PACKAGE:
-  getwd()
-  # setwd("./simcausal"); setwd(".."); getwd()
-  devtools::check(cran = TRUE, args = c("--no-vignettes")) # runs full check
-  devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs faster
-  devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
-  devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
-  devtools::check_built(cran = TRUE)
-  # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
-  # devtools::build() # build package tarball
+  # # CHECK AND BUILD PACKAGE:
+  # getwd()
+  # # setwd("./simcausal"); setwd(".."); getwd()
+  # devtools::check(cran = TRUE, args = c("--no-vignettes")) # runs full check
+  # devtools::check(cran = TRUE) # runs full check
+  # devtools::check(args = c("--no-vignettes"), build_args = c("--no-build-vignettes")) # runs faster
+  # # devtools::build_win(args = "--compact-vignettes") # build package on CRAN servers (windows os?)
+  # # devtools::build_win()
+  # # devtools::check_win_release()
+  # # devtools::check_win_oldrelease()
+  # devtools::check_rhub()
+  # devtools::build(args = "--compact-vignettes") # build package tarball compacting vignettes
+  # devtools::check_built(cran = TRUE)
+  # # devtools::build(args = "--no-build-vignettes") # build package tarball compacting vignettes
+  # # devtools::build() # build package tarball
 
-  # check reverse dependencies:
-  devtools::revdep(dependencies = c("Depends", "Imports", "Suggests", "LinkingTo"),
-                    recursive = FALSE, ignore = NULL)
-  res <- devtools::revdep_check()
-  devtools::revdep_check_summary(res)
-  # revdep_check_save_logs(res)
+  # # check reverse dependencies:
+  # devtools::revdep(dependencies = c("Depends", "Imports", "Suggests", "LinkingTo"),
+  #                   recursive = FALSE, ignore = NULL)
+  # res <- devtools::revdep_check()
+  # devtools::revdep_check_summary(res)
+  # # revdep_check_save_logs(res)
 
-  setwd("..")
+  # setwd("..")
 
-  system("R CMD check --as-cran simcausal_0.5.0.tar.gz") # check R package tar ball prior to CRAN submission
-      ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
-      ## system("R CMD build simcausal --no-build-vignettes")
-      ## system("R CMD build simcausal")
-  # devtools::use_travis() # SET UP TRAVIS CONFIG FILE
-  # INSTALLING FROM SOURCE:
-  # install.packages("./simcausal_0.2.2.tar.gz", repos = NULL, type="source", dependencies=TRUE)
-  # library(simcausal)
-  # simcausal:::addvectorfcn("poisson")
-  # simcausal:::debug_set() # SET TO DEBUG MODE
-  # simcausal:::debug_off() # SET DEBUG MODE OFF
+  # system("R CMD check --as-cran simcausal_0.5.0.tar.gz") # check R package tar ball prior to CRAN submission
+  #     ## system("R CMD check --no-manual --no-vignettes simcausal") # check without building the pdf manual and not building vignettes
+  #     ## system("R CMD build simcausal --no-build-vignettes")
+  #     ## system("R CMD build simcausal")
+  # # devtools::use_travis() # SET UP TRAVIS CONFIG FILE
+  # # INSTALLING FROM SOURCE:
+  # # install.packages("./simcausal_0.2.2.tar.gz", repos = NULL, type="source", dependencies=TRUE)
+  # # library(simcausal)
+  # # simcausal:::addvectorfcn("poisson")
+  # # simcausal:::debug_set() # SET TO DEBUG MODE
+  # # simcausal:::debug_off() # SET DEBUG MODE OFF
 
-  # To install a specific branch:
-  # devtools::install_github('osofr/simcausal', ref = "simnet", build_vignettes = FALSE)
-  # options(simcausal.verbose = FALSE)
-  # devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
-  # devtools::install_github('osofr/tmlenet', build_vignettes = FALSE)
+  # # To install a specific branch:
+  # # devtools::install_github('osofr/simcausal', ref = "simnet", build_vignettes = FALSE)
+  # # options(simcausal.verbose = FALSE)
+  # # devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
+  # # devtools::install_github('osofr/tmlenet', build_vignettes = FALSE)
 
-  # TEST COVERATE:
-  # if your working directory is in the packages base directory
-  # package_coverage()
-  # or a package in another directory
-  # cov <- package_coverage("simcausal")
-  # view results as a data.frame
-  # as.data.frame(cov)
-  # zero_coverage() can be used to filter only uncovered lines.
-  # zero_coverage(cov)
+  # # TEST COVERATE:
+  # # if your working directory is in the packages base directory
+  # # package_coverage()
+  # # or a package in another directory
+  # # cov <- package_coverage("simcausal")
+  # # view results as a data.frame
+  # # as.data.frame(cov)
+  # # zero_coverage() can be used to filter only uncovered lines.
+  # # zero_coverage(cov)
 }
 
 psi_RDs_DAG2a <- NULL
