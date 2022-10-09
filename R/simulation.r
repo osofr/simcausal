@@ -97,7 +97,7 @@ simFromDAG <- function(DAG, Nsamp, wide = TRUE, LTCF = NULL, rndseed = NULL, rnd
       # print("distparam: "); print(distparam)
       # print("class(distparam): "); print(class(distparam))
 
-      if (class(distparam)%in%"list") {
+      if (is(distparam,"list")) {
         distparam <- lapply(distparam, check_len)
         distparam <- do.call("cbind", distparam)
       } else if (is.vector(distparam)) {
