@@ -2,7 +2,7 @@
 % \documentclass[a4paper]{article}
 % \documentclass[article,nojss]{jss}
 % alternative:
-\documentclass[nojss,article,shortnames]{jss}
+\documentclass[nojss,article,shortnames,table]{jss}
 % \usepackage[margin=2.5cm]{geometry}
 \usepackage{float}
 \usepackage{amssymb,amsmath,amsfonts}
@@ -10,7 +10,7 @@
 \usepackage[multiple]{footmisc}
 \usepackage[utf8]{inputenc}
 % \usepackage[colorlinks=true,urlcolor=blue]{hyperref}
-% \usepackage{graphicx}
+\usepackage{graphicx}
 % \usepackage[font={scriptsize, it}]{caption}
 \usepackage[english]{babel}
 \usepackage{pdflscape}
@@ -19,7 +19,7 @@
 % \usepackage{color}
 
 % causes conflict with jss style:
-% \usepackage[table]{xcolor}
+\usepackage[]{xcolor}
 % \usepackage[]{colortbl}
 % \usepackage{listings}
 % \lstset{breaklines=true}
