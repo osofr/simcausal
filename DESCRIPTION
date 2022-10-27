@@ -1,11 +1,12 @@
 Package: simcausal
 Type: Package
-Version: 0.5.5
+Version: 0.5.6
 Title: Simulating Longitudinal Data with Causal Inference Applications
 Authors@R: c(
-    person("Oleg", "Sofrygin", role=c("aut", "cre"), email="oleg.sofrygin@gmail.com"),
+    person("Oleg", "Sofrygin", role=c("aut"), email="oleg.sofrygin@gmail.com"),
     person(c("Mark", "J."), "van der Laan", role="aut", email="laan@berkeley.edu"),
-    person("Romain", "Neugebauer", role="aut", email="Romain.S.Neugebauer@kp.org"))
+    person("Romain", "Neugebauer", role="aut", email="Romain.S.Neugebauer@kp.org"),
+    person("Fred", "Gruber", role=c("ctb","cre"), email="fgruber@gmail.com")	)
 Description: A flexible tool for simulating complex longitudinal data using
     structural equations, with emphasis on problems in causal inference.
     Specify interventions and simulate from intervened data generating
@@ -15,7 +16,7 @@ Description: A flexible tool for simulating complex longitudinal data using
     reproducible simulation studies, and allows concise expression of complex
     functional dependencies for a large number of time-varying nodes. See the
     package vignette for more information, documentation and examples.
-URL: https://github.com/osofr/simcausal
+URL: https://github.com/osofr/simcausal 
 BugReports: https://github.com/osofr/simcausal/issues
 Depends:
     R (>= 3.2.0)
