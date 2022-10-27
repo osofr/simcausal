@@ -39,4 +39,4 @@ Suggests:
     bindata
 VignetteBuilder: knitr
 License: GPL-2
-RoxygenNote: 6.1.1
+RoxygenNote: 7.2.0

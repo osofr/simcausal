@@ -4,8 +4,13 @@
 \alias{set.DAG}
 \title{Create and Lock DAG Object}
 \usage{
-set.DAG(DAG, vecfun, latent.v, n.test = 10,
-  verbose = getOption("simcausal.verbose"))
+set.DAG(
+  DAG,
+  vecfun,
+  latent.v,
+  n.test = 10,
+  verbose = getOption("simcausal.verbose")
+)
 }
 \arguments{
 \item{DAG}{Named list of node objects that together will form a DAG.

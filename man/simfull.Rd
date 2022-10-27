@@ -4,8 +4,15 @@
 \alias{simfull}
 \title{Simulate Full Data (From Action DAG(s))}
 \usage{
-simfull(actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
-  rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose"))
+simfull(
+  actions,
+  n,
+  wide = TRUE,
+  LTCF = NULL,
+  rndseed = NULL,
+  rndseed.reset.node = NULL,
+  verbose = getOption("simcausal.verbose")
+)
 }
 \arguments{
 \item{actions}{Actions specifying the counterfactual DAG. This argument must be either an object of class DAG.action or a list of DAG.action objects.}
@@ -34,7 +41,8 @@ This function simulates full data based on a list of intervention DAGs, returnin
 \seealso{
 \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
-Other simulation functions: \code{\link{simobs}},
-  \code{\link{sim}}
+Other simulation functions: 
+\code{\link{simobs}()},
+\code{\link{sim}()}
 }
 \concept{simulation functions}

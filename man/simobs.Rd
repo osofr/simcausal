@@ -4,8 +4,15 @@
 \alias{simobs}
 \title{Simulate Observed Data}
 \usage{
-simobs(DAG, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
-  rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose"))
+simobs(
+  DAG,
+  n,
+  wide = TRUE,
+  LTCF = NULL,
+  rndseed = NULL,
+  rndseed.reset.node = NULL,
+  verbose = getOption("simcausal.verbose")
+)
 }
 \arguments{
 \item{DAG}{A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated.}
@@ -34,7 +41,8 @@ This function simulates observed data from a DAG object.
 \seealso{
 \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{sim}} - a wrapper function for simulating both types of data; \code{\link{doLTCF}} for forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
-Other simulation functions: \code{\link{simfull}},
-  \code{\link{sim}}
+Other simulation functions: 
+\code{\link{simfull}()},
+\code{\link{sim}()}
 }
 \concept{simulation functions}

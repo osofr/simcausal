@@ -4,9 +4,8 @@
 \name{NetIndClass}
 \alias{NetIndClass}
 \title{R6 class for creating and storing a friend matrix (network IDs) for network data}
-\format{An \code{\link{R6Class}} generator object}
-\usage{
-NetIndClass
+\format{
+An \code{\link{R6Class}} generator object
 }
 \description{
 This R6 class defines fields and methods for creating and storing \code{NetInd_k},
@@ -39,3 +38,71 @@ a matrix of friend indices (network IDs) of \code{dim = (nobs x Kmax)}.
 
 \keyword{R6}
 \keyword{class}
+\section{Methods}{
+\subsection{Public methods}{
+\itemize{
+\item \href{#method-NetIndClass-new}{\code{NetIndClass$new()}}
+\item \href{#method-NetIndClass-makeNetInd.fromIDs}{\code{NetIndClass$makeNetInd.fromIDs()}}
+\item \href{#method-NetIndClass-make.nF}{\code{NetIndClass$make.nF()}}
+\item \href{#method-NetIndClass-mat.nF}{\code{NetIndClass$mat.nF()}}
+\item \href{#method-NetIndClass-clone}{\code{NetIndClass$clone()}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NetIndClass-new"></a>}}
+\if{latex}{\out{\hypertarget{method-NetIndClass-new}{}}}
+\subsection{Method \code{new()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NetIndClass$new(nobs, Kmax = 1)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NetIndClass-makeNetInd.fromIDs"></a>}}
+\if{latex}{\out{\hypertarget{method-NetIndClass-makeNetInd.fromIDs}{}}}
+\subsection{Method \code{makeNetInd.fromIDs()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NetIndClass$makeNetInd.fromIDs(Net_str, IDs_str = NULL, sep = " ")}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NetIndClass-make.nF"></a>}}
+\if{latex}{\out{\hypertarget{method-NetIndClass-make.nF}{}}}
+\subsection{Method \code{make.nF()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NetIndClass$make.nF(
+  NetInd_k = self$NetInd_k,
+  nobs = self$nobs,
+  Kmax = self$Kmax
+)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NetIndClass-mat.nF"></a>}}
+\if{latex}{\out{\hypertarget{method-NetIndClass-mat.nF}{}}}
+\subsection{Method \code{mat.nF()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NetIndClass$mat.nF(nFnode)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-NetIndClass-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-NetIndClass-clone}{}}}
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{NetIndClass$clone(deep = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
+}
