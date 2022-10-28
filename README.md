@@ -23,7 +23,6 @@ devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
 ```
 
 ### Documentation
-
 Once the package is installed, see the [vignette](https://CRAN.R-project.org/package=simcausal/vignettes/simcausal_vignette.pdf), consult the internal package documentation and examples. 
 
 * To see the vignette in R:

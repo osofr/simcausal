@@ -6,7 +6,7 @@ Authors@R: c(
     person("Oleg", "Sofrygin", role=c("aut"), email="oleg.sofrygin@gmail.com"),
     person(c("Mark", "J."), "van der Laan", role="aut", email="laan@berkeley.edu"),
     person("Romain", "Neugebauer", role="aut", email="Romain.S.Neugebauer@kp.org"),
-    person("Fred", "Gruber", role=c("ctb","cre"), email="fgruber@gmail.com")	)
+    person("Fred", "Gruber", role=c("ctb","cre"), email="fgruber@gmail.com"))
 Description: A flexible tool for simulating complex longitudinal data using
     structural equations, with emphasis on problems in causal inference.
     Specify interventions and simulate from intervened data generating
@@ -40,3 +40,4 @@ Suggests:
 VignetteBuilder: knitr
 License: GPL-2
 RoxygenNote: 7.2.0
+Encoding: UTF-8
