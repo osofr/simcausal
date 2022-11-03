@@ -4,9 +4,8 @@
 \name{Define_sVar}
 \alias{Define_sVar}
 \title{Class for defining and evaluating user-specified summary measures (exprs_list)}
-\format{An R6 class object.}
-\usage{
-Define_sVar
+\format{
+An R6 class object.
 }
 \description{
 Evaluates and and stores arbitrary summary measure expressions. The expressions (exprs_list) are evaluated in the environment of the input data.frame.
@@ -21,4 +20,97 @@ Following fields are created during initialization
 \item{Kmax} ...
 }
 }
-\keyword{datasets}
+\section{Methods}{
+\subsection{Public methods}{
+\itemize{
+\item \href{#method-Define_sVar-new}{\code{Define_sVar$new()}}
+\item \href{#method-Define_sVar-set.new.exprs}{\code{Define_sVar$set.new.exprs()}}
+\item \href{#method-Define_sVar-eval.nodeforms}{\code{Define_sVar$eval.nodeforms()}}
+\item \href{#method-Define_sVar-eval.EFU}{\code{Define_sVar$eval.EFU()}}
+\item \href{#method-Define_sVar-df.names}{\code{Define_sVar$df.names()}}
+\item \href{#method-Define_sVar-setnode.setenv}{\code{Define_sVar$setnode.setenv()}}
+\item \href{#method-Define_sVar-set.net}{\code{Define_sVar$set.net()}}
+\item \href{#method-Define_sVar-clone}{\code{Define_sVar$clone()}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-new"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-new}{}}}
+\subsection{Method \code{new()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$new()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-set.new.exprs"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-set.new.exprs}{}}}
+\subsection{Method \code{set.new.exprs()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$set.new.exprs(exprs_list)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-eval.nodeforms"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-eval.nodeforms}{}}}
+\subsection{Method \code{eval.nodeforms()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$eval.nodeforms(cur.node, data.df)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-eval.EFU"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-eval.EFU}{}}}
+\subsection{Method \code{eval.EFU()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$eval.EFU(cur.node, data.df)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-df.names"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-df.names}{}}}
+\subsection{Method \code{df.names()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$df.names(data.df)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-setnode.setenv"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-setnode.setenv}{}}}
+\subsection{Method \code{setnode.setenv()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$setnode.setenv(cur.node)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-set.net"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-set.net}{}}}
+\subsection{Method \code{set.net()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$set.net(netind_cl)}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-Define_sVar-clone"></a>}}
+\if{latex}{\out{\hypertarget{method-Define_sVar-clone}{}}}
+\subsection{Method \code{clone()}}{
+The objects of this class are cloneable with this method.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Define_sVar$clone(deep = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{deep}}{Whether to make a deep clone.}
+}
+\if{html}{\out{</div>}}
+}
+}
+}

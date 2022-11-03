@@ -63,7 +63,7 @@ D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
 eval.target(D_WAY, n=10000)
 
 # Alternative parameter evaluation by passing already simulated full data to
-# \\code{eval.target}
+# \code{eval.target}
 X_dat1 <- simfull(A(D_WAY), n=10000)
 D_WAY <- set.targetE(D_WAY, outcome="Y", param="A1/A0")
 eval.target(D_WAY, data=X_dat1)

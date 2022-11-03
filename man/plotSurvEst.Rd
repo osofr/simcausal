@@ -4,8 +4,15 @@
 \alias{plotSurvEst}
 \title{(EXPERIMENTAL) Plot Discrete Survival Function(s)}
 \usage{
-plotSurvEst(surv = list(), xindx = NULL, ylab = "", xlab = "t",
-  ylim = c(0, 1), legend.xyloc = "topright", ...)
+plotSurvEst(
+  surv = list(),
+  xindx = NULL,
+  ylab = "",
+  xlab = "t",
+  ylim = c(0, 1),
+  legend.xyloc = "topright",
+  ...
+)
 }
 \arguments{
 \item{surv}{A list of vectors, each containing action-specific discrete survival probabilities over time.}

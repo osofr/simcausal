@@ -3,7 +3,6 @@
 \docType{package}
 \name{simcausal}
 \alias{simcausal}
-\alias{simcausal-package}
 \title{Simulating Longitudinal Data with Causal Inference Applications}
 \description{
 The \pkg{simcausal} R package is a tool for specification and simulation of complex longitudinal data structures that are
@@ -64,7 +63,7 @@ The following most common types of output are produced by the package:
 
 \section{Updates}{
 
-Check for updates and report bugs at \url{http://github.com/osofr/simcausal}.
+Check for updates and report bugs at \url{https://github.com/osofr/simcausal}.
 }
 
 \references{
