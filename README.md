@@ -3,14 +3,14 @@ simcausal
 
 [![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/simcausal)](https://CRAN.R-project.org/package=simcausal)
 [![](http://cranlogs.r-pkg.org/badges/simcausal)](https://CRAN.R-project.org/package=simcausal) [![](http://cranlogs.r-pkg.org/badges/grand-total/simcausal)](https://CRAN.R-project.org/package=simcausal)
-[![Travis-CI Build Status](https://travis-ci.org/osofr/simcausal.svg?branch=master)](https://travis-ci.org/osofr/simcausal)
+[![Travis-CI Build Status](https://app.travis-ci.org/osofr/simcausal.svg?branch=master)](https://app.travis-ci.com/osofr/simcausal)
 [![Coverage Status](https://coveralls.io/repos/osofr/simcausal/badge.svg?branch=master&service=github)](https://coveralls.io/github/osofr/simcausal?branch=master)
 
-The `simcausal` R package is a tool for specification and simulation of complex longitudinal data structures that are based on structural equation models (SEMs). The emphasis is on the types of simulations frequently encountered in causal inference problems, such as, observational data with time-dependent confounding, selection bias, and random monitoring processes. The interface allows for quick expression of dependencies between a large number of time-varying nodes. 
+The `simcausal` R package is a tool for specification and simulation of complex longitudinal data structures that are based on structural equation models (SEMs). The emphasis is on the types of simulations frequently encountered in causal inference problems, such as, observational data with time-dependent confounding, selection bias, and random monitoring processes. The interface allows for quick expression of dependencies between a large number of time-varying nodes.
 
 ### Installation
 
-To install the CRAN release version of `simcausal`: 
+To install the CRAN release version of `simcausal`:
 
 ```R
 install.packages('simcausal')
@@ -23,8 +23,7 @@ devtools::install_github('osofr/simcausal', build_vignettes = FALSE)
 ```
 
 ### Documentation
-
-Once the package is installed, see the [vignette](https://CRAN.R-project.org/package=simcausal/vignettes/simcausal_vignette.pdf), consult the internal package documentation and examples. 
+Once the package is installed, see the [vignette](https://CRAN.R-project.org/package=simcausal/vignettes/simcausal_vignette.pdf), consult the internal package documentation and examples.
 
 * To see the vignette in R:
 
@@ -51,7 +50,7 @@ Below is an example simulating data with 4 covariates specified by 4 structural 
 
 ```R
 library("simcausal")
-D <- DAG.empty() + 
+D <- DAG.empty() +
   node("CVD", distr="rcat.b1", probs = c(0.5, 0.25, 0.25)) +
   node("A1C", distr="rnorm", mean = 5 + (CVD > 1)*10 + (CVD > 2)*5) +
   node("TI", distr="rbern", prob = plogis(-0.5 - 0.3*CVD + 0.2*A1C)) +
@@ -70,9 +69,9 @@ To allow the above nodes `A1C`, `TI` and `Y` to change over time, for time point
 
 ```R
 library("simcausal")
-D <- DAG.empty() + 
+D <- DAG.empty() +
   node("CVD", distr="rcat.b1", probs = c(0.5, 0.25, 0.25)) +
-  node("A1C", t=0, distr="rnorm", mean=5 + (CVD > 1)*10 + (CVD > 2)*5) + 
+  node("A1C", t=0, distr="rnorm", mean=5 + (CVD > 1)*10 + (CVD > 2)*5) +
   node("TI", t=0, distr="rbern", prob=plogis(-5 - 0.3*CVD + 0.5*A1C[t])) +
 
   node("A1C", t=1:7, distr="rnorm", mean=-TI[t-1]*10 + 5 + (CVD > 1)*10 + (CVD > 2)*5) +
@@ -84,7 +83,7 @@ dat.long <- sim(D,n=200)
 
 The `+ action` function allows defining counterfactual data under various interventions (e.g., static, dynamic, deterministic, or stochastic), which can be then simulated by calling `sim` function. In particular, the interventions may represent exposures to treatment regimens, the occurrence or non-occurrence of right-censoring events, or of clinical monitoring events.
 
-In addition, the functions `set.targetE`, `set.targetMSM` and `eval.target` provide tools for defining and computing a few selected features of the distribution of the counterfactual data that represent common causal quantities of interest, such as, treatment-specific means, the average treatment effects and coefficients from working marginal structural models. 
+In addition, the functions `set.targetE`, `set.targetMSM` and `eval.target` provide tools for defining and computing a few selected features of the distribution of the counterfactual data that represent common causal quantities of interest, such as, treatment-specific means, the average treatment effects and coefficients from working marginal structural models.
 
 
 ### Using networks in SEMs
@@ -100,8 +99,8 @@ D <- DAG.empty() + network("ER.net", netfun = "rnet.gnm", m_pn = 50)
 First define two IDD nodes `W1` (categorical) and `W2` (Bernoulli):
 
 ```R
-D <- D + 
-  node("W1", distr = "rcat.b1", probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) + 
+D <- D +
+  node("W1", distr = "rcat.b1", probs = c(0.0494, 0.1823, 0.2806, 0.2680, 0.1651, 0.0546)) +
   node("W2", distr = "rbern", prob = plogis(-0.2 + W1/3))
 ```
 

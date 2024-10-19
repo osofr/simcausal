@@ -4,8 +4,16 @@
 \alias{sim}
 \title{Simulate Observed or Full Data from \code{DAG} Object}
 \usage{
-sim(DAG, actions, n, wide = TRUE, LTCF = NULL, rndseed = NULL,
-  rndseed.reset.node = NULL, verbose = getOption("simcausal.verbose"))
+sim(
+  DAG,
+  actions,
+  n,
+  wide = TRUE,
+  LTCF = NULL,
+  rndseed = NULL,
+  rndseed.reset.node = NULL,
+  verbose = getOption("simcausal.verbose")
+)
 }
 \arguments{
 \item{DAG}{A DAG objects that has been locked with set.DAG(DAG). Observed data from this DAG will be simulated if actions argument is omitted.}
@@ -82,7 +90,8 @@ Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
 \seealso{
 \code{\link{simobs}} - a wrapper function for simulating observed data only; \code{\link{simfull}} - a wrapper function for simulating full data only; \code{\link{doLTCF}} - forward imputation of the missing values in already simulating data; \code{\link{DF.to.long}}, \code{\link{DF.to.longDT}} - converting longitudinal data from wide to long formats.
 
-Other simulation functions: \code{\link{simfull}},
-  \code{\link{simobs}}
+Other simulation functions: 
+\code{\link{simfull}()},
+\code{\link{simobs}()}
 }
 \concept{simulation functions}

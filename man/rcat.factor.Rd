@@ -28,9 +28,9 @@ The number of categories generated is equal to \code{ncol(probs)+1}, the levels 
 }
 \section{Functions}{
 \itemize{
-\item \code{rcategor}: (Deperecated) Random Sample of a Categorical Factor
-}}
+\item \code{rcategor()}: (Deperecated) Random Sample of a Categorical Factor
 
+}}
 \examples{
 
 #---------------------------------------------------------------------------------------

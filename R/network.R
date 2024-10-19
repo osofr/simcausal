@@ -274,7 +274,7 @@ netvar <- function(varnm, fidx) {
 #'
 #' @docType class
 #' @importFrom R6 R6Class
-#' @format An \code{\link{R6Class}} generator object
+#' @format An \code{\link[R6]{R6Class}} generator object
 #' @keywords R6 class
 #' @details
 #' \itemize{

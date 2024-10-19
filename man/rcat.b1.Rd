@@ -30,13 +30,13 @@ or range 0, 1, ..., \code{ncol(probs)} for \code{rcat.b0}. For sampling categori
 }
 \section{Functions}{
 \itemize{
-\item \code{rcategor.int}: (Deperecated) Random Sample from Base 1 Categorical (Integer) Distribution
+\item \code{rcategor.int()}: (Deperecated) Random Sample from Base 1 Categorical (Integer) Distribution
 
-\item \code{rcat.b1}: Random Sample from Base 1 Categorical (Integer) Distribution
+\item \code{rcat.b1()}: Random Sample from Base 1 Categorical (Integer) Distribution
 
-\item \code{rcat.b0}: Random Sample from Base 0 Categorical (Integer) Distribution
+\item \code{rcat.b0()}: Random Sample from Base 0 Categorical (Integer) Distribution
+
 }}
-
 \seealso{
 \code{\link{rcat.factor}}
 }

@@ -4,8 +4,16 @@
 \alias{set.targetMSM}
 \title{Define Causal Parameters with a Working Marginal Structural Model (MSM)}
 \usage{
-set.targetMSM(DAG, outcome, t, formula, family = "quasibinomial", hazard,
-  ..., attr = list())
+set.targetMSM(
+  DAG,
+  outcome,
+  t,
+  formula,
+  family = "quasibinomial",
+  hazard,
+  ...,
+  attr = list()
+)
 }
 \arguments{
 \item{DAG}{Object specifying the directed acyclic graph (DAG) for the observed data}

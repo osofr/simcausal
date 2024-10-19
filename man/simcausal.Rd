@@ -2,8 +2,8 @@
 % Please edit documentation in R/simcausal-package.r
 \docType{package}
 \name{simcausal}
-\alias{simcausal}
 \alias{simcausal-package}
+\alias{simcausal}
 \title{Simulating Longitudinal Data with Causal Inference Applications}
 \description{
 The \pkg{simcausal} R package is a tool for specification and simulation of complex longitudinal data structures that are
@@ -64,11 +64,30 @@ The following most common types of output are produced by the package:
 
 \section{Updates}{
 
-Check for updates and report bugs at \url{http://github.com/osofr/simcausal}.
+Check for updates and report bugs at \url{https://github.com/osofr/simcausal}.
 }
 
 \references{
 Sofrygin O, van der Laan MJ, Neugebauer R (2017).
 "simcausal R Package: Conducting Transparent and Reproducible Simulation Studies of Causal Effect Estimation with Complex Longitudinal Data."
 Journal of Statistical Software, 81(2), 1-47. doi: 10.18637/jss.v081.i02.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/osofr/simcausal}
+  \item Report bugs at \url{https://github.com/osofr/simcausal/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Fred Gruber \email{fgruber@gmail.com} [contributor]
+
+Authors:
+\itemize{
+  \item Oleg Sofrygin \email{oleg.sofrygin@gmail.com}
+  \item Mark J. van der Laan \email{laan@berkeley.edu}
+  \item Romain Neugebauer \email{Romain.S.Neugebauer@kp.org}
+}
+
 }

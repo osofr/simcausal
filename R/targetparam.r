@@ -176,7 +176,7 @@ set.targetE <- function(DAG, outcome, t, param, ...,  attr=list()) {
   if (missing(t)) t <- NULL
   attr(DAG, "target")$outnodes <- list(gen_name=as.character(outcome), t=t)
 
-  if ((class(param)=="character")&&length(param)==1) {
+  if (is(param,"character")&&length(param)==1){
   	res_ratio <- length(gsub("[[:space:]]*","",unlist(strsplit(param, "/", fixed = TRUE)))) > 1
   	res_diff <- length(gsub("[[:space:]]*","",unlist(strsplit(param, "-", fixed = TRUE)))) > 1
   	interv_nms <- gsub("[[:space:]]*","",unlist(strsplit(param, "[-/]")))	# names of interventions
@@ -308,7 +308,7 @@ eval.target <- function(DAG, n, data, actions, rndseed = NULL, verbose = getOpti
 
   if (is.null(params.E)&is.null(params.MSM)) stop("at least one target parameter must be specified (set.targetE,set.targetMSM) ")
   if (length(outnodes)!=2) stop("outnodes must be a list of length two")
-  if (class(outnodes)!="list") stop("outnodes must be a list")
+  if (!is(outnodes,"list")) stop("outnodes must be a list")
   if (!all(c("gen_name", "t")%in%names(outnodes))) stop("outnodes must contain named items gen_name and t")
   if (length(outnodes$gen_name)>1) stop("can only specify one generic name in outnodes$gen_name")
 

@@ -30,7 +30,7 @@ Define and add new action (intervention) to the existing DAG object. Use either 
 In addition to the action name and list of action nodes, both of these functions accept arbitrary named attributes (as additional arguments which must be given a name).
 This additional attributes can be used to simplify specification of dynamic regimes (actions that depend on the past observed covariates).
 
-The formula of the intervention node is allowed to contain undefined variables, as long as those are later defined as a named argument to \code{action}.
+The formula of the intervention node is allowed to contain undefined variables, as long as those are later defined as a named argument to \code{action}. 
 
 In Example 2 below, \code{node("A",..., mean = ifelse(W1 >= theta, 1, 0))}, 
 defines the mean of the node "A" as a function of some undefined variable \code{theta}, setting \code{A} to 1 if the baseline node \code{W1} is above or equal to \code{theta} and 0 vice versa.

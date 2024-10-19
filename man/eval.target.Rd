@@ -4,8 +4,14 @@
 \alias{eval.target}
 \title{Evaluate the True Value of the Causal Target Parameter}
 \usage{
-eval.target(DAG, n, data, actions, rndseed = NULL,
-  verbose = getOption("simcausal.verbose"))
+eval.target(
+  DAG,
+  n,
+  data,
+  actions,
+  rndseed = NULL,
+  verbose = getOption("simcausal.verbose")
+)
 }
 \arguments{
 \item{DAG}{DAG object with target parameter set via \code{set.targetE} or \code{set.targetMSM} functions}
